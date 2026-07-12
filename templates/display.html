@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Prompteur — Écran</title>
+  <style>
+    :root { --bg:#000; --fg:#fff; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    html, body { height:100%; overflow:hidden; background:var(--bg); }
+    body { cursor:none; }               /* pas de curseur en mode kiosque */
+
+    /* Zone qui subit l'effet miroir (le texte ET la ligne de repère) */
+    #stage {
+      position:fixed; inset:0;
+      background:var(--bg);
+      overflow:hidden;
+    }
+
+    /* Le texte défilant */
+    #viewport { position:absolute; inset:0; overflow:hidden; }
+    #scroller {
+      position:absolute; left:0; top:0; width:100%;
+      color:var(--fg);
+      white-space:pre-wrap;
+      word-wrap:break-word;
+      will-change:transform;
+    }
+
+    /* Ligne de repère de lecture */
+    #guide {
+      position:absolute; left:0; right:0; height:0;
+      border-top:2px solid rgba(255,60,60,.55);
+      pointer-events:none;
+      display:none;
+    }
+    #guide::before, #guide::after {
+      content:""; position:absolute; top:-9px;
+      border-top:9px solid transparent; border-bottom:9px solid transparent;
+    }
+    #guide::before { left:0;  border-left:14px solid rgba(255,60,60,.7); }
+    #guide::after  { right:0; border-right:14px solid rgba(255,60,60,.7); }
+
+    /* Bandeau d'aide / d'état, discret */
+    #hud {
+      position:fixed; left:12px; bottom:10px;
+      font:600 14px/1.4 system-ui, sans-serif;
+      color:rgba(255,255,255,.5);
+      background:rgba(0,0,0,.35);
+      padding:6px 10px; border-radius:8px;
+      pointer-events:none; transition:opacity .4s;
+      z-index:10;
+    }
+    #hud.hidden { opacity:0; }
+    #speedTag {
+      position:fixed; right:14px; top:10px;
+      font:700 16px/1 system-ui, sans-serif;
+      color:rgba(255,255,255,.55);
+      background:rgba(0,0,0,.35); padding:6px 10px; border-radius:8px;
+      z-index:10; transition:opacity .4s;
+    }
+    #speedTag.hidden { opacity:0; }
+
+    /* Écran d'attente si aucun texte */
+    #empty {
+      position:fixed; inset:0; display:none;
+      align-items:center; justify-content:center; text-align:center;
+      color:rgba(255,255,255,.6);
+      font:500 28px/1.5 system-ui, sans-serif; padding:8%; flex-direction:column;
+    }
+
+    /* Carte d'info : adresse à taper sur un PC/tablette */
+    #netinfo {
+      position:fixed; left:50%; top:5%; transform:translateX(-50%);
+      max-width:82%; text-align:center; z-index:20;
+      background:rgba(18,22,30,.94); border:1px solid rgba(255,255,255,.16);
+      color:#dfe4ee; padding:16px 24px; border-radius:16px;
+      font:500 20px/1.5 system-ui, sans-serif; transition:opacity .5s;
+      box-shadow:0 10px 40px rgba(0,0,0,.5);
+    }
+    #netinfo b { color:#8ab4ff; }
+    #netinfo .addr { font:700 27px/1.4 'Consolas', monospace; color:#fff; margin-top:8px; letter-spacing:.5px; }
+    #netinfo.hidden { opacity:0; pointer-events:none; }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <div id="viewport">
+      <div id="scroller"></div>
+    </div>
+    <div id="guide"></div>
+  </div>
+
+  <div id="speedTag">▶︎ 70</div>
+  <div id="netinfo" class="hidden"></div>
+  <div id="hud">
+    Pédale droite = avancer · gauche = reculer · Espace = lecture/pause · +/− = vitesse · M = miroir · F = plein écran · i = adresse PC
+  </div>
+  <div id="empty">
+    <div>Aucun texte.<br>Envoie ton texte depuis le téléphone (WiFi « Prompteur ») ou par clé USB.</div>
+    <div style="margin-top:22px; font-size:20px;">Écran déporté (PC / tablette) :
+      <span id="emptyAddr" style="font-family:'Consolas',monospace; color:#8ab4ff;">…</span>
+    </div>
+  </div>
+
+  <script src="/static/display.js"></script>
+</body>
+</html>

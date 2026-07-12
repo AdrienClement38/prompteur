@@ -1,0 +1,15 @@
+# Données d'exécution (générées par le boîtier au lancement)
+state.json
+state.json.tmp
+scripts/*.txt
+server.log
+*.tmp
+
+# Python
+__pycache__/
+*.pyc
+
+# Outils / éditeur
+.claude/
+.DS_Store
+Thumbs.db

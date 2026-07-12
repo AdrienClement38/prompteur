@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Prompteur — Télécommande</title>
+  <style>
+    :root{
+      --bg:#0f1115; --card:#181b22; --card2:#20242e; --line:#2b3040;
+      --fg:#eef1f6; --muted:#9aa3b2; --accent:#4f8cff; --accent2:#2fbf71;
+      --danger:#e2544a; --radius:14px;
+    }
+    *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+    body{
+      margin:0; background:var(--bg); color:var(--fg);
+      font:16px/1.45 system-ui,'Segoe UI',Roboto,Arial,sans-serif;
+      padding:14px 14px calc(14px + env(safe-area-inset-bottom)); max-width:760px; margin:0 auto;
+    }
+    h1{font-size:20px; margin:4px 0 2px; display:flex; align-items:center; gap:8px;}
+    h1 .dot{width:10px;height:10px;border-radius:50%;background:var(--accent2);box-shadow:0 0 10px var(--accent2);}
+    .sub{color:var(--muted); font-size:13px; margin-bottom:14px;}
+    .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px; margin-bottom:14px;}
+    .card h2{font-size:14px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:0 0 10px;}
+    textarea{
+      width:100%; min-height:150px; resize:vertical; background:var(--card2); color:var(--fg);
+      border:1px solid var(--line); border-radius:10px; padding:12px; font-size:16px; line-height:1.5;
+    }
+    label{display:block; font-size:13px; color:var(--muted); margin:10px 0 4px;}
+    input[type=text]{width:100%; background:var(--card2); color:var(--fg); border:1px solid var(--line);
+      border-radius:10px; padding:10px 12px; font-size:16px;}
+    .row{display:flex; gap:10px; flex-wrap:wrap;}
+    .row > *{flex:1;}
+    button{
+      appearance:none; border:1px solid var(--line); background:var(--card2); color:var(--fg);
+      border-radius:12px; padding:13px 14px; font-size:15px; font-weight:600; cursor:pointer;
+      display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px;
+    }
+    button:active{transform:translateY(1px);}
+    button.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+    button.go{background:var(--accent2); border-color:var(--accent2); color:#04240f;}
+    button.ghost{background:transparent;}
+    button.danger{color:var(--danger); border-color:#43272a;}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+    .slider{display:flex; align-items:center; gap:10px;}
+    .slider input[type=range]{flex:1;}
+    .val{min-width:52px; text-align:right; color:var(--muted); font-variant-numeric:tabular-nums;}
+    .toggle{display:flex; align-items:center; justify-content:space-between; padding:8px 0;}
+    .switch{position:relative; width:50px; height:30px;}
+    .switch input{opacity:0; width:0; height:0;}
+    .slot{position:absolute; inset:0; background:var(--line); border-radius:30px; transition:.2s;}
+    .knob{position:absolute; top:3px; left:3px; width:24px; height:24px; background:#fff; border-radius:50%; transition:.2s;}
+    .switch input:checked + .slot{background:var(--accent2);}
+    .switch input:checked + .slot .knob{transform:translateX(20px);}
+    .list{display:flex; flex-direction:column; gap:8px; max-height:220px; overflow:auto;}
+    .item{display:flex; align-items:center; gap:8px; background:var(--card2); border:1px solid var(--line);
+      border-radius:10px; padding:8px 10px;}
+    .item .name{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    .item button{min-height:auto; padding:8px 10px; font-size:13px;}
+    .swatches{display:flex; gap:8px; flex-wrap:wrap;}
+    .swatch{width:34px;height:34px;border-radius:8px;border:2px solid transparent; cursor:pointer;}
+    .swatch.sel{border-color:var(--accent);}
+    .toast{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom)); transform:translateX(-50%);
+      background:#000; border:1px solid var(--line); color:#fff; padding:10px 16px; border-radius:30px;
+      font-size:14px; opacity:0; transition:opacity .25s; pointer-events:none; z-index:50;}
+    .toast.show{opacity:1;}
+    .muted{color:var(--muted); font-size:13px;}
+    .tabbtns{display:flex; gap:8px; margin-bottom:12px;}
+    .tabbtns button{flex:1; min-height:42px; font-size:14px;}
+    .tabbtns button.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+    .hide{display:none;}
+  </style>
+</head>
+<body>
+  <h1><span class="dot"></span> Prompteur</h1>
+  <div class="sub">Télécommande — connecté au boîtier, sans internet.</div>
+
+  <div class="tabbtns">
+    <button data-tab="texte" class="active">📝 Texte</button>
+    <button data-tab="controle">🎬 Contrôle</button>
+    <button data-tab="reglages">⚙️ Réglages</button>
+  </div>
+
+  <!-- ONGLET TEXTE ------------------------------------------------------- -->
+  <section id="tab-texte">
+    <div class="card">
+      <h2>Coller / écrire le texte</h2>
+      <label>Titre</label>
+      <input type="text" id="title" placeholder="Ex : Intro épisode 12">
+      <label>Texte du prompteur</label>
+      <textarea id="text" placeholder="Colle ici ton texte…"></textarea>
+      <div class="row" style="margin-top:12px;">
+        <button class="go" id="send">⬆︎ Envoyer à l'écran</button>
+        <button class="ghost" id="saveLib">💾 Enregistrer</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Importer</h2>
+      <div class="grid2">
+        <button id="pickFile">📄 Fichier (.txt)</button>
+        <button id="scanUsb">🔌 Clé USB</button>
+      </div>
+      <input type="file" id="file" accept=".txt,.md,.text" class="hide">
+      <div id="usbList" class="list" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Mes textes enregistrés</h2>
+      <div id="libList" class="list"></div>
+    </div>
+  </section>
+
+  <!-- ONGLET CONTRÔLE ---------------------------------------------------- -->
+  <section id="tab-controle" class="hide">
+    <div class="card">
+      <h2>Défilement</h2>
+      <div class="grid3">
+        <button class="go" data-cmd="play">▶︎ Lecture</button>
+        <button data-cmd="pause">⏸ Pause</button>
+        <button data-cmd="restart">⏮ Début</button>
+      </div>
+      <div class="grid2" style="margin-top:10px;">
+        <button data-cmd="slower">🐢 Moins vite</button>
+        <button data-cmd="faster">🐇 Plus vite</button>
+      </div>
+      <p class="muted" style="margin-top:12px;">
+        En direct, tu piloteras surtout avec les <b>pédales</b> : pédale droite = avancer,
+        pédale gauche = reculer. Ces boutons sont un secours / réglage à distance.
+      </p>
+    </div>
+    <div class="card">
+      <h2>Vitesse de lecture</h2>
+      <div class="slider">
+        <input type="range" id="speed" min="10" max="400" step="5">
+        <span class="val" id="speedVal">70</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ONGLET RÉGLAGES ---------------------------------------------------- -->
+  <section id="tab-reglages" class="hide">
+    <div class="card">
+      <h2>Texte</h2>
+      <label>Taille du texte</label>
+      <div class="slider"><input type="range" id="fontSize" min="24" max="140" step="2"><span class="val" id="fontSizeVal">64</span></div>
+      <label>Interligne</label>
+      <div class="slider"><input type="range" id="lineHeight" min="10" max="30" step="1"><span class="val" id="lineHeightVal">1.6</span></div>
+      <label>Marges latérales</label>
+      <div class="slider"><input type="range" id="margin" min="0" max="40" step="1"><span class="val" id="marginVal">10%</span></div>
+      <label>Alignement</label>
+      <div class="grid2">
+        <button data-align="left" class="alignBtn">⬅︎ Gauche</button>
+        <button data-align="center" class="alignBtn">↔︎ Centré</button>
+      </div>
+      <label>Police</label>
+      <div class="grid3">
+        <button data-font="sans-serif" class="fontBtn">Sans</button>
+        <button data-font="serif" class="fontBtn">Serif</button>
+        <button data-font="monospace" class="fontBtn">Mono</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Couleurs</h2>
+      <label>Texte</label>
+      <div class="swatches" id="fgSwatches"></div>
+      <label>Fond</label>
+      <div class="swatches" id="bgSwatches"></div>
+    </div>
+
+    <div class="card">
+      <h2>Affichage</h2>
+      <div class="toggle"><span>Miroir horizontal <span class="muted">(vitre sans tain)</span></span>
+        <label class="switch"><input type="checkbox" id="mirrorH"><span class="slot"><span class="knob"></span></span></label></div>
+      <div class="toggle"><span>Miroir vertical</span>
+        <label class="switch"><input type="checkbox" id="mirrorV"><span class="slot"><span class="knob"></span></span></label></div>
+      <div class="toggle"><span>Ligne de repère</span>
+        <label class="switch"><input type="checkbox" id="guide" checked><span class="slot"><span class="knob"></span></span></label></div>
+    </div>
+
+    <div class="card">
+      <h2>Pédales</h2>
+      <label>Mode</label>
+      <div class="grid2">
+        <button data-mode="hold" class="modeBtn">Maintien</button>
+        <button data-mode="tap" class="modeBtn">Impulsion</button>
+      </div>
+      <p class="muted" style="margin-top:8px;">
+        <b>Maintien</b> : tu gardes la pédale enfoncée = ça défile ; tu relâches = ça s'arrête.<br>
+        <b>Impulsion</b> : une pression sur la pédale droite lance/arrête ; la gauche revient au début.
+      </p>
+      <div class="grid2" style="margin-top:10px;">
+        <div>
+          <label>Touche pédale droite (avancer)</label>
+          <input type="text" id="keyForward" readonly placeholder="clique puis appuie sur la pédale">
+        </div>
+        <div>
+          <label>Touche pédale gauche (reculer)</label>
+          <input type="text" id="keyBackward" readonly placeholder="clique puis appuie sur la pédale">
+        </div>
+      </div>
+      <p class="muted" style="margin-top:8px;">Astuce : clique dans un champ puis appuie sur la pédale pour « apprendre » sa touche.</p>
+    </div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+  <script src="/static/remote.js"></script>
+</body>
+</html>
