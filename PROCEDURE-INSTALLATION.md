@@ -45,20 +45,32 @@ opérationnel qui démarre tout seul sur le prompteur.
   utilisez la **fente SD** du PC avec l'**adaptateur micro‑SD → SD** (généralement fourni avec la carte),
   ou un petit **lecteur USB de carte**. Ensuite, la carte **reste dans le boîtier**.
 
-Sur **votre ordinateur** (uniquement pour une carte vierge) :
+### Préparer une carte vierge (« flasher » la carte)
 
-1. Installez **Raspberry Pi Imager** (raspberrypi.com/software).
-2. Insérez la carte micro‑SD, lancez Imager :
-   - **Appareil** : Raspberry Pi 5
-   - **Système** : *Raspberry Pi OS (64‑bit)* (la version **avec bureau**)
-   - **Stockage** : votre carte SD
-3. Cliquez sur **⚙️ (Modifier les réglages)** et renseignez :
-   - Nom d'hôte : `prompteur`
-   - **Activer SSH** (avec mot de passe)
-   - **Nom d'utilisateur / mot de passe** → *notez‑les*
-   - Langue / clavier : **France (fr)**
-   - *(Optionnel)* WiFi de votre local, si vous n'utilisez pas Ethernet
-4. **Écrire**, puis attendre la fin de la vérification.
+> **« Flasher » une carte**, c'est y copier le système d'exploitation (Raspberry Pi OS) — un peu
+> comme installer Windows sur un ordinateur. On le fait **une seule fois**, avec l'outil **gratuit et
+> officiel « Raspberry Pi Imager »**. Comptez ~10 minutes.
+
+1. **Installer l'outil.** Sur votre ordinateur (Windows ou Mac), allez sur **raspberrypi.com/software**,
+   téléchargez **Raspberry Pi Imager** et installez‑le.
+2. **Insérer la carte** micro‑SD dans le lecteur du PC (fente SD + adaptateur, ou lecteur USB).
+3. **Ouvrir Raspberry Pi Imager** et remplir les **3 gros boutons** de l'écran principal :
+   - **« CHOISIR L'APPAREIL »** → *Raspberry Pi 5*
+   - **« CHOISIR L'OS »** → *Raspberry Pi OS (64‑bit)* (la version recommandée, **avec bureau**)
+   - **« CHOISIR LE STOCKAGE »** → **votre carte SD**
+     > ⚠️ Vérifiez bien que vous sélectionnez la **carte SD**, et pas un disque de votre PC :
+     > **tout son contenu sera effacé**.
+4. Cliquez sur **« SUIVANT »**, puis sur **« MODIFIER LES RÉGLAGES »** *(c'est ce qui pré‑configure le
+   Pi pour qu'il fonctionne du premier coup, sans écran ni clavier si besoin)*. Renseignez :
+   - **Nom d'hôte** : `prompteur`
+   - **Nom d'utilisateur + mot de passe** → **notez‑les** (ils serviront à ouvrir le terminal)
+   - Onglet **Services** : **cocher « Activer SSH »** (authentification par mot de passe)
+   - **Langue / fuseau / clavier** : *France*
+   - *(si vous n'utilisez pas Ethernet)* le **WiFi de votre local** (nom + mot de passe)
+
+   Puis **« ENREGISTRER »**.
+5. Cliquez **« OUI »** pour lancer l'écriture. Imager **copie le système puis le vérifie** (~5 à 10 min).
+6. Au message **« Écriture réussie »**, **retirez la carte** du PC. Elle est prête → passez à l'étape 2.
 
 ---
 
