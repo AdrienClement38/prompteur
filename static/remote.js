@@ -22,6 +22,22 @@
   const postJSON = (path, body) =>
     api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
+  // récupère le message d'erreur lisible renvoyé par le serveur (corps JSON)
+  function errText(err) {
+    try { return JSON.parse(err && err.message).error; } catch { return null; }
+  }
+
+  // Lien pour l'écran régie / spectateur (affiché dans l'onglet Contrôle)
+  async function loadViewLink() {
+    try {
+      const info = await api("/api/info");
+      const ip = (info.addresses || [])[0] || "10.42.0.1";
+      $("viewLink").textContent = `http://${ip}:${info.port || 5000}/view`;
+    } catch {
+      $("viewLink").textContent = "http://10.42.0.1:5000/view";
+    }
+  }
+
   let settings = {};
 
   // --- Onglets --------------------------------------------------------------
@@ -130,10 +146,17 @@
     if (!f) return;
     const fd = new FormData();
     fd.append("file", f);
-    const res = await api("/api/upload", { method: "POST", body: fd });
-    await loadState();
-    toast("Importé : " + res.title);
-    e.target.value = "";
+    try {
+      const r = await fetch("/api/upload", { method: "POST", body: fd });
+      const res = await r.json().catch(() => ({}));
+      if (!r.ok || !res.ok) { toast(res.error || "Import impossible"); return; }
+      await loadState();
+      toast("Importé : " + res.title);
+    } catch {
+      toast("Import impossible");
+    } finally {
+      e.target.value = "";
+    }
   });
 
   // --- Import clé USB -------------------------------------------------------
@@ -142,16 +165,20 @@
     const files = await api("/api/usb");
     const box = $("usbList");
     box.innerHTML = "";
-    if (!files.length) { box.innerHTML = '<div class="muted">Aucune clé USB / fichier .txt détecté. Branche la clé sur le boîtier puis réessaie.</div>'; return; }
+    if (!files.length) { box.innerHTML = '<div class="muted">Aucun fichier détecté sur une clé USB. Branche la clé sur le boîtier puis réessaie.</div>'; return; }
     files.forEach((f) => {
       const row = document.createElement("div");
       row.className = "item";
       row.innerHTML = `<span class="name">${escapeHtml(f.name)}</span>`;
       const load = mkBtn("Charger", "primary");
       load.onclick = async () => {
-        const res = await postJSON("/api/usb/load", { path: f.path });
-        await loadState();
-        toast("Chargé : " + res.title);
+        try {
+          const res = await postJSON("/api/usb/load", { path: f.path });
+          await loadState();
+          toast("Chargé : " + res.title);
+        } catch (err) {
+          toast(errText(err) || "Lecture impossible");
+        }
       };
       row.appendChild(load);
       box.appendChild(row);
@@ -261,4 +288,5 @@
   }
 
   loadState().catch(() => toast("Erreur de connexion au boîtier"));
+  loadViewLink();
 })();

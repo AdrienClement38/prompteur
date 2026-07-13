@@ -86,13 +86,16 @@ automatiquement. **Après le redémarrage, le prompteur s'affiche tout seul.**
    - Mot de passe : **unique par boîtier**, généré et **affiché à la fin de l'installation**
      (note-le ; tu peux imposer le tien avec `WIFI_PASS=monsecret ./install/setup.sh`)
 3. Ouvre le navigateur du téléphone sur : **http://10.42.0.1:5000**
-4. **Colle ton texte** (ou importe un `.txt` / une clé USB) → **« Envoyer à l'écran »**.
+4. **Colle ton texte**, ou importe un fichier **Word / PDF / ODT / RTF / txt** (ou une clé USB) → **« Envoyer à l'écran »**.
 5. **Branche les pédales** en USB sur le boîtier et lis :
    pédale droite = avancer, pédale gauche = reculer.
 
-### Import par clé USB
-Branche une clé contenant des fichiers `.txt` sur le boîtier, puis dans la
-télécommande : onglet **Texte → Clé USB → Charger**.
+### Import de fichiers (téléphone ou clé USB)
+Tu peux importer du **Word (.doc, .docx), PDF, LibreOffice (.odt), RTF** et du
+**texte (.txt)**. Le boîtier **extrait et nettoie automatiquement le texte** : il
+retire la mise en forme et les caractères parasites, pour ne garder que le texte
+lisible, prêt à défiler. Dans la télécommande, onglet **Texte** : bouton
+**Fichier** (depuis l'appareil) ou **Clé USB** (branchée sur le boîtier) → **Charger**.
 
 ---
 
@@ -122,8 +125,23 @@ bouge » (latence ≈ une image d'écran, ~15 ms, imperceptible).
 | PC affiche via l'IP **+ pédales sur le PC** | ✅ quasi nulle |
 | PC affiche via l'IP **mais pédales sur le Raspberry** | ❌ à éviter (passerait par le réseau) |
 
-La petite synchro (0,3 s) ne sert **qu'à** recevoir le texte importé depuis le
-téléphone ; elle n'a **aucun** effet sur la réactivité des pédales.
+La petite synchro ne sert **qu'à** recevoir le texte importé depuis le téléphone
+et à alimenter les écrans spectateurs ; elle n'a **aucun** effet sur la réactivité
+des pédales de l'écran meneur.
+
+### 👀 Mode régie / spectateur (synchronisé en temps réel)
+
+Un autre appareil (le **PC de la régie**, par exemple) peut **suivre en direct** où
+en est le prompteur, en ouvrant l'adresse spectateur : `http://10.42.0.1:5000/view`.
+
+- Cet écran **suit le meneur** (l'écran principal) : même texte, même position, en temps réel.
+- Il est en **lecture seule** : ses pédales/clavier sont ignorés (un seul meneur pilote).
+- On peut connecter **plusieurs spectateurs** en même temps.
+- La synchro est **quasi imperceptible** (~40 ms mesurés sur réseau local) : les écrans
+  spectateurs **anticipent** le mouvement entre deux mises à jour → défilement fluide et collé.
+
+> L'adresse spectateur est rappelée dans la télécommande (onglet **Contrôle**) et sur
+> l'écran principal au démarrage.
 
 ## 6. Réglages disponibles (depuis le téléphone)
 

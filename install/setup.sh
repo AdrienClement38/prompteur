@@ -30,10 +30,14 @@ echo "==> Utilisateur: $RUN_USER"
 echo
 
 # --- 1. Dépendances ----------------------------------------------------------
-echo "==> Installation des paquets (Flask, waitress, Chromium, unclutter, nftables)…"
+echo "==> Installation des paquets (Flask, waitress, Chromium, antiword, unclutter, nftables)…"
 sudo apt-get update
-sudo apt-get install -y python3-flask python3-waitress chromium-browser unclutter nftables || \
-  sudo apt-get install -y python3-flask python3-waitress chromium unclutter nftables
+sudo apt-get install -y python3-flask python3-waitress antiword chromium-browser unclutter nftables || \
+  sudo apt-get install -y python3-flask python3-waitress antiword chromium unclutter nftables
+# Bibliothèques Python pour lire les PDF et RTF (pur Python, hors-ligne).
+# antiword (ci-dessus) gère l'ancien format .doc.
+sudo pip3 install --break-system-packages striprtf pypdf 2>/dev/null || \
+  pip3 install --user striprtf pypdf || true
 
 # --- 2. Service serveur (démarrage auto) -------------------------------------
 echo "==> Création du service systemd 'prompteur'…"

@@ -76,9 +76,9 @@
   <div class="sub">Télécommande — connecté au boîtier, sans internet.</div>
 
   <div class="tabbtns">
-    <button data-tab="texte" class="active">📝 Texte</button>
-    <button data-tab="controle">🎬 Contrôle</button>
-    <button data-tab="reglages">⚙️ Réglages</button>
+    <button data-tab="texte" class="active">Texte</button>
+    <button data-tab="controle">Contrôle</button>
+    <button data-tab="reglages">Réglages</button>
   </div>
 
   <!-- ONGLET TEXTE ------------------------------------------------------- -->
@@ -90,18 +90,19 @@
       <label>Texte du prompteur</label>
       <textarea id="text" placeholder="Colle ici ton texte…"></textarea>
       <div class="row" style="margin-top:12px;">
-        <button class="go" id="send">⬆︎ Envoyer à l'écran</button>
-        <button class="ghost" id="saveLib">💾 Enregistrer</button>
+        <button class="go" id="send">Envoyer à l'écran</button>
+        <button class="ghost" id="saveLib">Enregistrer</button>
       </div>
     </div>
 
     <div class="card">
       <h2>Importer</h2>
       <div class="grid2">
-        <button id="pickFile">📄 Fichier (.txt)</button>
-        <button id="scanUsb">🔌 Clé USB</button>
+        <button id="pickFile">Fichier</button>
+        <button id="scanUsb">Clé USB</button>
       </div>
-      <input type="file" id="file" accept=".txt,.md,.text" class="hide">
+      <p class="muted" style="margin-top:8px;">Formats acceptés : Word (.doc, .docx), PDF, LibreOffice (.odt), RTF, texte (.txt). Le texte est nettoyé automatiquement.</p>
+      <input type="file" id="file" accept=".txt,.md,.text,.doc,.docx,.odt,.rtf,.pdf" class="hide">
       <div id="usbList" class="list" style="margin-top:12px;"></div>
     </div>
 
@@ -116,18 +117,24 @@
     <div class="card">
       <h2>Défilement</h2>
       <div class="grid3">
-        <button class="go" data-cmd="play">▶︎ Lecture</button>
-        <button data-cmd="pause">⏸ Pause</button>
-        <button data-cmd="restart">⏮ Début</button>
+        <button class="go" data-cmd="play">Lecture</button>
+        <button data-cmd="pause">Pause</button>
+        <button data-cmd="restart">Début</button>
       </div>
       <div class="grid2" style="margin-top:10px;">
-        <button data-cmd="slower">🐢 Moins vite</button>
-        <button data-cmd="faster">🐇 Plus vite</button>
+        <button data-cmd="slower">Moins vite</button>
+        <button data-cmd="faster">Plus vite</button>
       </div>
       <p class="muted" style="margin-top:12px;">
         En direct, tu piloteras surtout avec les <b>pédales</b> : pédale droite = avancer,
         pédale gauche = reculer. Ces boutons sont un secours / réglage à distance.
       </p>
+    </div>
+
+    <div class="card">
+      <h2>Écran régie / spectateur</h2>
+      <p class="muted">Sur un autre appareil (PC de la régie…), ouvrez cette adresse pour <b>suivre le prompteur en direct</b>, synchronisé avec l'écran principal :</p>
+      <div id="viewLink" style="font-family:monospace; color:#ffd400; word-break:break-all; margin-top:6px;">…</div>
     </div>
     <div class="card">
       <h2>Vitesse de lecture</h2>
@@ -150,8 +157,8 @@
       <div class="slider"><input type="range" id="margin" min="0" max="40" step="1"><span class="val" id="marginVal">10%</span></div>
       <label>Alignement</label>
       <div class="grid2">
-        <button data-align="left" class="alignBtn">⬅︎ Gauche</button>
-        <button data-align="center" class="alignBtn">↔︎ Centré</button>
+        <button data-align="left" class="alignBtn">Gauche</button>
+        <button data-align="center" class="alignBtn">Centré</button>
       </div>
       <label>Police</label>
       <div class="grid3">

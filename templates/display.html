@@ -26,6 +26,11 @@
       word-wrap:break-word;
       will-change:transform;
     }
+    /* Structure du script : titres en gros/gras, lignes et lignes vides préservées */
+    #scroller .h1 { font-weight:800; font-size:1.5em;  line-height:1.2; margin:.5em 0 .12em; }
+    #scroller .h2 { font-weight:700; font-size:1.28em; line-height:1.2; margin:.4em 0 .1em; }
+    #scroller .h3 { font-weight:700; font-size:1.12em; line-height:1.25; margin:.3em 0 .1em; }
+    #scroller .blank { height:.5em; }
 
     /* Ligne de repère de lecture */
     #guide {
@@ -81,6 +86,14 @@
     #netinfo b { color:#8ab4ff; }
     #netinfo .addr { font:700 27px/1.4 'Consolas', monospace; color:#fff; margin-top:8px; letter-spacing:.5px; }
     #netinfo.hidden { opacity:0; pointer-events:none; }
+
+    /* Badge affiché uniquement sur les écrans spectateurs (régie) */
+    #specBadge {
+      position:fixed; left:12px; top:10px; z-index:25;
+      font:700 13px/1 system-ui, sans-serif; letter-spacing:.08em;
+      color:#0b1220; background:#ffd400; padding:6px 11px; border-radius:8px;
+      display:none;
+    }
   </style>
 </head>
 <body>
@@ -92,6 +105,7 @@
   </div>
 
   <div id="speedTag">▶︎ 70</div>
+  <div id="specBadge">SPECTATEUR — suit l'écran principal</div>
   <div id="netinfo" class="hidden"></div>
   <div id="hud">
     Pédale droite = avancer · gauche = reculer · Espace = lecture/pause · +/− = vitesse · M = miroir · F = plein écran · i = adresse PC
@@ -103,6 +117,7 @@
     </div>
   </div>
 
+  <script>window.PROMPTEUR_MODE = "{{ mode | default('presenter') }}";</script>
   <script src="/static/display.js"></script>
 </body>
 </html>

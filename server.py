@@ -4,10 +4,12 @@
 Prompteur — serveur du boîtier téléprompteur (Raspberry Pi).
 
 Rôle :
-  * Sert l'affichage du téléprompteur  ->  /display  (écran du boîtier, mode kiosque)
+  * Sert l'affichage du téléprompteur  ->  /display  (écran meneur, mode kiosque)
+  * Sert l'affichage spectateur        ->  /view     (régie… suit le meneur en direct)
   * Sert la télécommande / import       ->  /        (ton téléphone, via le WiFi du boîtier)
   * Stocke le texte courant + les réglages dans state.json
-  * Importe du texte depuis une clé USB branchée sur le boîtier
+  * Importe du texte (.txt/.md/.doc/.docx/.odt/.rtf/.pdf) depuis un fichier ou une clé USB
+  * Partage en temps réel la position de défilement (meneur -> écrans spectateurs)
 
 Aucune connexion internet n'est nécessaire : tout est local au boîtier.
 
@@ -31,6 +33,8 @@ import threading
 from pathlib import Path
 
 from flask import Flask, jsonify, render_template, request
+
+import textextract
 
 # --------------------------------------------------------------------------
 # Chemins et constantes
@@ -170,9 +174,19 @@ STATE = load_state()
 
 
 # --------------------------------------------------------------------------
+# Temps réel : position de défilement partagée (meneur -> spectateurs)
+# --------------------------------------------------------------------------
+# Position du MENEUR (écran /display), lue très fréquemment par les spectateurs
+# (/view) qui la SUIVENT avec anticipation (ils connaissent la vitesse et prédisent
+# le mouvement entre deux lectures -> retard imperceptible). Mise à jour par POST,
+# lue par GET, sur /api/scroll.
+SCROLL = {"pos": 0.0, "vel": 0.0, "playing": False, "seq": 0}
+
+
+# --------------------------------------------------------------------------
 # Détection des clés USB (import de texte hors-ligne)
 # --------------------------------------------------------------------------
-USB_EXTS = (".txt", ".md", ".text", ".rtf")
+USB_EXTS = textextract.SUPPORTED_EXTS  # .txt/.md/.rtf/.docx/.doc/.odt/.pdf
 USB_MAX_TXT = 200  # nombre max de fichiers texte listés
 USB_MAX_ENTRIES = 8000  # nombre max de fichiers PARCOURUS (borne le coût sur grosse clé)
 USB_MAX_DEPTH = 6  # profondeur max de descente
@@ -298,8 +312,14 @@ def index():
 
 @app.route("/display")
 def display():
-    """Affichage du téléprompteur (écran du boîtier, mode kiosque)."""
-    return render_template("display.html")
+    """Écran MENEUR (boîtier, kiosque) : piloté aux pédales, diffuse sa position."""
+    return render_template("display.html", mode="presenter")
+
+
+@app.route("/view")
+def view():
+    """Écran SPECTATEUR (régie…) : suit le meneur en temps réel, en lecture seule."""
+    return render_template("display.html", mode="viewer")
 
 
 # --------------------------------------------------------------------------
@@ -315,10 +335,33 @@ def api_state():
 
 @app.route("/api/version")
 def api_version():
-    """Sonde légère : l'affichage la lit toutes les 300 ms et ne télécharge le
+    """Sonde légère : les écrans la lisent régulièrement et ne retéléchargent le
     texte complet (/api/state) que si version ou cmdSeq a changé."""
     with _lock:
         return jsonify({"version": STATE["version"], "cmdSeq": STATE["control"]["cmdSeq"]})
+
+
+@app.route("/api/scroll", methods=["GET", "POST"])
+def api_scroll():
+    """Position de défilement du MENEUR.
+    GET  : lue très fréquemment par les spectateurs (/view) qui la suivent.
+    POST : le meneur (/display) y pousse sa position. pos en px, vel en px/s."""
+    if request.method == "GET":
+        with _lock:
+            return jsonify(dict(SCROLL))
+    data = request.get_json(force=True, silent=True) or {}
+    try:
+        pos = max(0.0, min(1e7, float(data.get("pos", 0) or 0)))
+        vel = max(-5000.0, min(5000.0, float(data.get("vel", 0) or 0)))
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "valeurs invalides"}), 400
+    with _lock:
+        SCROLL["pos"] = pos
+        SCROLL["vel"] = vel
+        SCROLL["playing"] = bool(data.get("playing"))
+        SCROLL["seq"] += 1
+        seq = SCROLL["seq"]
+    return jsonify({"ok": True, "seq": seq})
 
 
 @app.route("/api/text", methods=["POST"])
@@ -458,7 +501,11 @@ def api_usb_load():
     path = data.get("path", "")
     if not is_allowed_usb_file(path):
         return jsonify({"ok": False, "error": "fichier non autorisé"}), 400
-    text = read_text_file(path)
+    try:
+        raw = Path(path).read_bytes()
+        text = textextract.extract_text(path, raw)
+    except (OSError, ValueError) as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
     title = Path(path).stem
     with _lock:
         STATE["text"] = text
@@ -469,7 +516,7 @@ def api_usb_load():
 
 
 # --------------------------------------------------------------------------
-# API — téléversement de fichier (.txt) depuis le téléphone
+# API — téléversement de fichier depuis le téléphone (.txt/.doc/.docx/.odt/.rtf/.pdf)
 # --------------------------------------------------------------------------
 @app.route("/api/upload", methods=["POST"])
 def api_upload():
@@ -477,7 +524,10 @@ def api_upload():
     if not file:
         return jsonify({"ok": False, "error": "aucun fichier"}), 400
     raw = file.read(MAX_FILE_SIZE)  # MAX_CONTENT_LENGTH a déjà borné le corps en amont
-    text = raw.decode("utf-8", errors="replace")
+    try:
+        text = textextract.extract_text(file.filename, raw)
+    except ValueError as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
     title = Path(file.filename).stem or "Import"
     with _lock:
         STATE["text"] = text
@@ -512,12 +562,17 @@ def local_ips():
     return clean
 
 
+def current_port():
+    """Port d'écoute : PROMPTEUR_PORT (boîtier), sinon PORT (assigné par l'hôte), sinon 5000."""
+    return int(os.environ.get("PROMPTEUR_PORT") or os.environ.get("PORT") or "5000")
+
+
 @app.route("/api/info")
 def api_info():
     return jsonify(
         {
             "addresses": local_ips(),
-            "port": int(os.environ.get("PROMPTEUR_PORT", "5000")),
+            "port": current_port(),
         }
     )
 
@@ -541,16 +596,15 @@ if __name__ == "__main__":
     # bind sur toutes les interfaces VOLONTAIRE : le pare-feu (install/setup.sh)
     # confine le port au WiFi du boîtier (wlan0). D'où le nosec B104.
     host = os.environ.get("PROMPTEUR_HOST", "0.0.0.0")  # nosec
-    port = int(os.environ.get("PROMPTEUR_PORT", "5000"))
+    port = current_port()
     if os.environ.get("PROMPTEUR_DEBUG"):
-        # mode développement uniquement (activé explicitement via PROMPTEUR_DEBUG)
         app.run(host=host, port=port, threaded=True, debug=True)  # nosec B201
     else:
         try:
-            # serveur WSGI de production (robuste sur de longues sessions)
+            # serveur WSGI de production (robuste sur de longues sessions, multi-clients)
             from waitress import serve
 
-            serve(app, host=host, port=port, threads=8, channel_timeout=60)
+            serve(app, host=host, port=port, threads=16, channel_timeout=120)
         except ImportError:
             # waitress absent (ex. poste de test) : repli sur le serveur Flask
             app.run(host=host, port=port, threaded=True)

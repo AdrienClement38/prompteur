@@ -10,6 +10,7 @@ import copy
 import io
 import json
 import sys
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -146,3 +147,60 @@ def test_state_corrompu_se_repare(client, tmp_path):
     assert st["settings"]["fontSize"] == 64
     assert st["settings"]["bgColor"] == "#000000"
     assert st["settings"]["align"] == "left"
+
+
+# --- Écrans meneur / spectateur ----------------------------------------------
+def test_routes_ecrans(client):
+    assert client.get("/display").status_code == 200
+    assert client.get("/view").status_code == 200
+
+
+# --- Synchro : position de défilement ----------------------------------------
+def test_scroll_get_post_et_bornes(client):
+    r0 = client.get("/api/scroll").get_json()
+    assert {"pos", "vel", "playing", "seq"} <= set(r0)
+    seq0 = r0["seq"]
+    client.post("/api/scroll", json={"pos": 42.5, "vel": 100, "playing": True})
+    s = client.get("/api/scroll").get_json()
+    assert s["pos"] == 42.5
+    assert s["vel"] == 100.0
+    assert s["playing"] is True
+    assert s["seq"] == seq0 + 1  # chaque point incrémente la séquence
+    # bornes de sécurité (valeurs aberrantes plafonnées)
+    client.post("/api/scroll", json={"pos": 1e12, "vel": 999999})
+    s2 = client.get("/api/scroll").get_json()
+    assert s2["pos"] <= 1e7
+    assert s2["vel"] <= 5000
+
+
+# --- Import de formats bureautiques (correctif : .docx & nettoyage) ----------
+def _docx_bytes(paragraphs):
+    xml = '<?xml version="1.0"?><w:document xmlns:w="x"><w:body>'
+    for para in paragraphs:
+        xml += f"<w:p><w:r><w:t>{para}</w:t></w:r></w:p>"
+    xml += "</w:body></w:document>"
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("word/document.xml", xml)
+    return buf.getvalue()
+
+
+def test_upload_docx_extrait_et_nettoie(client):
+    data = _docx_bytes(["Titre", "Corps du   texte."])  # espaces multiples -> nettoyés
+    r = client.post(
+        "/api/upload",
+        data={"file": (io.BytesIO(data), "note.docx")},
+        content_type="multipart/form-data",
+    )
+    assert r.status_code == 200
+    assert client.get("/api/state").get_json()["text"] == "Titre\nCorps du texte."
+
+
+def test_upload_fichier_illisible_erreur_claire(client):
+    r = client.post(
+        "/api/upload",
+        data={"file": (io.BytesIO(b"ceci n'est pas un docx"), "faux.docx")},
+        content_type="multipart/form-data",
+    )
+    assert r.status_code == 400
+    assert "error" in r.get_json()
