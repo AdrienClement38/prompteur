@@ -3,6 +3,8 @@
 Mise en service complète **à partir du matériel neuf**, jusqu'à un boîtier
 opérationnel qui démarre tout seul sur le prompteur.
 
+> 🖨️ **Version imprimable (à cocher sur le terrain)** : [Procedure-Installation-Prompteur.pdf](Procedure-Installation-Prompteur.pdf)
+
 - **Durée** : 30 à 45 min.
 - **Niveau** : sait ouvrir un terminal et taper quelques commandes.
 - **Important** : Internet n'est nécessaire **qu'une seule fois**, pour l'installation.
