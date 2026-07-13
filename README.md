@@ -61,6 +61,10 @@ télécommande apparaît sur l'écran. Sur l'écran, teste les touches :
 
 ## 3. Installation sur le Raspberry Pi
 
+> 📋 **Procédure technique complète, pas à pas, à partir du matériel neuf** :
+> voir **[PROCEDURE-INSTALLATION.md](PROCEDURE-INSTALLATION.md)** (déballage → boîtier opérationnel,
+> avec réglages système, pédales, dépannage et checklist de validation). Version résumée ci-dessous.
+
 1. **Prépare la carte SD** avec *Raspberry Pi Imager* → « Raspberry Pi OS (64-bit) »
    (la version avec bureau). Note le nom d'utilisateur et le mot de passe que tu choisis.
 2. **Copie ce dossier `Prompteur`** sur le Pi (clé USB, ou `scp`), par ex. dans
