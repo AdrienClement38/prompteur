@@ -41,7 +41,7 @@ opérationnel qui démarre tout seul sur le prompteur.
 
 - ✅ **Carte pré‑installée Raspberry Pi OS** (recommandé — **~12 – 16 €**, souvent incluse dans le kit) :
   **rien à faire ici, aucun ordinateur nécessaire.** Insérez la carte dans le Pi et **passez à l'étape 2**.
-- 💾 **Carte vierge** (SanDisk 32 Go, **~8 – 10 €**) : un peu moins chère, mais à préparer **une seule fois
+- 💾 **Carte vierge** (SanDisk 32 Go, **~8 – 12 €**) : un peu moins chère, mais à préparer **une seule fois
   depuis un ordinateur**. Pour y insérer la micro‑SD, utilisez la **fente SD** du PC avec l'**adaptateur
   micro‑SD → SD** (généralement fourni avec la carte), ou un petit **lecteur USB de carte**. Ensuite, la
   carte **reste dans le boîtier**.

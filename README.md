@@ -9,15 +9,16 @@ aux **pédales** (gauche = reculer, droite = avancer). Tu importes ton texte
 
 ## 1. Liste de courses (matériel)
 
-| Élément | Rôle | Prix indicatif |
+| Élément | Rôle | Prix indicatif (juil. 2026) |
 |---|---|---|
-| **Raspberry Pi 5** (4 Go) ou **Pi 4** | Le cerveau du boîtier | ~60–70 € |
-| Carte **microSD 32 Go** (classe A1/A2) | Le « disque dur » | ~8 € |
-| Alimentation officielle USB-C | — | ~12 € |
-| Boîtier + ventilateur | Protection | ~10 € |
-| **Écran** : écran tactile officiel 7″ **ou** petit moniteur HDMI | Affiche le texte | ~60–70 € |
-| **Pédalier USB programmable** (ex. PCsensor à 2–3 pédales) | Pédales gauche/droite | ~15–40 € |
-| *(optionnel)* Vitre sans tain + support | Look « pro » face caméra | ~40–150 € |
+| **Kit Starter Raspberry Pi 5** (4 Go) — contient déjà carte + alimentation + boîtier + ventilateur + câble micro‑HDMI | Le cerveau + le nécessaire | **~175–185 €** |
+| **Écran** : petit moniteur HDMI 7″ (~55 €) **ou** écran tactile officiel 7″ (~80 €) | Affiche le texte | ~55–80 € |
+| **Pédalier USB programmable** (ex. PCsensor FS2020U, 3 pédales) | Pédales gauche/droite | ~30–45 € |
+| *(optionnel)* Vitre sans tain + support | Look « pro » face caméra | ~50–150 € |
+
+**Total (sans l'option) : ~265–310 €.** *Les tarifs Raspberry Pi ont fortement augmenté récemment (coût de la mémoire RAM) — à vérifier au moment de l'achat.*
+
+> **Alternative à la carte** (sans kit) : Raspberry Pi 5 4 Go **~130 €** + carte microSD 32 Go (~8–12 € vierge à flasher, ou ~12–16 € pré‑installée) + alimentation officielle ~12 € + boîtier & ventilateur ~10–15 € + câble micro‑HDMI → HDMI ~7 €.
 
 > 💡 Les pédales doivent être **programmables pour envoyer des touches clavier**
 > (flèche haut/bas, PageUp/PageDown, Espace…). C'est le cas de la plupart des
