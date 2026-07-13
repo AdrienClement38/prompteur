@@ -28,7 +28,7 @@
   let lastTime = 0;
 
   // --- Application des réglages reçus du serveur ----------------------------
-  function applySettings(s, text, version) {
+  function applySettings(s, text) {
     settings = s;
     speed = Number(s.speed) || 70;
 
@@ -249,7 +249,7 @@
 
       if (state.version !== lastVersion) {
         lastVersion = state.version;
-        applySettings(state.settings, state.text, state.version);
+        applySettings(state.settings, state.text);
       }
       const cmdSeq = state.control ? state.control.cmdSeq : 0;
       if (cmdSeq !== lastCmdSeq) {

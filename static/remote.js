@@ -260,5 +260,5 @@
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
-  loadState().catch((e) => toast("Erreur de connexion au boîtier"));
+  loadState().catch(() => toast("Erreur de connexion au boîtier"));
 })();

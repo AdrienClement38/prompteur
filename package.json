@@ -1,0 +1,14 @@
+{
+  "name": "prompteur",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Téléprompteur à pédales, hors-ligne, sur Raspberry Pi",
+  "scripts": {
+    "lint": "eslint static"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "eslint": "^9.15.0",
+    "globals": "^15.12.0"
+  }
+}

@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: Python — lint, sécurité, tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Installer les dépendances + outils
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff bandit pip-audit pytest
+      - name: Ruff — lint (propreté)
+        run: ruff check .
+      - name: Ruff — format (propreté)
+        run: ruff format --check .
+      - name: Bandit — analyse de sécurité (SAST)
+        run: bandit -c pyproject.toml -r server.py
+      - name: pip-audit — vulnérabilités des dépendances
+        run: pip-audit
+      - name: Pytest — tests fonctionnels
+        run: pytest
+
+  javascript:
+    name: JavaScript — lint & syntaxe
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Installer ESLint
+        run: npm install --no-audit --no-fund
+      - name: Vérification de syntaxe
+        run: |
+          node --check static/display.js
+          node --check static/remote.js
+      - name: ESLint — lint (propreté)
+        run: npm run lint
+
+  shell:
+    name: Scripts shell — shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shellcheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          severity: error
+          scandir: ./install
+
+  secrets:
+    name: Sécurité — scan de secrets (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

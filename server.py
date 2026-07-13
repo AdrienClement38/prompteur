@@ -36,11 +36,11 @@ from flask import Flask, jsonify, render_template, request
 # Chemins et constantes
 # --------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent
-SCRIPTS_DIR = BASE_DIR / "scripts"          # bibliothèque des textes enregistrés (.txt)
-STATE_FILE = BASE_DIR / "state.json"        # texte courant + réglages + commandes
+SCRIPTS_DIR = BASE_DIR / "scripts"  # bibliothèque des textes enregistrés (.txt)
+STATE_FILE = BASE_DIR / "state.json"  # texte courant + réglages + commandes
 SCRIPTS_DIR.mkdir(exist_ok=True)
 
-MAX_BODY = 6 * 1024 * 1024      # taille max d'un corps de requête (protège RAM/disque)
+MAX_BODY = 6 * 1024 * 1024  # taille max d'un corps de requête (protège RAM/disque)
 MAX_FILE_SIZE = 5 * 1024 * 1024  # taille max d'un texte importé
 
 # Verrou global pour toute lecture/écriture cohérente de STATE et de state.json
@@ -48,7 +48,7 @@ _lock = threading.Lock()
 
 # État par défaut si state.json n'existe pas encore
 DEFAULT_STATE = {
-    "version": 1,          # incrémenté à chaque changement -> l'affichage détecte les MAJ
+    "version": 1,  # incrémenté à chaque changement -> l'affichage détecte les MAJ
     "title": "Bienvenue",
     "text": (
         "Bienvenue sur ton prompteur.\n\n"
@@ -59,27 +59,27 @@ DEFAULT_STATE = {
         "Bon tournage."
     ),
     "settings": {
-        "fontSize": 64,        # taille du texte en px
-        "lineHeight": 1.6,     # interligne
-        "speed": 70,           # vitesse de lecture en px/seconde
+        "fontSize": 64,  # taille du texte en px
+        "lineHeight": 1.6,  # interligne
+        "speed": 70,  # vitesse de lecture en px/seconde
         "textColor": "#ffffff",
         "bgColor": "#000000",
-        "margin": 10,          # marge latérale en % de la largeur
-        "mirrorH": False,      # miroir horizontal (vitre sans tain face caméra)
-        "mirrorV": False,      # miroir vertical
-        "guide": True,         # ligne de repère de lecture
-        "guidePos": 42,        # position de la ligne de repère en % depuis le haut
-        "align": "left",       # left | center
+        "margin": 10,  # marge latérale en % de la largeur
+        "mirrorH": False,  # miroir horizontal (vitre sans tain face caméra)
+        "mirrorV": False,  # miroir vertical
+        "guide": True,  # ligne de repère de lecture
+        "guidePos": 42,  # position de la ligne de repère en % depuis le haut
+        "align": "left",  # left | center
         "font": "sans-serif",  # sans-serif | serif | monospace
-        "mode": "hold",        # "hold" (maintien) | "tap" (impulsion)
+        "mode": "hold",  # "hold" (maintien) | "tap" (impulsion)
         # Touches envoyées par les pédales (personnalisables)
-        "keyForward": "ArrowDown",   # pédale droite -> avancer
-        "keyBackward": "ArrowUp",    # pédale gauche -> reculer
+        "keyForward": "ArrowDown",  # pédale droite -> avancer
+        "keyBackward": "ArrowUp",  # pédale gauche -> reculer
     },
     "control": {
-        "playing": False,      # défilement auto en cours (info seulement)
-        "cmd": None,           # commande ponctuelle: play|pause|toggle|restart|top|faster|slower
-        "cmdSeq": 0,           # numéro de séquence: l'affichage applique chaque commande une seule fois
+        "playing": False,  # défilement auto en cours (info seulement)
+        "cmd": None,  # commande ponctuelle: play|pause|toggle|restart|top|faster|slower
+        "cmdSeq": 0,  # numéro de séquence: l'affichage applique chaque commande une seule fois
     },
 }
 
@@ -93,24 +93,25 @@ def _num(lo, hi):
     def check(v):
         # on rejette explicitement les booléens (isinstance(True, int) est vrai en Python)
         return isinstance(v, (int, float)) and not isinstance(v, bool) and lo <= v <= hi
+
     return check
 
 
 SETTING_VALIDATORS = {
-    "fontSize":    _num(8, 400),
-    "lineHeight":  _num(0.8, 4),
-    "speed":       _num(10, 600),
-    "margin":      _num(0, 45),
-    "guidePos":    _num(0, 100),
-    "textColor":   lambda v: isinstance(v, str) and bool(_HEX6.match(v)),
-    "bgColor":     lambda v: isinstance(v, str) and bool(_HEX6.match(v)),
-    "mirrorH":     lambda v: isinstance(v, bool),
-    "mirrorV":     lambda v: isinstance(v, bool),
-    "guide":       lambda v: isinstance(v, bool),
-    "align":       lambda v: v in ("left", "center"),
-    "font":        lambda v: v in ("sans-serif", "serif", "monospace"),
-    "mode":        lambda v: v in ("hold", "tap"),
-    "keyForward":  lambda v: isinstance(v, str) and 1 <= len(v) <= 20,
+    "fontSize": _num(8, 400),
+    "lineHeight": _num(0.8, 4),
+    "speed": _num(10, 600),
+    "margin": _num(0, 45),
+    "guidePos": _num(0, 100),
+    "textColor": lambda v: isinstance(v, str) and bool(_HEX6.match(v)),
+    "bgColor": lambda v: isinstance(v, str) and bool(_HEX6.match(v)),
+    "mirrorH": lambda v: isinstance(v, bool),
+    "mirrorV": lambda v: isinstance(v, bool),
+    "guide": lambda v: isinstance(v, bool),
+    "align": lambda v: v in ("left", "center"),
+    "font": lambda v: v in ("sans-serif", "serif", "monospace"),
+    "mode": lambda v: v in ("hold", "tap"),
+    "keyForward": lambda v: isinstance(v, str) and 1 <= len(v) <= 20,
     "keyBackward": lambda v: isinstance(v, str) and 1 <= len(v) <= 20,
 }
 
@@ -172,9 +173,9 @@ STATE = load_state()
 # Détection des clés USB (import de texte hors-ligne)
 # --------------------------------------------------------------------------
 USB_EXTS = (".txt", ".md", ".text", ".rtf")
-USB_MAX_TXT = 200        # nombre max de fichiers texte listés
-USB_MAX_ENTRIES = 8000   # nombre max de fichiers PARCOURUS (borne le coût sur grosse clé)
-USB_MAX_DEPTH = 6        # profondeur max de descente
+USB_MAX_TXT = 200  # nombre max de fichiers texte listés
+USB_MAX_ENTRIES = 8000  # nombre max de fichiers PARCOURUS (borne le coût sur grosse clé)
+USB_MAX_DEPTH = 6  # profondeur max de descente
 
 
 def _usb_bases():
@@ -369,7 +370,7 @@ def api_command():
         STATE["control"]["cmd"] = cmd
         STATE["control"]["cmdSeq"] = int(STATE["control"].get("cmdSeq", 0)) + 1
         if cmd in ("play", "pause"):
-            STATE["control"]["playing"] = (cmd == "play")
+            STATE["control"]["playing"] = cmd == "play"
         bump(STATE)  # en mémoire seulement, pas d'écriture disque
         seq = STATE["control"]["cmdSeq"]
     return jsonify({"ok": True, "cmdSeq": seq})
@@ -388,7 +389,7 @@ def safe_name(name):
 
 def _library_path(name):
     """Chemin d'un texte de la bibliothèque, confiné à SCRIPTS_DIR."""
-    path = (SCRIPTS_DIR / f"{safe_name(name)}.txt")
+    path = SCRIPTS_DIR / f"{safe_name(name)}.txt"
     root = SCRIPTS_DIR.resolve()
     if root != path.resolve().parent:
         return None
@@ -415,8 +416,7 @@ def api_library_save():
         return jsonify({"ok": False, "error": "nom invalide"}), 400
     if path.exists() and not overwrite:
         # collision : on demande confirmation au lieu d'écraser en silence
-        return jsonify({"ok": False, "error": "exists", "name": name,
-                        "sanitized": name != raw.strip()}), 409
+        return jsonify({"ok": False, "error": "exists", "name": name, "sanitized": name != raw.strip()}), 409
     path.write_text(text, encoding="utf-8")
     return jsonify({"ok": True, "name": name, "sanitized": name != raw.strip()})
 
@@ -514,10 +514,12 @@ def local_ips():
 
 @app.route("/api/info")
 def api_info():
-    return jsonify({
-        "addresses": local_ips(),
-        "port": int(os.environ.get("PROMPTEUR_PORT", "5000")),
-    })
+    return jsonify(
+        {
+            "addresses": local_ips(),
+            "port": int(os.environ.get("PROMPTEUR_PORT", "5000")),
+        }
+    )
 
 
 @app.after_request
@@ -536,15 +538,18 @@ def favicon():
 # Démarrage
 # --------------------------------------------------------------------------
 if __name__ == "__main__":
-    host = os.environ.get("PROMPTEUR_HOST", "0.0.0.0")
+    # bind sur toutes les interfaces VOLONTAIRE : le pare-feu (install/setup.sh)
+    # confine le port au WiFi du boîtier (wlan0). D'où le nosec B104.
+    host = os.environ.get("PROMPTEUR_HOST", "0.0.0.0")  # nosec
     port = int(os.environ.get("PROMPTEUR_PORT", "5000"))
     if os.environ.get("PROMPTEUR_DEBUG"):
-        # mode développement uniquement (rechargement, traceback)
-        app.run(host=host, port=port, threaded=True, debug=True)
+        # mode développement uniquement (activé explicitement via PROMPTEUR_DEBUG)
+        app.run(host=host, port=port, threaded=True, debug=True)  # nosec B201
     else:
         try:
             # serveur WSGI de production (robuste sur de longues sessions)
             from waitress import serve
+
             serve(app, host=host, port=port, threads=8, channel_timeout=60)
         except ImportError:
             # waitress absent (ex. poste de test) : repli sur le serveur Flask

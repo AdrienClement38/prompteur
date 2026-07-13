@@ -1,0 +1,18 @@
+# Configuration des outils de qualité / sécurité Python.
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]   # pycodestyle, pyflakes, isort
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E402"]            # import après sys.path.insert (nécessaire pour importer server)
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.bandit]
+exclude_dirs = ["tests", ".git"]
