@@ -22,7 +22,7 @@ opérationnel qui démarre tout seul sur le prompteur.
 **Uniquement pour l'installation (pas en usage courant) :**
 - [ ] Un **clavier + une souris USB** branchés sur le Pi (ou un accès **SSH** depuis un autre ordinateur)
 - [ ] Un **accès Internet temporaire** : **câble Ethernet recommandé** (le plus simple), ou le WiFi de votre local
-- [ ] Un ordinateur avec **lecteur de carte SD** — *seulement si la carte n'est pas déjà « pré‑installée Raspberry Pi OS »*
+- [ ] Un ordinateur avec **lecteur de carte SD** — *seulement si la carte n'est pas déjà « pré‑installée »* (fente SD du PC + l'**adaptateur micro‑SD → SD** fourni avec la carte, ou un petit **lecteur USB** à quelques euros)
 
 > 💡 **Résumé express** (pour les pressés, une fois le Pi démarré et connecté à Internet) :
 > ```bash
@@ -37,9 +37,15 @@ opérationnel qui démarre tout seul sur le prompteur.
 
 ## 1. Préparer la carte micro‑SD
 
-> ⏭️ **À sauter** si vous avez acheté une carte **« pré‑installée Raspberry Pi OS »** : passez directement à l'étape 2.
+**Deux cas de figure :**
 
-Sur **votre ordinateur** :
+- ✅ **Carte pré‑installée** (recommandé — l'option « carte SD pré‑installée Raspberry Pi OS » du kit) :
+  **rien à faire ici, aucun ordinateur nécessaire.** Insérez la carte dans le Pi et **passez à l'étape 2**.
+- 🖥️ **Carte vierge** : à préparer **une seule fois depuis un ordinateur**. Pour y insérer la micro‑SD,
+  utilisez la **fente SD** du PC avec l'**adaptateur micro‑SD → SD** (généralement fourni avec la carte),
+  ou un petit **lecteur USB de carte**. Ensuite, la carte **reste dans le boîtier**.
+
+Sur **votre ordinateur** (uniquement pour une carte vierge) :
 
 1. Installez **Raspberry Pi Imager** (raspberrypi.com/software).
 2. Insérez la carte micro‑SD, lancez Imager :
