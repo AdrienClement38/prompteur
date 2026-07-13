@@ -416,7 +416,8 @@ def api_command():
             STATE["control"]["playing"] = cmd == "play"
         bump(STATE)  # en mémoire seulement, pas d'écriture disque
         seq = STATE["control"]["cmdSeq"]
-    return jsonify({"ok": True, "cmdSeq": seq})
+        speed = STATE["settings"]["speed"]
+    return jsonify({"ok": True, "cmdSeq": seq, "speed": speed})
 
 
 # --------------------------------------------------------------------------

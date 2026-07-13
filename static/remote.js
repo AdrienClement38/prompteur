@@ -186,11 +186,26 @@
   });
 
   // --- Commandes de contrôle ------------------------------------------------
+  // Reflète la vitesse renvoyée par le serveur sur la barre « Vitesse de lecture »
+  function reflectSpeed(v) {
+    if (v == null) return;
+    settings.speed = v;
+    if ($("speed")) $("speed").value = v;
+    if ($("speedVal")) $("speedVal").textContent = v;
+  }
+
   document.querySelectorAll("[data-cmd]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      postJSON("/api/command", { cmd: btn.dataset.cmd });
+    btn.addEventListener("click", async () => {
+      const cmd = btn.dataset.cmd;
       const labels = { play: "Lecture", pause: "Pause", restart: "Début", faster: "Plus vite", slower: "Moins vite" };
-      toast(labels[btn.dataset.cmd] || "OK");
+      toast(labels[cmd] || "OK");
+      try {
+        const res = await postJSON("/api/command", { cmd });
+        // Plus vite / Moins vite : on fait bouger la barre de vitesse et sa valeur
+        if (cmd === "faster" || cmd === "slower") reflectSpeed(res.speed);
+      } catch {
+        toast("Commande impossible");
+      }
     });
   });
 

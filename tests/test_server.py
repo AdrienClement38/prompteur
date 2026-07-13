@@ -84,8 +84,10 @@ def test_booleen_refuse_comme_nombre(client):
 # --- Commandes de pilotage (correctif audit #8) ------------------------------
 def test_vitesse_cumulative_et_bornee(client):
     client.post("/api/settings", json={"speed": 100})
+    r = None
     for _ in range(3):
-        client.post("/api/command", json={"cmd": "faster"})
+        r = client.post("/api/command", json={"cmd": "faster"})
+    assert r.get_json()["speed"] == 130  # le serveur renvoie la nouvelle vitesse (pour la barre)
     assert client.get("/api/state").get_json()["settings"]["speed"] == 130
     for _ in range(100):
         client.post("/api/command", json={"cmd": "faster"})
