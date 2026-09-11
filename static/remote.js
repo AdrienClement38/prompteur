@@ -467,6 +467,25 @@
   bindKeyLearn("keyForward", "keyBackward");
   bindKeyLearn("keyBackward", "keyForward");
 
+  // --- Écran principal déjà pris ? -----------------------------------------
+  // On grise le bouton plutôt que de laisser quelqu'un entrer et bousculer le
+  // défilement de celui qui est en train de lire.
+  async function refreshPresenter() {
+    const btn = document.querySelector(".readbtn.main");
+    if (!btn) return;
+    let info;
+    try {
+      info = await api("/api/presenter");
+    } catch {
+      return;
+    }
+    const busy = info.taken && !info.mine;
+    btn.classList.toggle("busy", busy);
+    btn.querySelector(".tiny").textContent = busy
+      ? "déjà utilisé par un autre appareil"
+      : "celui qu'on pilote aux pédales";
+  }
+
   // --- Barre « Écran du boîtier » ------------------------------------------
   // Le prompteur est une application qu'on ouvre et qu'on ferme : plus besoin de
   // redémarrer le boîtier pour y revenir. Le serveur ne déclare ces commandes
@@ -538,5 +557,7 @@
   loadState().catch(() => toast("Erreur de connexion au boîtier"));
   refreshKiosk();
   setInterval(pollVersion, 1500);
+  refreshPresenter();
+  setInterval(refreshPresenter, 3000);
   loadViewLink();
 })();

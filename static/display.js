@@ -165,6 +165,7 @@
     }).catch(() => {});
   }
   function maybePush(now, v) {
+    if (!isLeading) return; // pas le meneur : on n'impose sa position à personne
     const KEYFRAME_MS = 250;
     const changed = v !== lastSentVel;
     const keyframe = v !== 0 && now - lastSentAt > KEYFRAME_MS;
@@ -213,6 +214,87 @@
     if (isViewer) frameViewer(now, dt);
     else framePresenter(now, dt);
     requestAnimationFrame(frame);
+  }
+
+  // --- Réservation de la place de meneur ------------------------------------
+  // Un seul écran principal à la fois : deux meneurs pousseraient chacun leur
+  // position de défilement, et le texte sauterait en pleine lecture.
+  // Bail à renouveler, jamais verrou : si ce navigateur disparaît sans prévenir,
+  // la place se libère seule au bout de quelques secondes. Et la reprise en main
+  // forcée est toujours offerte — on ne doit jamais pouvoir s'enfermer dehors.
+  const takenBox = document.getElementById("taken");
+  let presenterToken = null;
+  let isLeading = false;
+
+  function newToken() {
+    if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+    return "t" + Date.now() + Math.random().toString(36).slice(2);
+  }
+
+  function postJson(path, body) {
+    return fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      keepalive: true,
+    });
+  }
+
+  function showTaken(title, sub) {
+    if (title) document.getElementById("takenTitle").textContent = title;
+    if (sub) document.getElementById("takenSub").textContent = sub;
+    takenBox.style.display = "flex";
+  }
+
+  async function claimPresenter(force) {
+    try {
+      const sess = window.sessionStorage;
+      presenterToken = (sess && sess.getItem("prompteurToken")) || presenterToken || newToken();
+      if (sess) sess.setItem("prompteurToken", presenterToken);
+    } catch {
+      presenterToken = presenterToken || newToken();
+    }
+    try {
+      const r = await postJson("/api/presenter/claim", { token: presenterToken, force: !!force });
+      if (r.status === 409) {
+        isLeading = false;
+        showTaken();
+        return;
+      }
+      isLeading = r.ok;
+      takenBox.style.display = "none";
+    } catch {
+      // Serveur injoignable : on laisse l'écran fonctionner en local plutôt que
+      // de le bloquer. L'alerte de liaison perdue prendra le relais.
+      isLeading = true;
+    }
+  }
+
+  async function pingPresenter() {
+    if (!presenterToken) return;
+    try {
+      const r = await postJson("/api/presenter/ping", { token: presenterToken });
+      const body = await r.json().catch(() => ({}));
+      if (body.ok === false) {
+        isLeading = false;
+        showTaken(
+          "Un autre appareil a pris la main.",
+          "Cet écran ne pilote plus le défilement. Il continue d'afficher le texte."
+        );
+      }
+    } catch {
+      /* liaison perdue : déjà signalée par ailleurs */
+    }
+  }
+
+  if (!isViewer) {
+    document.getElementById("takeOver").addEventListener("click", () => claimPresenter(true));
+    claimPresenter(false);
+    setInterval(pingPresenter, 4000);
+    window.addEventListener("pagehide", () => {
+      // Meilleur effort : si ce message n'arrive pas, le bail expire tout seul.
+      if (presenterToken) postJson("/api/presenter/release", { token: presenterToken });
+    });
   }
 
   // --- Revenir à la page d'accueil (Échap) ----------------------------------

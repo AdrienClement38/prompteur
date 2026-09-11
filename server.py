@@ -34,6 +34,7 @@ import socket
 import string
 import subprocess  # nosec B404 - script local du projet, arguments fixes, sans shell
 import threading
+import time
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -668,6 +669,88 @@ def local_ips():
 def current_port():
     """Port d'écoute : PROMPTEUR_PORT (boîtier), sinon PORT (assigné par l'hôte), sinon 5000."""
     return int(os.environ.get("PROMPTEUR_PORT") or os.environ.get("PORT") or "5000")
+
+
+# --------------------------------------------------------------------------
+# Réservation de l'écran principal (un seul meneur à la fois)
+# --------------------------------------------------------------------------
+# Deux écrans principaux se disputeraient le pilotage : chacun pousse sa position
+# de défilement sur /api/scroll, et le texte sauterait d'un endroit à l'autre en
+# pleine lecture.
+#
+# BAIL À RENOUVELER, et non verrou. Un verrou qu'on oublie de rendre — onglet
+# fermé brutalement, WiFi coupé, boîtier redémarré — condamnerait le prompteur,
+# c'est-à-dire exactement l'inverse du but recherché. Ici le bail expire tout seul
+# au bout de PRESENTER_TTL secondes sans signe de vie, et une reprise en main
+# forcée reste TOUJOURS possible. On ne doit jamais pouvoir s'enfermer dehors.
+PRESENTER_TTL = 12.0  # secondes sans battement avant de considérer la place libre
+_presenter = {"token": None, "seen": 0.0}
+
+
+def _presenter_holder():
+    """Jeton du meneur en place, ou None si la place est libre. Verrou requis."""
+    token = _presenter["token"]
+    if not token:
+        return None
+    if time.monotonic() - _presenter["seen"] > PRESENTER_TTL:
+        return None
+    return token
+
+
+@app.route("/api/presenter")
+def api_presenter():
+    """Qui tient l'écran principal ? Le jeton n'est jamais divulgué : on répond
+    seulement si la place est prise, et si c'est celui qui demande."""
+    mine = request.args.get("token", "")
+    with _lock:
+        holder = _presenter_holder()
+    return jsonify({"taken": holder is not None, "mine": bool(holder) and holder == mine})
+
+
+@app.route("/api/presenter/claim", methods=["POST"])
+def api_presenter_claim():
+    data = request.get_json(silent=True) or {}
+    token = str(data.get("token") or "")[:64]
+    if not token:
+        return jsonify({"ok": False, "error": "jeton manquant"}), 400
+    force = bool(data.get("force"))
+    with _lock:
+        holder = _presenter_holder()
+        if holder and holder != token and not force:
+            return jsonify({"ok": False, "taken": True}), 409
+        _presenter["token"] = token
+        _presenter["seen"] = time.monotonic()
+    return jsonify({"ok": True, "taken": False, "mine": True})
+
+
+@app.route("/api/presenter/ping", methods=["POST"])
+def api_presenter_ping():
+    """Battement de cœur du meneur. Renvoie ok=False s'il a perdu la place
+    (quelqu'un a repris la main) : l'écran le saura et cessera de piloter."""
+    data = request.get_json(silent=True) or {}
+    token = str(data.get("token") or "")[:64]
+    with _lock:
+        holder = _presenter_holder()
+        if holder and holder == token:
+            _presenter["seen"] = time.monotonic()
+            return jsonify({"ok": True})
+        if holder is None:
+            # Place libérée entre-temps : on la reprend sans discuter.
+            _presenter["token"] = token
+            _presenter["seen"] = time.monotonic()
+            return jsonify({"ok": True})
+    return jsonify({"ok": False, "taken": True})
+
+
+@app.route("/api/presenter/release", methods=["POST"])
+def api_presenter_release():
+    data = request.get_json(silent=True) or {}
+    token = str(data.get("token") or "")[:64]
+    with _lock:
+        if _presenter["token"] == token:
+            _presenter["token"] = None
+            _presenter["seen"] = 0.0
+    return jsonify({"ok": True})
 
 
 # --------------------------------------------------------------------------

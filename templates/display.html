@@ -100,6 +100,25 @@
     #quitAsk b { color:#ffd400; }
     #quitAsk .sub { font-size:17px; color:rgba(255,255,255,.6); margin-top:10px; }
 
+    /* Place de meneur déjà prise. On propose TOUJOURS une reprise en main : un
+       bail bloqué ne doit jamais pouvoir condamner le prompteur. */
+    #taken {
+      position:fixed; inset:0; z-index:40; display:none;
+      flex-direction:column; align-items:center; justify-content:center;
+      background:rgba(8,10,14,.97); color:#eef1f6; text-align:center; padding:8%;
+      font:600 26px/1.4 system-ui, sans-serif;
+    }
+    #taken .sub { font-weight:400; font-size:18px; color:rgba(255,255,255,.65);
+      margin-top:14px; max-width:640px; }
+    #taken .acts { display:flex; gap:14px; margin-top:32px; flex-wrap:wrap; justify-content:center; }
+    #taken .btn {
+      appearance:none; cursor:pointer; text-decoration:none;
+      border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.06);
+      color:#eef1f6; border-radius:12px; padding:14px 22px;
+      font:600 18px/1 system-ui, sans-serif;
+    }
+    #taken .btn.go { background:#2fbf71; border-color:#2fbf71; color:#04240f; }
+
     /* Liaison perdue : sans cela l'écran reste noir et muet, et personne ne peut
        deviner si le texte affiché est encore à jour. */
     #linkLost {
@@ -132,6 +151,17 @@
   <div id="speedTag">▶︎ 70</div>
   <div id="specBadge">SPECTATEUR — suit l'écran principal</div>
   <div id="netinfo" class="hidden"></div>
+  <div id="taken">
+    <div id="takenTitle">Un autre écran principal est déjà en cours.</div>
+    <div class="sub" id="takenSub">
+      Deux écrans principaux se disputeraient le pilotage : le texte sauterait
+      d'un endroit à l'autre en pleine lecture.
+    </div>
+    <div class="acts">
+      <a class="btn go" href="/view">Ouvrir en écran secondaire</a>
+      <button class="btn" id="takeOver">Prendre la main quand même</button>
+    </div>
+  </div>
   <div id="linkLost">
     Liaison avec le boîtier perdue.
     <div class="sub">

@@ -418,3 +418,83 @@ def test_kiosque_protege_aussi_par_l_anti_csrf(client):
     assert client.post("/api/kiosk/launch", json={}, headers=pirate).status_code == 403
     r = client.post("/api/kiosk/close", data="{}", content_type="text/plain")
     assert r.status_code == 415
+
+
+# ============================================================================
+# Réservation de l'écran principal
+# ----------------------------------------------------------------------------
+# Un seul meneur à la fois : deux écrans principaux pousseraient chacun leur
+# position de défilement et le texte sauterait en pleine lecture. Mais le bail
+# doit TOUJOURS pouvoir être repris : un verrou bloqué condamnerait le prompteur,
+# soit exactement l'inverse du but recherché.
+# ============================================================================
+
+
+@pytest.fixture(autouse=True)
+def _place_libre():
+    """Chaque test part d'une place de meneur libre."""
+    server._presenter["token"] = None
+    server._presenter["seen"] = 0.0
+    yield
+
+
+def test_premier_arrive_obtient_la_place(client):
+    r = client.post("/api/presenter/claim", json={"token": "ecran-A"})
+    assert r.status_code == 200
+    assert r.get_json()["ok"] is True
+    assert client.get("/api/presenter").get_json()["taken"] is True
+
+
+def test_second_ecran_refuse(client):
+    client.post("/api/presenter/claim", json={"token": "ecran-A"})
+    r = client.post("/api/presenter/claim", json={"token": "ecran-B"})
+    assert r.status_code == 409
+    assert r.get_json()["taken"] is True
+
+
+def test_le_meme_ecran_peut_reprendre_sa_place(client):
+    """Un rechargement de page ne doit pas se verrouiller dehors tout seul."""
+    client.post("/api/presenter/claim", json={"token": "ecran-A"})
+    assert client.post("/api/presenter/claim", json={"token": "ecran-A"}).status_code == 200
+
+
+def test_reprise_en_main_forcee_toujours_possible(client):
+    client.post("/api/presenter/claim", json={"token": "ecran-A"})
+    r = client.post("/api/presenter/claim", json={"token": "ecran-B", "force": True})
+    assert r.status_code == 200
+    # L'évincé l'apprend à son prochain battement et cesse de piloter.
+    assert client.post("/api/presenter/ping", json={"token": "ecran-A"}).get_json()["ok"] is False
+    assert client.post("/api/presenter/ping", json={"token": "ecran-B"}).get_json()["ok"] is True
+
+
+def test_bail_expire_tout_seul(client):
+    """Onglet ferme brutalement, WiFi coupe, boitier redemarre : la place se
+    libère sans intervention. C'est ce qui empêche de condamner le prompteur."""
+    client.post("/api/presenter/claim", json={"token": "ecran-A"})
+    server._presenter["seen"] -= server.PRESENTER_TTL + 1
+    assert client.get("/api/presenter").get_json()["taken"] is False
+    assert client.post("/api/presenter/claim", json={"token": "ecran-B"}).status_code == 200
+
+
+def test_liberation_explicite(client):
+    client.post("/api/presenter/claim", json={"token": "ecran-A"})
+    client.post("/api/presenter/release", json={"token": "ecran-A"})
+    assert client.get("/api/presenter").get_json()["taken"] is False
+
+
+def test_liberation_par_un_autre_sans_effet(client):
+    client.post("/api/presenter/claim", json={"token": "ecran-A"})
+    client.post("/api/presenter/release", json={"token": "ecran-B"})
+    assert client.get("/api/presenter").get_json()["taken"] is True
+
+
+def test_le_jeton_du_meneur_n_est_jamais_divulgue(client):
+    client.post("/api/presenter/claim", json={"token": "secret-A"})
+    corps = client.get("/api/presenter").get_json()
+    assert "secret-A" not in json.dumps(corps)
+    assert corps["mine"] is False
+    assert client.get("/api/presenter?token=secret-A").get_json()["mine"] is True
+
+
+def test_claim_sans_jeton_refuse(client):
+    assert client.post("/api/presenter/claim", json={}).status_code == 400
