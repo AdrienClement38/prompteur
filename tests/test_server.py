@@ -558,3 +558,66 @@ def test_ranger_un_texte_ne_touche_pas_l_antenne(client):
     avant_ver = client.get("/api/version").get_json()["version"]
     client.post("/api/library/save", json={"name": "Sujet", "text": "v1"})
     assert client.get("/api/version").get_json()["version"] == avant_ver
+
+
+# ============================================================================
+# Réglages résolus par surface (le miroir)
+# ----------------------------------------------------------------------------
+# Le miroir sert à lire à travers une vitre sans tain, face caméra. Sur un écran
+# de régie, qu'on lit directement, il rend le texte illisible à l'envers. La
+# décision est prise côté serveur, à un endroit nommé, pour que le jour où un
+# autre réglage devra diverger il suffise de remplir la même fonction.
+# ============================================================================
+
+
+def test_miroir_actif_sur_l_ecran_principal(client):
+    client.post("/api/settings", json={"mirrorH": True, "mirrorV": True})
+    s = client.get("/api/state?surface=display").get_json()["settings"]
+    assert s["mirrorH"] is True
+    assert s["mirrorV"] is True
+
+
+def test_miroir_neutralise_sur_l_ecran_secondaire(client):
+    client.post("/api/settings", json={"mirrorH": True, "mirrorV": True})
+    s = client.get("/api/state?surface=view").get_json()["settings"]
+    assert s["mirrorH"] is False
+    assert s["mirrorV"] is False
+
+
+def test_etat_sans_parametre_inchange(client):
+    """La télécommande lit les réglages BRUTS : elle doit refléter les
+    interrupteurs tels qu'ils sont, et la refonte des pédales relit cette même
+    route pour confirmer un enregistrement."""
+    client.post("/api/settings", json={"mirrorH": True})
+    assert client.get("/api/state").get_json()["settings"]["mirrorH"] is True
+
+
+def test_surface_inconnue_se_comporte_comme_l_ecran_principal(client):
+    """Un paramètre mal orthographié ne doit jamais laisser un écran noir."""
+    client.post("/api/settings", json={"mirrorH": True})
+    s = client.get("/api/state?surface=nawak").get_json()["settings"]
+    assert s["mirrorH"] is True
+
+
+def test_les_autres_reglages_ne_sont_pas_touches(client):
+    client.post("/api/settings", json={"fontSize": 96, "speed": 150, "mirrorH": True})
+    s = client.get("/api/state?surface=view").get_json()["settings"]
+    assert s["fontSize"] == 96
+    assert s["speed"] == 150
+
+
+# ============================================================================
+# Une seule police
+# ============================================================================
+
+
+def test_seule_la_police_sans_est_acceptee(client):
+    for refusee in ("serif", "monospace", "cursive"):
+        client.post("/api/settings", json={"font": refusee})
+        assert client.get("/api/state").get_json()["settings"]["font"] == "sans-serif", refusee
+
+
+def test_state_json_avec_une_ancienne_police_se_repare(client, tmp_path):
+    (tmp_path / "state.json").write_text(json.dumps({"settings": {"font": "serif"}}), encoding="utf-8")
+    server.STATE_FILE = tmp_path / "state.json"
+    assert server.load_state()["settings"]["font"] == "sans-serif"

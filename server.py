@@ -127,7 +127,9 @@ SETTING_VALIDATORS = {
     "mirrorV": lambda v: isinstance(v, bool),
     "guide": lambda v: isinstance(v, bool),
     "align": lambda v: v in ("left", "center"),
-    "font": lambda v: v in ("sans-serif", "serif", "monospace"),
+    # Une seule police : les deux autres etaient illisibles sur un prompteur.
+    # Un state.json portant encore "serif" ou "monospace" retombe au defaut.
+    "font": lambda v: v == "sans-serif",
     "mode": lambda v: v in ("hold", "tap"),
     "keyForward": lambda v: isinstance(v, str) and 1 <= len(v) <= 20,
     "keyBackward": lambda v: isinstance(v, str) and 1 <= len(v) <= 20,
@@ -427,6 +429,11 @@ def api_state():
     # snapshot cohérent sous verrou (évite de sérialiser un état muté par un autre thread)
     with _lock:
         snap = copy.deepcopy(STATE)
+    # Sans paramètre, la réponse reste EXACTEMENT celle d'avant : c'est ce que lit
+    # la télécommande, qui doit voir les réglages bruts pour les refléter.
+    surface = request.args.get("surface", "")
+    if surface:
+        snap["settings"] = effective_settings(snap["settings"], surface)
     return jsonify(snap)
 
 
@@ -686,6 +693,35 @@ def local_ips():
 def current_port():
     """Port d'écoute : PROMPTEUR_PORT (boîtier), sinon PORT (assigné par l'hôte), sinon 5000."""
     return int(os.environ.get("PROMPTEUR_PORT") or os.environ.get("PORT") or "5000")
+
+
+# --------------------------------------------------------------------------
+# Réglages résolus selon la surface d'affichage
+# --------------------------------------------------------------------------
+# Certains réglages n'ont de sens que sur l'écran principal. Le miroir en est le
+# premier cas : il sert à lire à travers une vitre sans tain, face caméra. Sur un
+# écran de régie, qu'on lit directement, il rend le texte illisible à l'envers.
+#
+# La décision est prise ICI, à un endroit nommé, et non dans un « if » noyé au
+# milieu du rendu. Le jour où un deuxième réglage devra diverger — le client parle
+# déjà de tailles et de couleurs — il suffira de remplir cette fonction, sans
+# toucher aux écrans. C'est ce que le client appelle « futur proof ».
+#
+# Les surfaces inconnues retombent sur le comportement de l'écran principal : un
+# paramètre mal orthographié ne doit jamais laisser un écran noir.
+SURFACE_OVERRIDES = {
+    "view": {"mirrorH": False, "mirrorV": False},
+}
+
+
+def effective_settings(settings, surface):
+    """Réglages tels que la surface demandée doit les appliquer."""
+    overrides = SURFACE_OVERRIDES.get(surface)
+    if not overrides:
+        return settings
+    resolved = dict(settings)
+    resolved.update(overrides)
+    return resolved
 
 
 # --------------------------------------------------------------------------

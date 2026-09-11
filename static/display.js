@@ -560,7 +560,11 @@
       const v = await (await fetch("/api/version", { cache: "no-store" })).json();
       linkOk();
       if (v.version === lastVersion && v.cmdSeq === lastCmdSeq) return;
-      const st = await (await fetch("/api/state", { cache: "no-store" })).json();
+      // On demande les réglages DÉJÀ résolus pour cette surface : l'écran ne
+      // porte aucune logique de portée, il applique ce qu'on lui donne.
+      const st = await (
+        await fetch(`/api/state?surface=${isViewer ? "view" : "display"}`, { cache: "no-store" })
+      ).json();
       if (st.version !== lastVersion) {
         lastVersion = st.version;
         applySettings(st.settings, st.text);

@@ -125,7 +125,6 @@
     $("guide").checked = !!settings.guide;
     refreshPedals();
     markSel(".alignBtn", "align", settings.align || "left");
-    markSel(".fontBtn", "font", settings.font || "sans-serif");
     markSel(".modeBtn", "mode", settings.mode || "hold");
     renderSwatches();
   }
@@ -313,7 +312,6 @@
       }));
   }
   bindChoice(".alignBtn", "align", "align");
-  bindChoice(".fontBtn", "font", "font");
   bindChoice(".modeBtn", "mode", "mode");
 
   // --- Couleurs -------------------------------------------------------------
