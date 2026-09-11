@@ -433,7 +433,7 @@ def test_kiosque_protege_aussi_par_l_anti_csrf(client):
 @pytest.fixture(autouse=True)
 def _place_libre():
     """Chaque test part d'une place de meneur libre."""
-    server._presenter["token"] = None
+    server._presenter["holder"] = None
     server._presenter["seen"] = 0.0
     yield
 
@@ -694,3 +694,47 @@ def test_valeurs_acceptees_pour_apply(client):
             headers={server.CLIENT_HEADER: "1"},
         )
         assert r.get_json()["applied"] is attendu, valeur
+
+
+# ============================================================================
+# Pédalier à trois pédales et trois modes
+# ============================================================================
+
+
+def test_les_trois_modes_sont_acceptes(client):
+    for mode in ("hold", "tap", "dyn"):
+        client.post("/api/settings", json={"mode": mode})
+        assert client.get("/api/state").get_json()["settings"]["mode"] == mode, mode
+
+
+def test_mode_inconnu_refuse(client):
+    client.post("/api/settings", json={"mode": "dynamique"})
+    assert client.get("/api/state").get_json()["settings"]["mode"] == "hold"
+
+
+def test_touche_de_la_pedale_centrale(client):
+    client.post("/api/settings", json={"keyCenter": "F13"})
+    assert client.get("/api/state").get_json()["settings"]["keyCenter"] == "F13"
+
+
+def test_duree_de_montee_bornee(client):
+    client.post("/api/settings", json={"rampSeconds": 4})
+    assert client.get("/api/state").get_json()["settings"]["rampSeconds"] == 4
+    for aberrant in (0, 31, -5, "vite", True):
+        client.post("/api/settings", json={"rampSeconds": aberrant})
+        assert client.get("/api/state").get_json()["settings"]["rampSeconds"] == 4, aberrant
+
+
+def test_valeurs_par_defaut_du_pedalier(client):
+    s = client.get("/api/state").get_json()["settings"]
+    assert s["mode"] == "hold"
+    assert s["rampSeconds"] == 10  # le client a demandé 10 s pour aller au maximum
+    assert s["keyForward"] == "ArrowDown"
+    assert s["keyBackward"] == "ArrowUp"
+    assert s["keyCenter"] == "ArrowRight"
+
+
+def test_state_json_avec_un_mode_obsolete_se_repare(client, tmp_path):
+    (tmp_path / "state.json").write_text(json.dumps({"settings": {"mode": "impulsion"}}), encoding="utf-8")
+    server.STATE_FILE = tmp_path / "state.json"
+    assert server.load_state()["settings"]["mode"] == "hold"

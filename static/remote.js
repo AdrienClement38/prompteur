@@ -144,6 +144,10 @@
     refreshPedals();
     markSel(".alignBtn", "align", settings.align || "left");
     markSel(".modeBtn", "mode", settings.mode || "hold");
+    setSlider("rampSeconds", settings.rampSeconds, (v) => v + " s");
+    // Le réglage de montée n'a de sens qu'en mode dynamique : on le masque ailleurs
+    // plutôt que d'offrir un curseur sans effet.
+    $("rampRow").classList.toggle("hide", (settings.mode || "hold") !== "dyn");
     renderSwatches();
   }
 
@@ -345,6 +349,7 @@
   }
   bindChoice(".alignBtn", "align", "align");
   bindChoice(".modeBtn", "mode", "mode");
+  bindSlider("rampSeconds", "rampSeconds", (v) => v + " s");
 
   // --- Couleurs -------------------------------------------------------------
   const FG_COLORS = ["#ffffff", "#ffd400", "#eaeaea", "#00e0ff", "#9dff70", "#000000"];
@@ -376,7 +381,11 @@
   //     « enregistré » veut donc dire réellement enregistré, pas « envoyé en aveugle ».
   // On refuse aussi les deux cas qui rendent une pédale muette sans prévenir :
   // la touche F (interceptée avant les pédales) et une touche déjà prise par l'autre pédale.
-  const PEDAL_LABEL = { keyForward: "pédale droite (avancer)", keyBackward: "pédale gauche (reculer)" };
+  const PEDAL_LABEL = {
+    keyForward: "pédale droite (avancer)",
+    keyBackward: "pédale gauche (reculer)",
+    keyCenter: "pédale centrale (lecture/pause)",
+  };
   const RESERVED = {
     " ": "Espace (lecture/pause)",
     r: "R (retour au début)", R: "R (retour au début)",
@@ -400,7 +409,7 @@
     Object.keys(pedals).forEach((k) => pedals[k].refresh());
   }
 
-  function bindKeyLearn(key, otherKey) {
+  function bindKeyLearn(key, otherKeys) {
     const el = $(key);
     const box = $("pedal-" + key);
     const stat = $(key + "Stat");
@@ -458,9 +467,10 @@
         setStat("Impossible : Échap sert à quitter le prompteur. Une pédale réglée sur Échap fermerait l'écran au premier appui.", "err");
         return;
       }
-      if (settings[otherKey] && k === settings[otherKey]) {
-        setStat("Impossible : « " + keyLabel(k) + " » est déjà la touche de la " + PEDAL_LABEL[otherKey] +
-          ". Les deux pédales doivent envoyer des touches différentes, sinon l'une des deux devient muette.", "err");
+      const conflit = otherKeys.find((autre) => settings[autre] && k === settings[autre]);
+      if (conflit) {
+        setStat("Impossible : « " + keyLabel(k) + " » est déjà la touche de la " + PEDAL_LABEL[conflit] +
+          ". Chaque pédale doit envoyer une touche différente, sinon l'une d'elles devient muette.", "err");
         return;
       }
       self.pending = k;
@@ -500,7 +510,7 @@
       } catch {
         toIdle("✗ Échec : le boîtier n'a pas répondu. Rien n'a été changé.", "err");
       }
-      if (pedals[otherKey]) pedals[otherKey].refresh();
+      otherKeys.forEach((autre) => pedals[autre] && pedals[autre].refresh());
     });
   }
 
@@ -508,8 +518,9 @@
   // et on ne réagit que pendant un apprentissage explicitement démarré.
   window.addEventListener("keydown", (e) => { if (capturing) capturing.capture(e); });
 
-  bindKeyLearn("keyForward", "keyBackward");
-  bindKeyLearn("keyBackward", "keyForward");
+  bindKeyLearn("keyForward", ["keyBackward", "keyCenter"]);
+  bindKeyLearn("keyBackward", ["keyForward", "keyCenter"]);
+  bindKeyLearn("keyCenter", ["keyForward", "keyBackward"]);
 
   // --- Ouvrir l'écran principal hors du navigateur --------------------------
   // Un onglet ordinaire garde sa barre d'adresse et ses onglets : ce n'est pas un

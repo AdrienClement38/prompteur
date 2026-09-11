@@ -118,6 +118,7 @@
       case "top":
         pos = 0;
         autoPlay = false;
+        resetPedalState(); // revenir au début remet aussi le pilotage au repos
         forceResync();
         break;
       // faster/slower : le serveur a déjà ajusté settings.speed, appliqué via applySettings.
@@ -130,10 +131,31 @@
     updateSpeedTag();
   }
 
+  // Écrit l'indicateur sans le faire clignoter : en mode dynamique il change à
+  // chaque image tant qu'une pédale est enfoncée.
+  function renderSpeedTag() {
+    if (isViewer) return;
+    const mode = currentMode();
+    let icon = "⏸";
+    let valeur = Math.round(speed);
+    if (mode === "dyn") {
+      valeur = Math.round(Math.abs(dynVel));
+      if (!dynPaused && dynVel > 0.5) icon = "▶︎";
+      else if (!dynPaused && dynVel < -0.5) icon = "◀︎";
+    } else if (mode === "tap") {
+      if (tapDir > 0) icon = "▶︎";
+      else if (tapDir < 0) icon = "◀︎";
+    } else if (autoPlay || keys.forward) {
+      icon = "▶︎";
+    } else if (keys.backward) {
+      icon = "◀︎";
+    }
+    speedTag.textContent = `${icon} ${valeur}`;
+  }
+
   function updateSpeedTag() {
     if (isViewer) return;
-    const icon = autoPlay || keys.forward ? "▶︎" : keys.backward ? "◀︎" : "⏸";
-    speedTag.textContent = `${icon} ${Math.round(speed)}`;
+    renderSpeedTag();
     flash(speedTag);
   }
 
@@ -178,10 +200,26 @@
 
   // --- Boucle d'animation ---------------------------------------------------
   function framePresenter(now, dt) {
+    const mode = currentMode();
     let v = 0;
-    if (keys.backward) v = -speed * 2.2; // reculer plus vite pour retrouver sa place
-    else if (keys.forward) v = +speed;
-    else if (autoPlay) v = +speed;
+
+    if (mode === "dyn") {
+      // Rampe intégrée image par image : on atteint la vitesse maximale après
+      // « rampSeconds » d'appui continu. La vitesse traverse zéro sans à-coup,
+      // ce qui donne le passage progressif de l'avant vers l'arrière.
+      const secondes = Math.max(1, Math.min(30, Number((settings || {}).rampSeconds) || 10));
+      const accel = SPEED_MAX / secondes; // px/s²
+      if (keys.forward) dynVel = Math.min(SPEED_MAX, dynVel + accel * dt);
+      if (keys.backward) dynVel = Math.max(-SPEED_MAX, dynVel - accel * dt);
+      if (keys.forward || keys.backward) renderSpeedTag();
+      v = dynPaused ? 0 : dynVel;
+    } else if (mode === "tap") {
+      v = tapDir * speed;
+    } else {
+      if (keys.backward) v = -speed * 2.2; // reculer plus vite pour retrouver sa place
+      else if (keys.forward) v = +speed;
+      else if (autoPlay) v = +speed;
+    }
 
     if (v !== 0) {
       pos += v * dt;
@@ -438,6 +476,35 @@
     window.location.href = "/";
   }
 
+  // --- Les trois modes de pédalier ------------------------------------------
+  // MAINTIEN  : pédale enfoncée = ça défile, relâchée = ça s'arrête. Pédale
+  //             centrale sans fonction.
+  // IMPULSION : une pression lance le défilement dans un sens, une seconde
+  //             pression sur la MÊME pédale met en pause. Centrale sans fonction.
+  // DYNAMIQUE : la centrale fait lecture/pause ; la droite accélère vers l'avant
+  //             tant qu'on appuie, la gauche ralentit puis repart en arrière, de
+  //             plus en plus vite. La vitesse atteinte est CONSERVÉE au
+  //             relâchement : le présentateur pose la vitesse une fois, puis lit.
+  //
+  // Le mode dynamique n'utilise pas le réglage « vitesse » : sa vitesse est
+  // construite au pied. Les événements clavier servent seulement à savoir si une
+  // pédale est enfoncée ; toute la rampe est intégrée image par image dans la
+  // boucle d'animation, avec le même dt borné que le reste.
+  const SPEED_MAX = 600; // même borne que le serveur
+  let dynVel = 0; // vitesse signée construite au pied, en px/s
+  let dynPaused = true; // la pédale centrale bascule ce drapeau
+  let tapDir = 0; // -1 arrière, 0 pause, +1 avant (mode impulsion)
+
+  function currentMode() {
+    return (settings || {}).mode || "hold";
+  }
+
+  function resetPedalState() {
+    dynVel = 0;
+    dynPaused = true;
+    tapDir = 0;
+  }
+
   // --- Touches (pédales + raccourcis) — meneur uniquement pour le pilotage --
   function keyName(e) {
     const map = { Down: "ArrowDown", Up: "ArrowUp", Left: "ArrowLeft", Right: "ArrowRight", Spacebar: " ", Esc: "Escape" };
@@ -467,23 +534,39 @@
     const s = settings || {};
     const kf = s.keyForward || "ArrowDown";
     const kb = s.keyBackward || "ArrowUp";
+    const kc = s.keyCenter || "ArrowRight";
     const mode = s.mode || "hold";
 
     if (k === kf) {
       e.preventDefault();
-      if (mode === "hold") keys.forward = true;
-      else if (!e.repeat) autoPlay = !autoPlay; // impulsion : play/pause (on ignore l'autorepeat)
+      if (mode === "tap") {
+        // Deuxième appui sur la MÊME pédale = pause. Sur l'autre = on repart
+        // dans l'autre sens. L'autorépétition du clavier est ignorée, sinon une
+        // pédale maintenue basculerait des dizaines de fois par seconde.
+        if (!e.repeat) tapDir = tapDir === 1 ? 0 : 1;
+      } else {
+        keys.forward = true; // maintien et dynamique : pédale enfoncée
+        if (mode === "dyn") dynPaused = false;
+      }
       updateSpeedTag();
       return;
     }
     if (k === kb) {
       e.preventDefault();
-      if (mode === "hold") keys.backward = true;
-      else if (!e.repeat) {
-        pos = 0;
-        autoPlay = false;
-        forceResync();
+      if (mode === "tap") {
+        if (!e.repeat) tapDir = tapDir === -1 ? 0 : -1;
+      } else {
+        keys.backward = true;
+        if (mode === "dyn") dynPaused = false;
       }
+      updateSpeedTag();
+      return;
+    }
+    if (k === kc) {
+      e.preventDefault();
+      // Pédale centrale : lecture/pause, et UNIQUEMENT en mode dynamique. Dans
+      // les deux autres modes le client la veut explicitement sans fonction.
+      if (mode === "dyn" && !e.repeat) dynPaused = !dynPaused;
       updateSpeedTag();
       return;
     }
@@ -514,12 +597,18 @@
 
   // Sécurité meneur : perte de focus pédale enfoncée -> on relâche (pas de « pédale collée »)
   function releasePedals() {
-    if (keys.forward || keys.backward) {
-      keys.forward = false;
-      keys.backward = false;
-      forceResync();
-      updateSpeedTag();
-    }
+    // Perte de focus : aucune pédale ne doit rester « collée ». En impulsion et
+    // en dynamique, le défilement est en cours SANS qu'aucune touche soit
+    // enfoncée : on le met aussi en pause, sinon le texte continuerait de défiler
+    // derrière une fenêtre que plus personne ne regarde.
+    const enMouvement = keys.forward || keys.backward || tapDir !== 0 || !dynPaused;
+    if (!enMouvement) return;
+    keys.forward = false;
+    keys.backward = false;
+    tapDir = 0;
+    dynPaused = true; // la vitesse acquise est conservée, on la reprend au pied
+    forceResync();
+    updateSpeedTag();
   }
   window.addEventListener("blur", releasePedals);
   window.addEventListener("pagehide", releasePedals);

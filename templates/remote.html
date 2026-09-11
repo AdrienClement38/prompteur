@@ -285,14 +285,30 @@
     <div class="card">
       <h2>Pédales</h2>
       <label>Mode</label>
-      <div class="grid2">
+      <div class="grid3">
         <button data-mode="hold" class="modeBtn">Maintien</button>
         <button data-mode="tap" class="modeBtn">Impulsion</button>
+        <button data-mode="dyn" class="modeBtn">Dynamique</button>
       </div>
       <p class="muted" style="margin-top:8px;">
-        <b>Maintien</b> : tu gardes la pédale enfoncée = ça défile ; tu relâches = ça s'arrête.<br>
-        <b>Impulsion</b> : une pression sur la pédale droite lance/arrête ; la gauche revient au début.
+        <b>Maintien</b> : pédale enfoncée = ça défile, relâchée = ça s'arrête.
+        Pédale centrale sans fonction.<br>
+        <b>Impulsion</b> : une pression lance le défilement, une seconde pression
+        sur la <b>même</b> pédale met en pause. Centrale sans fonction.<br>
+        <b>Dynamique</b> : la <b>centrale</b> fait lecture/pause. La droite accélère
+        vers l'avant tant qu'on appuie ; la gauche ralentit, puis repart en arrière
+        de plus en plus vite. <b>La vitesse atteinte est conservée</b> quand on
+        relâche : on la pose une fois, puis on lit.
       </p>
+
+      <div id="rampRow" class="hide">
+        <label>Montée en vitesse (mode dynamique)</label>
+        <div class="slider">
+          <input type="range" id="rampSeconds" min="1" max="30" step="1">
+          <span class="val" id="rampSecondsVal">10 s</span>
+        </div>
+        <p class="muted">Secondes d'appui continu pour atteindre la vitesse maximale.</p>
+      </div>
       <div class="grid2" style="margin-top:10px;">
         <div class="pedal" id="pedal-keyForward">
           <label>Touche pédale droite (avancer)</label>
@@ -314,6 +330,16 @@
           </div>
           <div class="pedalstat" id="keyBackwardStat"></div>
         </div>
+      </div>
+      <div class="pedal" id="pedal-keyCenter" style="margin-top:10px;">
+        <label>Touche pédale centrale (lecture/pause — mode dynamique)</label>
+        <input type="text" id="keyCenter" readonly placeholder="—">
+        <div class="pedalbtns">
+          <button class="ghost" id="keyCenterLearn">Réapprendre</button>
+          <button class="go hide" id="keyCenterSave">Enregistrer</button>
+          <button class="ghost hide" id="keyCenterCancel">Annuler</button>
+        </div>
+        <div class="pedalstat" id="keyCenterStat"></div>
       </div>
       <p class="muted" style="margin-top:10px;">
         <b>Marche à suivre :</b> « Réapprendre » → appuyez <b>une fois</b> sur la pédale → la touche
