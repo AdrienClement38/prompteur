@@ -297,6 +297,62 @@
     });
   }
 
+  // --- Plein écran (écran principal uniquement) ------------------------------
+  // On veut un écran de lecture sans barre d'adresse ni onglet. Deux obstacles,
+  // tous deux contournés ici :
+  //
+  // 1. Un navigateur REFUSE le plein écran demandé au chargement : il exige un
+  //    geste de l'utilisateur. On tente quand même (certains contextes, dont le
+  //    kiosque du boîtier, l'acceptent), et sinon on l'installe au PREMIER geste
+  //    venu — un clic, une touche, un appui de pédale. En pratique c'est
+  //    invisible : on appuie de toute façon sur une pédale pour commencer.
+  //
+  // 2. En plein écran, Échap est CONFISQUÉE par le navigateur pour en sortir :
+  //    notre gestionnaire ne la verrait jamais. On écoute donc la sortie de
+  //    plein écran elle-même et on la traite comme la demande de quitter. Pour
+  //    l'utilisateur, le geste reste « Échap », et l'invite s'affiche.
+  //
+  // L'écran secondaire, lui, reste une page ordinaire : on y revient en arrière
+  // avec les flèches du navigateur, comme sur n'importe quel site.
+  const wantsFullscreen = !isViewer;
+  let fullscreenAsked = false;
+  let leavingOnPurpose = false;
+
+  function enterFullscreen() {
+    if (!wantsFullscreen || document.fullscreenElement) return;
+    const el = document.documentElement;
+    if (!el.requestFullscreen) return;
+    fullscreenAsked = true;
+    el.requestFullscreen().catch(() => {
+      /* refusé faute de geste : on retentera au premier geste réel */
+    });
+  }
+
+  if (wantsFullscreen) {
+    enterFullscreen();
+    // Filet : le premier geste, quel qu'il soit, installe le plein écran.
+    const once = () => {
+      enterFullscreen();
+      if (document.fullscreenElement) {
+        window.removeEventListener("keydown", once, true);
+        window.removeEventListener("click", once, true);
+      }
+    };
+    window.addEventListener("keydown", once, true);
+    window.addEventListener("click", once, true);
+
+    document.addEventListener("fullscreenchange", () => {
+      if (document.fullscreenElement) return;
+      if (!fullscreenAsked) return;
+      if (leavingOnPurpose) {
+        leavingOnPurpose = false;
+        return; // sortie volontaire par la touche F : on ne propose pas de quitter
+      }
+      // Sortie du plein écran non demandée : c'est l'Échap de l'utilisateur.
+      askQuit();
+    });
+  }
+
   // --- Revenir à la page d'accueil (Échap) ----------------------------------
   // C'est le SEUL endroit où l'on est prisonnier : la télécommande et l'écran de
   // régie sont des pages web ordinaires, qu'on ferme quand on veut. Ici le
@@ -324,6 +380,8 @@
   }
   function doQuit() {
     cancelQuit();
+    leavingOnPurpose = true;
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     window.location.href = "/";
   }
 
@@ -415,8 +473,13 @@
   document.addEventListener("visibilitychange", () => { if (document.hidden) releasePedals(); });
 
   function toggleFullscreen() {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
-    else document.exitFullscreen?.();
+    if (!document.fullscreenElement) {
+      fullscreenAsked = true;
+      document.documentElement.requestFullscreen?.().catch(() => {});
+    } else {
+      leavingOnPurpose = true; // bascule voulue : pas d'invite « quitter ? »
+      document.exitFullscreen?.();
+    }
   }
   window.addEventListener("click", () => { if (!isViewer) flash(hud); });
 
