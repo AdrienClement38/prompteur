@@ -94,14 +94,19 @@
     .boxbar .inner{padding:0 14px 14px;}
     .boxbar .state{font-size:13px; color:var(--muted); margin-bottom:10px;}
     .boxbar .state b{color:var(--fg);}
-    /* Aller lire : c'est l'action principale de cette page, et le retour de la
-       touche Échap. Un lien plein, en haut, impossible à manquer. */
+    /* Aller lire : l'action principale de cette page, et la suite naturelle d'un
+       appui sur Échap. Deux destinations, car se tromper a des consequences :
+       deux écrans « principaux » se disputeraient le pilotage. */
+    .screens{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;}
     .readbtn{
-      display:flex; align-items:center; justify-content:center; gap:6px;
-      min-height:54px; margin-bottom:12px; text-decoration:none;
-      background:var(--accent); color:#fff; border-radius:12px;
-      font-size:17px; font-weight:700;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:3px; min-height:64px; padding:10px 8px; text-align:center;
+      text-decoration:none; border-radius:12px; border:1px solid var(--line);
     }
+    .readbtn .big{font-size:16px; font-weight:700;}
+    .readbtn .tiny{font-size:11.5px; line-height:1.25; opacity:.8;}
+    .readbtn.main{background:var(--accent); border-color:var(--accent); color:#fff;}
+    .readbtn.follow{background:var(--card); color:var(--fg);}
     .readbtn:active{transform:translateY(1px);}
     .hide{display:none;}
   </style>
@@ -110,7 +115,20 @@
   <h1><span class="dot"></span> Prompteur</h1>
   <div class="sub">Télécommande — connecté au boîtier, sans internet.</div>
 
-  <a class="readbtn" href="/display">▶&nbsp; Lire le prompteur</a>
+  <div class="screens">
+    <a class="readbtn main" href="/display">
+      <span class="big">▶&nbsp; Écran principal</span>
+      <span class="tiny">celui qu'on pilote aux pédales</span>
+    </a>
+    <a class="readbtn follow" href="/view">
+      <span class="big">Écran secondaire</span>
+      <span class="tiny">régie, retour plateau — lecture seule</span>
+    </a>
+  </div>
+  <p class="muted" style="margin:-4px 0 14px;">
+    <b>Un seul écran principal à la fois.</b> Les autres appareils prennent
+    « Écran secondaire » : ils affichent la même chose, en direct, sans pouvoir agir.
+  </p>
 
   <details class="boxbar hide" id="boxbar">
     <summary>Écran du boîtier</summary>
@@ -120,15 +138,14 @@
         <button class="go" id="kioskLaunch">Afficher sur le boîtier</button>
         <button id="kioskClose">Fermer sur le boîtier</button>
       </div>
-      <div class="grid2" style="margin-top:10px;">
-        <button class="ghost" id="openView">Écran régie</button>
-        <button class="ghost" id="kioskRefresh">Actualiser</button>
+      <div style="margin-top:10px;">
+        <button class="ghost" id="kioskRefresh" style="width:100%;">Actualiser l'état</button>
       </div>
       <p class="muted" style="margin-top:10px;">
         Ces deux boutons agissent sur <b>l'écran du boîtier</b>, pas sur cet appareil :
         <b>Fermer</b> rend la main au bureau du Raspberry, <b>Afficher</b> y remet le
         prompteur en plein écran. Le texte et la position ne sont pas perdus.<br>
-        <i>Pour lire ici même, utilisez « Lire le prompteur » en haut de la page.</i><br>
+        <i>Pour lire sur cet appareil, utilisez les deux boutons en haut de la page.</i><br>
         Pour éteindre vraiment le boîtier, utilisez son <b>bouton physique</b>.
       </p>
     </div>

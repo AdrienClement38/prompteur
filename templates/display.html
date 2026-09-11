@@ -100,6 +100,18 @@
     #quitAsk b { color:#ffd400; }
     #quitAsk .sub { font-size:17px; color:rgba(255,255,255,.6); margin-top:10px; }
 
+    /* Liaison perdue : sans cela l'écran reste noir et muet, et personne ne peut
+       deviner si le texte affiché est encore à jour. */
+    #linkLost {
+      position:fixed; left:50%; bottom:10%; transform:translateX(-50%);
+      z-index:28; text-align:center; display:none; max-width:86%;
+      background:rgba(90,20,20,.94); border:1px solid rgba(255,120,120,.5);
+      color:#ffe9e9; padding:14px 22px; border-radius:14px;
+      font:600 19px/1.45 system-ui, sans-serif;
+      box-shadow:0 8px 36px rgba(0,0,0,.6);
+    }
+    #linkLost .sub { font-weight:400; font-size:15px; color:rgba(255,233,233,.75); margin-top:6px; }
+
     /* Badge affiché uniquement sur les écrans spectateurs (régie) */
     #specBadge {
       position:fixed; left:12px; top:10px; z-index:25;
@@ -120,6 +132,13 @@
   <div id="speedTag">▶︎ 70</div>
   <div id="specBadge">SPECTATEUR — suit l'écran principal</div>
   <div id="netinfo" class="hidden"></div>
+  <div id="linkLost">
+    Liaison avec le boîtier perdue.
+    <div class="sub">
+      Le texte ci-dessous reste lisible, mais il n'est plus mis à jour.<br>
+      Les pédales continuent de fonctionner.
+    </div>
+  </div>
   <div id="quitAsk">
     Revenir à la page d'accueil ?
     <div class="sub">

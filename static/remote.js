@@ -520,7 +520,6 @@
       act(e.currentTarget, "/api/kiosk/close", "Fermeture du prompteur…");
     });
     $("kioskRefresh").addEventListener("click", refreshKiosk);
-    $("openView").addEventListener("click", () => window.open("/view", "_blank"));
   }
   bindKiosk();
 

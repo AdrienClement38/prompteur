@@ -341,9 +341,26 @@
   // --- Synchronisation avec le serveur (interrogation rapide) ---------------
   // Texte + réglages + commandes : on lit /api/version (léger) et on ne recharge
   // le texte complet (/api/state) que si quelque chose a changé.
+  // Liaison perdue : on ne crie pas au premier raté (le service se relance tout
+  // seul en deux secondes), mais on finit par le DIRE. Sans cela l'écran reste
+  // noir et muet, et personne ne peut savoir si le texte est encore à jour.
+  const linkLost = document.getElementById("linkLost");
+  let failures = 0;
+  const FAILURES_BEFORE_WARNING = 4;
+
+  function linkOk() {
+    failures = 0;
+    linkLost.style.display = "none";
+  }
+  function linkFailed() {
+    failures += 1;
+    if (failures >= FAILURES_BEFORE_WARNING) linkLost.style.display = "block";
+  }
+
   async function pollState() {
     try {
       const v = await (await fetch("/api/version", { cache: "no-store" })).json();
+      linkOk();
       if (v.version === lastVersion && v.cmdSeq === lastCmdSeq) return;
       const st = await (await fetch("/api/state", { cache: "no-store" })).json();
       if (st.version !== lastVersion) {
@@ -355,7 +372,9 @@
         if (!isViewer && st.control.cmd) applyCommand(st.control.cmd);
       }
     } catch {
-      /* le serveur peut redémarrer : on réessaie au prochain tick */
+      // le serveur peut redémarrer : on réessaie au prochain tick, et on
+      // n'avertit qu'après plusieurs échecs d'affilée
+      linkFailed();
     }
   }
 
