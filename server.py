@@ -16,6 +16,9 @@ Aucune connexion internet n'est nécessaire : tout est local au boîtier.
 Modèle d'accès : l'API n'a pas d'authentification applicative. C'est acceptable
 UNIQUEMENT parce que le service est confiné au réseau du point d'accès WiFi isolé
 du boîtier (voir le pare-feu posé par install/setup.sh qui limite le port au wlan0).
+Ce confinement ne suffit toutefois pas seul : il ne protège pas d'une requête émise
+par le navigateur d'un appareil déjà connecté à ce WiFi. Voir la protection anti-CSRF
+(Origin + Content-Type) plus bas, verrouillée par les tests de tests/test_server.py.
 
 Lancement :
     python server.py
@@ -31,6 +34,7 @@ import socket
 import string
 import threading
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from flask import Flask, jsonify, render_template, request
 
@@ -123,6 +127,64 @@ SPEED_MIN, SPEED_MAX, SPEED_STEP = 10, 600, 10
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_BODY  # rejette (413) tout corps > 6 Mo avant bufferisation
+
+
+# --------------------------------------------------------------------------
+# Protection contre les requêtes déclenchées depuis un autre site (CSRF)
+# --------------------------------------------------------------------------
+# L'API n'a pas d'authentification : la sécurité repose sur le confinement réseau
+# (pare-feu limitant le port au wlan0 + WPA2). Ce confinement ne protège PAS d'une
+# requête émise par le NAVIGATEUR d'un appareil déjà connecté au WiFi du boîtier :
+# une page web piégée ouverte sur le téléphone du cadreur peut viser 10.42.0.1 sans
+# la moindre interaction. Le pare-feu n'y voit rien, la requête part de l'intérieur.
+#
+# Deux barrières, sans aucune dépendance supplémentaire :
+#   1. Origin — toute modification venant d'une autre origine est refusée (403).
+#      Les navigateurs envoient cet en-tête sur toute requête POST inter-origines,
+#      y compris les « simple requests » (text/plain, multipart) qui échappent au
+#      pré-vol CORS. C'est la barrière qui compte.
+#   2. Content-Type — les routes JSON n'acceptent que application/json (415).
+#      Exiger ce type force un pré-vol CORS, auquel nous ne répondons jamais.
+#
+# Un client non-navigateur (curl, tests) n'envoie pas d'Origin : il reste accepté,
+# car la CSRF est par définition une attaque menée par un navigateur.
+SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+# Routes de modification qui ne reçoivent pas du JSON (envoi de fichier multipart).
+NON_JSON_ROUTES = frozenset({"/api/upload"})
+# En-tête maison exigé sur l'envoi de fichier : un en-tête personnalisé ne peut pas
+# être posé par une page tierce sans pré-vol, ce qui protège la seule route de
+# modification que la barrière Content-Type ne couvre pas.
+CLIENT_HEADER = "X-Prompteur-Client"
+
+
+def _cross_origin(value):
+    """Vrai si l'en-tête fourni (Origin ou Referer) désigne une autre origine."""
+    if not value:
+        return False
+    try:
+        netloc = urlsplit(value).netloc
+    except ValueError:
+        return True  # en-tête illisible : on refuse plutôt que de deviner
+    return netloc != request.host
+
+
+@app.before_request
+def _guard_state_changing_requests():
+    if request.method in SAFE_METHODS:
+        return None
+
+    # 1. Origine de la requête. Referer en secours quand Origin est absent.
+    if _cross_origin(request.headers.get("Origin")) or _cross_origin(request.headers.get("Referer")):
+        return jsonify({"ok": False, "error": "origine refusée"}), 403
+
+    # 2. Type de contenu.
+    if request.path in NON_JSON_ROUTES:
+        if not request.headers.get(CLIENT_HEADER):
+            return jsonify({"ok": False, "error": "en-tête client manquant"}), 403
+    elif not request.is_json:
+        return jsonify({"ok": False, "error": "Content-Type application/json requis"}), 415
+
+    return None
 
 
 # --------------------------------------------------------------------------
@@ -349,7 +411,7 @@ def api_scroll():
     if request.method == "GET":
         with _lock:
             return jsonify(dict(SCROLL))
-    data = request.get_json(force=True, silent=True) or {}
+    data = request.get_json(silent=True) or {}
     try:
         pos = max(0.0, min(1e7, float(data.get("pos", 0) or 0)))
         vel = max(-5000.0, min(5000.0, float(data.get("vel", 0) or 0)))
@@ -366,7 +428,7 @@ def api_scroll():
 
 @app.route("/api/text", methods=["POST"])
 def api_text():
-    data = request.get_json(force=True, silent=True) or {}
+    data = request.get_json(silent=True) or {}
     with _lock:
         STATE["text"] = str(data.get("text", ""))
         if "title" in data:
@@ -379,7 +441,7 @@ def api_text():
 
 @app.route("/api/settings", methods=["POST"])
 def api_settings():
-    data = request.get_json(force=True, silent=True) or {}
+    data = request.get_json(silent=True) or {}
     with _lock:
         changed = False
         for key, value in data.items():
@@ -399,7 +461,7 @@ def api_command():
     """Commande ponctuelle envoyée depuis le téléphone (play/pause/restart/...).
 
     L'état de pilotage est TRANSITOIRE : on ne l'écrit pas sur la carte SD (usure)."""
-    data = request.get_json(force=True, silent=True) or {}
+    data = request.get_json(silent=True) or {}
     cmd = data.get("cmd")
     allowed = {"play", "pause", "toggle", "restart", "top", "faster", "slower"}
     if cmd not in allowed:
@@ -450,7 +512,7 @@ def api_library():
 
 @app.route("/api/library/save", methods=["POST"])
 def api_library_save():
-    data = request.get_json(force=True, silent=True) or {}
+    data = request.get_json(silent=True) or {}
     raw = str(data.get("name") or STATE.get("title") or "sans-titre")
     name = safe_name(raw)
     text = str(data.get("text", STATE.get("text", "")))
@@ -465,9 +527,14 @@ def api_library_save():
     return jsonify({"ok": True, "name": name, "sanitized": name != raw.strip()})
 
 
-@app.route("/api/library/load")
+@app.route("/api/library/load", methods=["POST"])
 def api_library_load():
-    path = _library_path(request.args.get("name", ""))
+    # POST et non GET : cette route MODIFIE le texte à l'antenne. Tant qu'elle
+    # répondait en GET, une simple balise <img src=".../api/library/load?name=..."/>
+    # posée sur une page tierce suffisait à changer le texte affiché en plein
+    # tournage, sans que le pare-feu ni WPA2 puissent l'empêcher.
+    data = request.get_json(silent=True) or {}
+    path = _library_path(str(data.get("name", "")))
     if path is None or not path.exists():
         return jsonify({"ok": False, "error": "introuvable"}), 404
     text = read_text_file(path)
@@ -481,7 +548,7 @@ def api_library_load():
 
 @app.route("/api/library/delete", methods=["POST"])
 def api_library_delete():
-    data = request.get_json(force=True, silent=True) or {}
+    data = request.get_json(silent=True) or {}
     path = _library_path(str(data.get("name", "")))
     if path and path.exists():
         path.unlink()
@@ -498,7 +565,7 @@ def api_usb():
 
 @app.route("/api/usb/load", methods=["POST"])
 def api_usb_load():
-    data = request.get_json(force=True, silent=True) or {}
+    data = request.get_json(silent=True) or {}
     path = data.get("path", "")
     if not is_allowed_usb_file(path):
         return jsonify({"ok": False, "error": "fichier non autorisé"}), 400

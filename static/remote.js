@@ -125,7 +125,8 @@
       const load = mkBtn("Charger", "primary");
       const del = mkBtn("✕", "danger");
       load.onclick = async () => {
-        const res = await api("/api/library/load?name=" + encodeURIComponent(it.name));
+        // POST : charger un texte modifie ce qui est à l'antenne (voir server.py).
+        const res = await postJSON("/api/library/load", { name: it.name });
         await loadState();
         toast("« " + res.title + " » chargé");
       };
@@ -146,7 +147,14 @@
     const fd = new FormData();
     fd.append("file", f);
     try {
-      const r = await fetch("/api/upload", { method: "POST", body: fd });
+      // En-tête maison exigé par le serveur : une page tierce ne peut pas le poser
+      // sans pré-vol CORS, ce qui protège cette route (multipart, donc sans la
+      // barrière Content-Type des routes JSON).
+      const r = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "X-Prompteur-Client": "1" },
+        body: fd,
+      });
       const res = await r.json().catch(() => ({}));
       if (!r.ok || !res.ok) { toast(res.error || "Import impossible"); return; }
       await loadState();

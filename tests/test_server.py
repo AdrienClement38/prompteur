@@ -2,8 +2,8 @@
 """Tests de l'API du prompteur.
 
 Ils exercent le fonctionnement nominal ET verrouillent les correctifs de l'audit
-sécurité (validation des réglages, traversée de chemin, limite de taille, 409…),
-pour empêcher toute régression.
+sécurité (validation des réglages, traversée de chemin, limite de taille, 409,
+protection anti-CSRF…), pour empêcher toute régression.
 """
 
 import copy
@@ -29,6 +29,16 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(server, "STATE", copy.deepcopy(server.DEFAULT_STATE))
     server.app.config.update(TESTING=True)
     return server.app.test_client()
+
+
+def _upload(client, data, name, headers=None):
+    """Envoi de fichier, avec l'en-tête client que le serveur exige (anti-CSRF)."""
+    return client.post(
+        "/api/upload",
+        data={"file": (io.BytesIO(data), name)},
+        content_type="multipart/form-data",
+        headers={server.CLIENT_HEADER: "1"} if headers is None else headers,
+    )
 
 
 # --- Fonctionnement de base --------------------------------------------------
@@ -103,7 +113,7 @@ def test_bibliotheque_collision_et_ecrasement(client):
     assert client.post("/api/library/save", json={"name": "Sujet", "text": "v1"}).status_code == 200
     assert client.post("/api/library/save", json={"name": "Sujet", "text": "v2"}).status_code == 409
     assert client.post("/api/library/save", json={"name": "Sujet", "text": "v2", "overwrite": True}).status_code == 200
-    client.get("/api/library/load?name=Sujet")
+    client.post("/api/library/load", json={"name": "Sujet"})
     assert client.get("/api/state").get_json()["text"] == "v2"
 
 
@@ -130,11 +140,7 @@ def test_corps_trop_gros_refuse(client):
 
 # --- Téléversement -----------------------------------------------------------
 def test_upload_txt(client):
-    r = client.post(
-        "/api/upload",
-        data={"file": (io.BytesIO("Réunion".encode("utf-8")), "note.txt")},
-        content_type="multipart/form-data",
-    )
+    r = _upload(client, "Réunion".encode("utf-8"), "note.txt")
     assert r.status_code == 200
     assert client.get("/api/state").get_json()["text"] == "Réunion"
 
@@ -189,20 +195,108 @@ def _docx_bytes(paragraphs):
 
 def test_upload_docx_extrait_et_nettoie(client):
     data = _docx_bytes(["Titre", "Corps du   texte."])  # espaces multiples -> nettoyés
-    r = client.post(
-        "/api/upload",
-        data={"file": (io.BytesIO(data), "note.docx")},
-        content_type="multipart/form-data",
-    )
+    r = _upload(client, data, "note.docx")
     assert r.status_code == 200
     assert client.get("/api/state").get_json()["text"] == "Titre\nCorps du texte."
 
 
 def test_upload_fichier_illisible_erreur_claire(client):
-    r = client.post(
-        "/api/upload",
-        data={"file": (io.BytesIO(b"ceci n'est pas un docx"), "faux.docx")},
-        content_type="multipart/form-data",
-    )
+    r = _upload(client, b"ceci n'est pas un docx", "faux.docx")
     assert r.status_code == 400
     assert "error" in r.get_json()
+
+
+# ============================================================================
+# Anti-CSRF
+# ----------------------------------------------------------------------------
+# Le confinement réseau (pare-feu + WPA2) ne protège pas du NAVIGATEUR d'un
+# appareil déjà connecté au WiFi du boîtier : une page piégée ouverte sur le
+# téléphone du cadreur peut viser 10.42.0.1 sans aucune interaction. Ces tests
+# verrouillent les deux barrières posées dans server.py.
+# ============================================================================
+
+# Toutes les routes qui MODIFIENT l'état, avec un corps par ailleurs valide.
+ROUTES_ECRITURE = [
+    ("/api/text", {"text": "injecté par un tiers"}),
+    ("/api/settings", {"fontSize": 8, "textColor": "#000000"}),
+    ("/api/command", {"cmd": "restart"}),
+    ("/api/scroll", {"pos": 10, "vel": 1, "playing": True}),
+    ("/api/library/save", {"name": "x", "text": "y", "overwrite": True}),
+    ("/api/library/load", {"name": "x"}),
+    ("/api/library/delete", {"name": "x"}),
+    ("/api/usb/load", {"path": "/tmp/x.txt"}),
+]
+
+
+@pytest.mark.parametrize("path,payload", ROUTES_ECRITURE)
+def test_csrf_content_type_non_json_refuse(client, path, payload):
+    """text/plain est une « simple request » : sans cette barrière, elle passerait."""
+    r = client.post(path, data=json.dumps(payload), content_type="text/plain")
+    assert r.status_code == 415, path
+
+
+@pytest.mark.parametrize("path,payload", ROUTES_ECRITURE)
+def test_csrf_origine_etrangere_refusee(client, path, payload):
+    """Même avec le bon Content-Type, une autre origine est refusée."""
+    r = client.post(path, json=payload, headers={"Origin": "http://pub.example"})
+    assert r.status_code == 403, path
+
+
+@pytest.mark.parametrize("path,payload", ROUTES_ECRITURE)
+def test_csrf_referer_etranger_refuse(client, path, payload):
+    """Secours quand Origin est absent."""
+    r = client.post(path, json=payload, headers={"Referer": "http://pub.example/page"})
+    assert r.status_code == 403, path
+
+
+def test_csrf_attaque_ne_modifie_rien(client):
+    """Le scénario réel, de bout en bout : rien ne doit bouger à l'antenne."""
+    client.post("/api/text", json={"text": "script du jour"})
+    avant = client.get("/api/state").get_json()
+    for content_type in ("text/plain", "application/x-www-form-urlencoded"):
+        client.post("/api/text", data='{"text": "PIRATE"}', content_type=content_type)
+        client.post("/api/settings", data='{"fontSize": 8}', content_type=content_type)
+    pirate = {"Origin": "http://pub.example"}
+    client.post("/api/text", json={"text": "PIRATE"}, headers=pirate)
+    client.post("/api/settings", json={"fontSize": 8}, headers=pirate)
+    client.post("/api/library/delete", json={"name": "Sujet"}, headers=pirate)
+    apres = client.get("/api/state").get_json()
+    assert apres["text"] == "script du jour"
+    assert apres["settings"]["fontSize"] == avant["settings"]["fontSize"]
+
+
+def test_meme_origine_toujours_acceptee(client):
+    """La télécommande légitime ne doit surtout pas être gênée."""
+    r = client.post("/api/text", json={"text": "ok"}, headers={"Origin": "http://localhost"})
+    assert r.status_code == 200
+    assert client.get("/api/state").get_json()["text"] == "ok"
+
+
+def test_library_load_refuse_le_get(client):
+    """Route qui change le texte à l'antenne : injoignable par <img src=...>."""
+    client.post("/api/library/save", json={"name": "Sujet", "text": "v1"})
+    assert client.get("/api/library/load?name=Sujet").status_code == 405
+
+
+def test_upload_sans_entete_client_refuse(client):
+    """multipart échappe au Content-Type : l'en-tête maison prend le relais."""
+    r = _upload(client, "texte pirate".encode("utf-8"), "note.txt", headers={})
+    assert r.status_code == 403
+    assert client.get("/api/state").get_json()["text"] != "texte pirate"
+
+
+def test_upload_origine_etrangere_refusee(client):
+    r = _upload(
+        client,
+        "texte pirate".encode("utf-8"),
+        "note.txt",
+        headers={server.CLIENT_HEADER: "1", "Origin": "http://pub.example"},
+    )
+    assert r.status_code == 403
+
+
+def test_lectures_non_genees_par_le_garde_fou(client):
+    """Les GET restent libres : une origine tierce ne peut pas lire la réponse (CORS)."""
+    for path in ("/api/state", "/api/version", "/api/scroll", "/api/library", "/api/info"):
+        r = client.get(path, headers={"Origin": "http://pub.example"})
+        assert r.status_code == 200, path
