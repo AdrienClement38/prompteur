@@ -36,6 +36,11 @@
     #scroller .h2 { font-weight:700; font-size:1.28em; line-height:1.2; margin:.4em 0 .1em; }
     #scroller .h3 { font-weight:700; font-size:1.12em; line-height:1.25; margin:.3em 0 .1em; }
     #scroller .blank { height:.5em; }
+    /* Mise en forme : des classes posees sur des <span>, jamais du HTML recu.
+       L'ecran construit ses elements un par un et n'ecrit que du textContent. */
+    #scroller .mb { font-weight:800; }
+    #scroller .mi { font-style:italic; }
+    #scroller .mu { text-decoration:underline; text-underline-offset:.12em; }
 
     /* Ligne de repère de lecture */
     #guide {

@@ -40,7 +40,7 @@
   const follow = { pos: 0, vel: 0, at: 0, seq: -1 };
 
   // --- Application des réglages reçus du serveur ----------------------------
-  function applySettings(s, text) {
+  function applySettings(s, text, marks) {
     settings = s;
     speed = Number(s.speed) || 70;
 
@@ -76,7 +76,7 @@
 
     // Texte : on ne remet à zéro le défilement (côté meneur) que s'il a vraiment changé
     if (text !== lastText) {
-      renderScript(text || "");
+      renderScript(text || "", marks);
       lastText = text;
       if (!isViewer) {
         pos = 0;
@@ -89,21 +89,79 @@
 
   // Construit l'affichage à partir du texte : les lignes « # / ## / ### » deviennent
   // des TITRES (gros/gras) ; les autres lignes et les lignes vides sont préservées.
-  function renderScript(text) {
+  // Classes de mise en forme actives a une position donnee du texte.
+  function styleClassesAt(marks, index) {
+    let cls = "";
+    for (const m of marks) {
+      if (index < m.start || index >= m.end) continue;
+      if (m.b && !cls.includes("mb")) cls += " mb";
+      if (m.i && !cls.includes("mi")) cls += " mi";
+      if (m.u && !cls.includes("mu")) cls += " mu";
+    }
+    return cls.trim();
+  }
+
+  // Remplit une ligne en respectant les plages qui la traversent.
+  // On ne calcule le style qu'aux FRONTIERES des plages, pas a chaque caractere :
+  // un script de plusieurs centaines de milliers de signes reste instantane.
+  function fillLine(div, line, lineStart, marks, bornes) {
+    const lineEnd = lineStart + line.length;
+    const coupes = [lineStart];
+    for (const b of bornes) {
+      if (b > lineStart && b < lineEnd) coupes.push(b);
+    }
+    coupes.push(lineEnd);
+
+    let pose = false;
+    for (let k = 0; k < coupes.length - 1; k++) {
+      const debut = coupes[k];
+      const fin = coupes[k + 1];
+      if (fin <= debut) continue;
+      const morceau = line.slice(debut - lineStart, fin - lineStart);
+      const cls = styleClassesAt(marks, debut);
+      if (!cls) {
+        div.appendChild(document.createTextNode(morceau));
+      } else {
+        const span = document.createElement("span");
+        span.className = cls;
+        span.textContent = morceau; // textContent -> aucun risque d'injection
+        div.appendChild(span);
+        pose = true;
+      }
+    }
+    if (!pose && div.childNodes.length === 1) {
+      // Ligne sans mise en forme : on garde un simple noeud de texte.
+      div.textContent = line;
+    }
+  }
+
+  function renderScript(text, marks) {
+    const plages = Array.isArray(marks) ? marks : [];
+    const bornes = [];
+    for (const m of plages) bornes.push(m.start, m.end);
+    bornes.sort((a, b) => a - b);
+
     const frag = document.createDocumentFragment();
+    let offset = 0;
     for (const line of String(text).split("\n")) {
       const div = document.createElement("div");
       const m = /^(#{1,3})\s+(.*)$/.exec(line);
       if (m) {
         div.className = "ln h" + m[1].length;
-        div.textContent = m[2]; // textContent -> aucun risque d'injection
+        // Le dièse et son espace ne sont pas affichés : les plages du titre sont
+        // donc décalées d'autant.
+        const decalage = line.length - m[2].length;
+        if (plages.length) fillLine(div, m[2], offset + decalage, plages, bornes);
+        else div.textContent = m[2]; // textContent -> aucun risque d'injection
       } else if (line.trim() === "") {
         div.className = "ln blank";
       } else {
         div.className = "ln";
-        div.textContent = line;
+        if (plages.length) fillLine(div, line, offset, plages, bornes);
+        else div.textContent = line;
       }
       frag.appendChild(div);
+      offset += line.length + 1; // +1 pour le saut de ligne retiré par split
     }
     scroller.replaceChildren(frag);
   }
@@ -656,7 +714,7 @@
       ).json();
       if (st.version !== lastVersion) {
         lastVersion = st.version;
-        applySettings(st.settings, st.text);
+        applySettings(st.settings, st.text, st.marks);
       }
       if (st.control && st.control.cmdSeq !== lastCmdSeq) {
         lastCmdSeq = st.control.cmdSeq;

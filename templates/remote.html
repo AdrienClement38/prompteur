@@ -126,6 +126,12 @@
       color:#e5b53a; font-size:13px; line-height:1.35;
     }
     .unsent b{color:#f2cf72;}
+    /* Barre de mise en forme : s'applique a la SELECTION dans la zone de texte.
+       On ne stocke jamais de HTML — seulement des plages sur le texte brut. */
+    .fmtbar{display:flex; gap:8px; margin-top:10px;}
+    .fmtbar button{min-height:40px; padding:8px 0; flex:1; font-size:16px;}
+    .fmtbar button:last-child{flex:2; font-size:13px;}
+    #fmtInfo{margin-top:6px;}
     .hide{display:none;}
   </style>
 </head>
@@ -184,6 +190,14 @@
       <input type="text" id="title" placeholder="Ex : Intro épisode 12">
       <label>Texte du prompteur</label>
       <textarea id="text" placeholder="Colle ici ton texte…"></textarea>
+      <div class="fmtbar">
+        <button id="fmtB" title="Gras"><b>G</b></button>
+        <button id="fmtI" title="Italique"><i>I</i></button>
+        <button id="fmtU" title="Souligné"><u>S</u></button>
+        <button class="ghost" id="fmtClear">Tout effacer</button>
+      </div>
+      <div class="muted" id="fmtInfo">Sélectionnez un passage, puis G, I ou S.</div>
+
       <div class="unsent hide" id="unsent">
         Ce texte n'est <b>pas encore à l'écran</b> — appuyez sur « Envoyer à l'écran ».
       </div>
@@ -290,15 +304,18 @@
         <button data-mode="tap" class="modeBtn">Impulsion</button>
         <button data-mode="dyn" class="modeBtn">Dynamique</button>
       </div>
-      <p class="muted" style="margin-top:8px;">
-        <b>Maintien</b> : pédale enfoncée = ça défile, relâchée = ça s'arrête.
-        Pédale centrale sans fonction.<br>
-        <b>Impulsion</b> : une pression lance le défilement, une seconde pression
-        sur la <b>même</b> pédale met en pause. Centrale sans fonction.<br>
-        <b>Dynamique</b> : la <b>centrale</b> fait lecture/pause. La droite accélère
-        vers l'avant tant qu'on appuie ; la gauche ralentit, puis repart en arrière
-        de plus en plus vite. <b>La vitesse atteinte est conservée</b> quand on
-        relâche : on la pose une fois, puis on lit.
+      <p class="muted modeHelp hide" data-mode="hold" style="margin-top:8px;">
+        Pédale enfoncée = ça défile, relâchée = ça s'arrête. Pédale centrale sans fonction.
+      </p>
+      <p class="muted modeHelp hide" data-mode="tap" style="margin-top:8px;">
+        Une pression lance le défilement, une seconde pression sur la <b>même</b>
+        pédale met en pause. Pédale centrale sans fonction.
+      </p>
+      <p class="muted modeHelp hide" data-mode="dyn" style="margin-top:8px;">
+        La <b>centrale</b> fait lecture/pause. La droite accélère vers l'avant tant
+        qu'on appuie ; la gauche ralentit, puis repart en arrière de plus en plus
+        vite. <b>La vitesse atteinte est conservée</b> quand on relâche : on la pose
+        une fois, puis on lit.
       </p>
 
       <div id="rampRow" class="hide">

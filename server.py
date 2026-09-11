@@ -76,6 +76,12 @@ DEFAULT_STATE = {
         "pédale droite = avancer, pédale gauche = reculer.\n\n"
         "Bon tournage."
     ),
+    # Mise en forme : des PLAGES sur le texte, jamais du HTML stocké.
+    # Le texte reste une chaîne brute — c'est lui qui part dans les .txt de la
+    # bibliothèque, qui borne la taille, et qui s'affiche si les marques sont
+    # absentes ou invalides. Aucune régression possible sur un texte existant, et
+    # aucun risque d'injection : l'écran construit ses éléments un par un.
+    "marks": [],
     "settings": {
         "fontSize": 64,  # taille du texte en px
         "lineHeight": 1.6,  # interligne
@@ -210,6 +216,38 @@ def _guard_state_changing_requests():
 # --------------------------------------------------------------------------
 # Lecture / écriture de l'état
 # --------------------------------------------------------------------------
+MAX_MARKS = 500  # au-delà, c'est un document, pas une mise en évidence
+
+
+def sanitize_marks(marks, length):
+    """Ne garde que des plages valides et confinées au texte.
+
+    Une plage hors bornes, vide, mal formée ou sans style est simplement écartée :
+    l'écran doit toujours pouvoir afficher le texte, même si la mise en forme qui
+    l'accompagne est abîmée.
+    """
+    if not isinstance(marks, list):
+        return []
+    clean = []
+    for mark in marks[:MAX_MARKS]:
+        if not isinstance(mark, dict):
+            continue
+        try:
+            start = int(mark.get("start", -1))
+            end = int(mark.get("end", -1))
+        except (TypeError, ValueError):
+            continue
+        start = max(0, min(length, start))
+        end = max(0, min(length, end))
+        if end <= start:
+            continue
+        styles = {key: True for key in ("b", "i", "u") if mark.get(key) is True}
+        if not styles:
+            continue
+        clean.append({"start": start, "end": end, **styles})
+    return clean
+
+
 def _sanitize_settings(settings):
     """Répare un state.json corrompu : toute valeur invalide retombe au défaut."""
     clean = copy.deepcopy(DEFAULT_STATE["settings"])
@@ -256,6 +294,7 @@ def load_state():
             # tronque au chargement. Sans cela l'écran resterait figé À CHAQUE
             # DÉMARRAGE, et il faudrait un clavier et un terminal pour s'en sortir.
             merged["text"] = _truncate_text(merged.get("text", ""))
+            merged["marks"] = sanitize_marks(merged.get("marks"), len(merged["text"]))
             return merged
         except (json.JSONDecodeError, OSError, TypeError, AttributeError):
             pass
@@ -490,8 +529,10 @@ def api_text():
     except ValueError as e:
         # Un texte demesure fige l'affichage, et le gel survit au redemarrage.
         return jsonify({"ok": False, "error": str(e)}), 400
+    marks = sanitize_marks(data.get("marks"), len(text))
     with _lock:
         STATE["text"] = text
+        STATE["marks"] = marks
         if "title" in data:
             STATE["title"] = str(data.get("title") or "Sans titre")
         bump(STATE)
@@ -554,6 +595,12 @@ def safe_name(name):
     return cleaned or "sans-titre"
 
 
+def _library_marks_path(path):
+    """Fichier des plages, frere du .txt. Hors du glob *.txt de la bibliotheque,
+    donc invisible dans la liste et sans effet sur les anciens textes."""
+    return path.with_suffix(".marks.json")
+
+
 def _library_path(name):
     """Chemin d'un texte de la bibliothèque, confiné à SCRIPTS_DIR."""
     path = SCRIPTS_DIR / f"{safe_name(name)}.txt"
@@ -585,6 +632,12 @@ def api_library_save():
         # collision : on demande confirmation au lieu d'écraser en silence
         return jsonify({"ok": False, "error": "exists", "name": name, "sanitized": name != raw.strip()}), 409
     path.write_text(text, encoding="utf-8")
+    marques = sanitize_marks(data.get("marks"), len(text))
+    chemin_marques = _library_marks_path(path)
+    if marques:
+        chemin_marques.write_text(json.dumps(marques), encoding="utf-8")
+    elif chemin_marques.exists():
+        chemin_marques.unlink()  # texte reenregistre sans mise en forme
     with _lock:
         LIBRARY["seq"] += 1
     return jsonify({"ok": True, "name": name, "sanitized": name != raw.strip()})
@@ -604,8 +657,16 @@ def api_library_load():
         text = textextract.check_size(read_text_file(path))
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
+    marques = []
+    chemin_marques = _library_marks_path(path)
+    if chemin_marques.exists():
+        try:
+            marques = sanitize_marks(json.loads(chemin_marques.read_text(encoding="utf-8")), len(text))
+        except (OSError, ValueError):
+            marques = []  # mise en forme abimee : on affiche le texte quand meme
     with _lock:
         STATE["text"] = text
+        STATE["marks"] = marques
         STATE["title"] = path.stem
         bump(STATE)
         _save_state_unlocked(STATE)
@@ -618,6 +679,9 @@ def api_library_delete():
     path = _library_path(str(data.get("name", "")))
     if path and path.exists():
         path.unlink()
+        marques = _library_marks_path(path)
+        if marques.exists():
+            marques.unlink()
         with _lock:
             LIBRARY["seq"] += 1
     return jsonify({"ok": True})
@@ -662,6 +726,7 @@ def api_usb_load():
     with _lock:
         STATE["text"] = text
         STATE["title"] = title
+        STATE["marks"] = []  # nouveau texte : les anciennes plages n'ont plus de sens
         bump(STATE)
         _save_state_unlocked(STATE)
     return jsonify({"ok": True, "title": title, "applied": True})
@@ -687,6 +752,7 @@ def api_upload():
     with _lock:
         STATE["text"] = text
         STATE["title"] = title
+        STATE["marks"] = []  # nouveau texte : les anciennes plages n'ont plus de sens
         bump(STATE)
         _save_state_unlocked(STATE)
     return jsonify({"ok": True, "title": title, "applied": True})

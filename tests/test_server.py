@@ -738,3 +738,122 @@ def test_state_json_avec_un_mode_obsolete_se_repare(client, tmp_path):
     (tmp_path / "state.json").write_text(json.dumps({"settings": {"mode": "impulsion"}}), encoding="utf-8")
     server.STATE_FILE = tmp_path / "state.json"
     assert server.load_state()["settings"]["mode"] == "hold"
+
+
+# ============================================================================
+# Mise en forme : gras / italique / souligné
+# ----------------------------------------------------------------------------
+# Le texte reste une CHAÎNE BRUTE ; la mise en forme est une liste de plages
+# posées dessus. Jamais d'HTML stocké : pas d'injection possible sur l'écran, et
+# un texte sans plages s'affiche exactement comme avant.
+# ============================================================================
+
+
+def test_plages_conservees_et_renvoyees(client):
+    client.post(
+        "/api/text",
+        json={"text": "Bonjour le monde", "marks": [{"start": 8, "end": 16, "b": True}]},
+    )
+    etat = client.get("/api/state").get_json()
+    assert etat["marks"] == [{"start": 8, "end": 16, "b": True}]
+    assert etat["text"][8:16] == "le monde"
+
+
+def test_plages_hors_bornes_rognees(client):
+    client.post("/api/text", json={"text": "court", "marks": [{"start": -5, "end": 999, "i": True}]})
+    assert client.get("/api/state").get_json()["marks"] == [{"start": 0, "end": 5, "i": True}]
+
+
+def test_plages_invalides_ecartees(client):
+    """Une mise en forme abîmée ne doit jamais empêcher d'afficher le texte."""
+    client.post(
+        "/api/text",
+        json={
+            "text": "Un texte lisible",
+            "marks": [
+                {"start": 5, "end": 5, "b": True},  # vide
+                {"start": 3, "end": 1, "b": True},  # inversée
+                {"start": 0, "end": 4},  # sans style
+                {"start": "a", "end": "b", "b": True},  # non numérique
+                "pas un objet",
+                {"start": 0, "end": 2, "b": True},  # la seule valable
+            ],
+        },
+    )
+    etat = client.get("/api/state").get_json()
+    assert etat["marks"] == [{"start": 0, "end": 2, "b": True}]
+    assert etat["text"] == "Un texte lisible"
+
+
+def test_marks_non_liste_ignore(client):
+    client.post("/api/text", json={"text": "Bonjour", "marks": "gras"})
+    assert client.get("/api/state").get_json()["marks"] == []
+
+
+def test_nombre_de_plages_borne(client):
+    trop = [{"start": i, "end": i + 1, "b": True} for i in range(600)]
+    client.post("/api/text", json={"text": "x" * 700, "marks": trop})
+    assert len(client.get("/api/state").get_json()["marks"]) <= server.MAX_MARKS
+
+
+def test_import_efface_les_plages(client):
+    """Nouveau texte : les anciennes plages ne désignent plus rien."""
+    client.post("/api/text", json={"text": "Ancien", "marks": [{"start": 0, "end": 6, "b": True}]})
+    _upload(client, "Tout autre texte".encode("utf-8"), "neuf.txt")
+    assert client.get("/api/state").get_json()["marks"] == []
+
+
+def test_bibliotheque_conserve_la_mise_en_forme(client):
+    client.post(
+        "/api/library/save",
+        json={"name": "Sujet", "text": "Bonjour le monde", "marks": [{"start": 0, "end": 7, "u": True}]},
+    )
+    client.post("/api/text", json={"text": "autre chose"})
+    client.post("/api/library/load", json={"name": "Sujet"})
+    etat = client.get("/api/state").get_json()
+    assert etat["text"] == "Bonjour le monde"
+    assert etat["marks"] == [{"start": 0, "end": 7, "u": True}]
+
+
+def test_bibliotheque_sans_mise_en_forme_reste_compatible(client):
+    """Un .txt deposé à la main, sans fichier de plages : il doit se charger."""
+    (server.SCRIPTS_DIR / "ancien.txt").write_text("Texte venu d'avant", encoding="utf-8")
+    client.post("/api/library/load", json={"name": "ancien"})
+    etat = client.get("/api/state").get_json()
+    assert etat["text"] == "Texte venu d'avant"
+    assert etat["marks"] == []
+
+
+def test_reenregistrer_sans_mise_en_forme_efface_le_fichier(client):
+    client.post(
+        "/api/library/save",
+        json={"name": "Sujet", "text": "Bonjour", "marks": [{"start": 0, "end": 3, "b": True}]},
+    )
+    client.post("/api/library/save", json={"name": "Sujet", "text": "Bonjour", "overwrite": True})
+    client.post("/api/library/load", json={"name": "Sujet"})
+    assert client.get("/api/state").get_json()["marks"] == []
+
+
+def test_suppression_emporte_le_fichier_de_plages(client):
+    client.post(
+        "/api/library/save",
+        json={"name": "Sujet", "text": "Bonjour", "marks": [{"start": 0, "end": 3, "b": True}]},
+    )
+    client.post("/api/library/delete", json={"name": "Sujet"})
+    assert not list(server.SCRIPTS_DIR.glob("*.json"))
+
+
+def test_state_json_avec_des_plages_aberrantes_se_repare(client, tmp_path):
+    poison = {"text": "court", "marks": [{"start": 0, "end": 9999, "b": True}]}
+    (tmp_path / "state.json").write_text(json.dumps(poison), encoding="utf-8")
+    server.STATE_FILE = tmp_path / "state.json"
+    assert server.load_state()["marks"] == [{"start": 0, "end": 5, "b": True}]
+
+
+def test_la_liste_de_la_bibliotheque_n_expose_pas_les_fichiers_de_plages(client):
+    client.post(
+        "/api/library/save",
+        json={"name": "Sujet", "text": "Bonjour", "marks": [{"start": 0, "end": 3, "b": True}]},
+    )
+    noms = [item["name"] for item in client.get("/api/library").get_json()]
+    assert noms == ["Sujet"]

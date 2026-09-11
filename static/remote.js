@@ -70,6 +70,8 @@
     $("title").value = s.title || "";
     $("text").value = s.text || "";
     sentText = s.text || "";
+    texteAvant = s.text || "";
+    marks = Array.isArray(s.marks) ? s.marks : [];
     textDirty = false;
     reflectSettings();
     refreshLibrary();
@@ -129,6 +131,8 @@
     $("title").value = st.title || "";
     $("text").value = st.text || "";
     sentText = st.text || "";
+    texteAvant = st.text || "";
+    marks = Array.isArray(st.marks) ? st.marks : [];
     refreshLibrary();
     refreshUnsent();
   }
@@ -148,6 +152,10 @@
     // Le réglage de montée n'a de sens qu'en mode dynamique : on le masque ailleurs
     // plutôt que d'offrir un curseur sans effet.
     $("rampRow").classList.toggle("hide", (settings.mode || "hold") !== "dyn");
+    // Une seule explication a l'ecran : celle du mode choisi. Les trois ensemble
+    // faisaient un pave que plus personne ne lisait.
+    document.querySelectorAll(".modeHelp").forEach((p) =>
+      p.classList.toggle("hide", p.dataset.mode !== (settings.mode || "hold")));
     renderSwatches();
   }
 
@@ -163,13 +171,103 @@
       b.classList.toggle("primary", b.dataset[attr] === String(value)));
   }
 
+  let texteAvant = "";
   ["text", "title"].forEach((id) =>
-    $(id).addEventListener("input", () => { textDirty = true; refreshUnsent(); }));
+    $(id).addEventListener("input", () => {
+      if (id === "text") {
+        remapMarks(texteAvant, $("text").value);
+        texteAvant = $("text").value;
+      }
+      textDirty = true;
+      refreshUnsent();
+    }));
+
+  // --- Mise en forme : gras / italique / souligné ---------------------------
+  // Le texte reste une CHAÎNE BRUTE ; la mise en forme est une liste de plages
+  // posées dessus. Aucun HTML n'est stocké ni transmis : l'écran construit ses
+  // éléments un par un. Un texte sans plages s'affiche exactement comme avant.
+  let marks = [];
+
+  function refreshFmtInfo() {
+    $("fmtInfo").textContent = marks.length
+      ? marks.length + (marks.length > 1 ? " passages mis en forme." : " passage mis en forme.")
+      : "Sélectionnez un passage, puis G, I ou S.";
+  }
+
+  function applyFormat(style) {
+    const ta = $("text");
+    const debut = ta.selectionStart;
+    const fin = ta.selectionEnd;
+    if (fin <= debut) {
+      toast("Sélectionnez d'abord un passage");
+      return;
+    }
+    // Déjà entièrement dans ce style ? On l'enlève. Sinon on l'ajoute.
+    const dedans = marks.filter((m) => m[style] && m.start <= debut && m.end >= fin);
+    if (dedans.length) {
+      marks = marks.flatMap((m) => {
+        if (!m[style] || m.start > debut || m.end < fin) return [m];
+        const morceaux = [];
+        if (m.start < debut) morceaux.push({ ...m, end: debut });
+        if (m.end > fin) morceaux.push({ ...m, start: fin });
+        return morceaux;
+      });
+    } else {
+      marks.push({ start: debut, end: fin, [style]: true });
+    }
+    if (marks.length > 500) marks = marks.slice(-500);
+    textDirty = true;
+    refreshUnsent();
+    refreshFmtInfo();
+    ta.focus();
+    ta.setSelectionRange(debut, fin);
+  }
+
+  // Le texte change : on recale les plages sur les parties intactes.
+  // On compare le préfixe et le suffixe communs — c'est exact pour une frappe ou
+  // un collage ordinaire, et une plage qui chevauche la zone modifiée est
+  // rognée plutôt que laissée à une position devenue fausse.
+  function remapMarks(avant, apres) {
+    if (!marks.length || avant === apres) return;
+    let p = 0;
+    while (p < avant.length && p < apres.length && avant[p] === apres[p]) p++;
+    let s = 0;
+    while (
+      s < avant.length - p &&
+      s < apres.length - p &&
+      avant[avant.length - 1 - s] === apres[apres.length - 1 - s]
+    ) {
+      s++;
+    }
+    const finAvant = avant.length - s;
+    const delta = apres.length - avant.length;
+    marks = marks
+      .map((m) => {
+        if (m.end <= p) return m; // entièrement avant la modification
+        if (m.start >= finAvant) return { ...m, start: m.start + delta, end: m.end + delta };
+        const start = Math.min(m.start, p);
+        const end = Math.max(p, Math.min(m.end, finAvant) + delta);
+        return end > start ? { ...m, start, end } : null;
+      })
+      .filter(Boolean);
+    refreshFmtInfo();
+  }
+
+  $("fmtB").addEventListener("click", () => applyFormat("b"));
+  $("fmtI").addEventListener("click", () => applyFormat("i"));
+  $("fmtU").addEventListener("click", () => applyFormat("u"));
+  $("fmtClear").addEventListener("click", () => {
+    marks = [];
+    textDirty = true;
+    refreshUnsent();
+    refreshFmtInfo();
+    toast("Mise en forme effacée");
+  });
 
   // --- Envoi du texte -------------------------------------------------------
   $("send").addEventListener("click", async () => {
     const envoye = $("text").value;
-    await postJSON("/api/text", { text: envoye, title: $("title").value });
+    await postJSON("/api/text", { text: envoye, title: $("title").value, marks });
     sentText = envoye;
     textDirty = false;
     refreshUnsent();
@@ -180,7 +278,7 @@
     const name = ($("title").value || "").trim() || "Sans titre";
     const r = await fetch("/api/library/save", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, text: $("text").value, overwrite: !!overwrite }),
+      body: JSON.stringify({ name, text: $("text").value, overwrite: !!overwrite, marks }),
     });
     if (r.status === 409) {
       // un texte du même nom existe déjà : on demande confirmation au lieu d'écraser
@@ -226,6 +324,8 @@
   function fillFromImport(res) {
     $("text").value = res.text || "";
     $("title").value = res.title || "";
+    texteAvant = res.text || "";
+    marks = []; // nouveau texte : les anciennes plages n'ont plus de sens
     textDirty = true;
     refreshUnsent();
     toast("Importé : " + res.title + " — appuyez sur « Envoyer à l'écran »");
@@ -642,6 +742,7 @@
   }
 
   loadState().catch(() => toast("Erreur de connexion au boîtier"));
+  refreshFmtInfo();
   refreshKiosk();
   setInterval(pollVersion, 1500);
   const mainBtn = document.querySelector(".readbtn.main");
