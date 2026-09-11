@@ -382,18 +382,49 @@ sudo raspi-config
 **Réglage n° 1 — le démarrage automatique (le plus important des trois)**
 
 - [ ] **E1.** Avec les flèches, allez sur **System Options** → Entrée.
-- [ ] **E2.** Allez sur **Boot / Auto Login** → Entrée. *(Si vous ne voyez pas ce nom exact, cherchez une ligne voisine qui parle de « Boot » ou de « Auto Login » : les libellés changent un peu d'une version à l'autre.)*
+
+**Regardez maintenant la liste : selon la version de votre boîtier, ce réglage se
+présente de DEUX façons différentes.** Les deux mènent exactement au même résultat.
+Repérez celle que vous avez, puis suivez uniquement son cas.
+
+> **🔀 Quel cas est le vôtre ?**
+> - Vous voyez **une seule ligne** qui contient à la fois « Boot » et « Auto Login »
+>   (par exemple `Boot / Auto Login`) → **cas 1**.
+> - Vous voyez **deux lignes séparées**, l'une **Boot**, l'autre **Auto Login**
+>   → **cas 2** (c'est la présentation des versions récentes).
+
+***Cas 1 — une seule ligne « Boot / Auto Login »***
+
+- [ ] **E2.** Allez sur **Boot / Auto Login** → Entrée.
 - [ ] **E3.** Choisissez **Desktop Autologin** → Entrée.
 
-**✅ Ce que vous devez voir après E3 :** l'écran revient tout seul au **grand menu
-bleu** de départ. Aucun message de confirmation n'apparaît : ce retour au menu
-principal **est** la confirmation.
+***Cas 2 — deux lignes séparées, « Boot » et « Auto Login »***
 
-> **⚠️ PIÈGE — ne confondez pas.** Il existe aussi un choix « **Console** Autologin ».
-> Si vous le prenez, le boîtier démarrera sur un écran noir de texte et le
-> prompteur ne s'affichera **jamais**. Le mot qui compte est **Desktop**.
-> Ne vous fiez pas aux numéros de menu (S5, B4, A6…) : ils changent d'une version
-> à l'autre. Fiez-vous aux **mots**.
+**Il faut faire les deux**, l'une après l'autre. L'une seule ne suffit pas.
+
+- [ ] **E2.** Allez sur **Boot** → Entrée, puis choisissez **Desktop** → Entrée.
+      *(Vous revenez alors dans la liste System Options.)*
+- [ ] **E3.** Allez sur **Auto Login** → Entrée, puis activez la connexion
+      automatique **au bureau** : selon la version, cela s'appelle
+      **Desktop Auto Login**, ou bien on vous pose une question à laquelle il faut
+      répondre **`<Yes>`** (Oui) → Entrée.
+
+**✅ Ce que vous devez voir après E3, dans les deux cas :** l'écran revient tout seul
+au **grand menu bleu** de départ. Aucun message de confirmation n'apparaît : ce
+retour au menu principal **est** la confirmation.
+
+> **⚠️ PIÈGE — le mot qui compte est « Desktop ».** Partout dans ce réglage, il
+> existe un équivalent « **Console** » (« Console Autologin », ou « Console » dans
+> la ligne *Boot*). Si vous le prenez, le boîtier démarrera sur un écran noir de
+> texte et le prompteur ne s'affichera **jamais**.
+> Ne vous fiez pas non plus aux numéros de menu (S5, S6, B4, A6…) : ils changent
+> d'une version à l'autre. Fiez-vous aux **mots**.
+
+> **🆘 Dans le cas 2, si vous n'avez fait que « Boot → Desktop » et oublié
+> « Auto Login » :** au redémarrage, le boîtier s'arrêtera sur un écran de
+> connexion réclamant votre mot de passe, et le prompteur ne partira pas tout seul.
+> Ce n'est pas grave : connectez-vous une fois à la main, puis refaites
+> `sudo raspi-config` et complétez la ligne **Auto Login**.
 
 **Réglage n° 2 — le mode d'affichage**
 
@@ -666,8 +697,12 @@ prompteur s'affiche **tout seul**. Ne touchez à rien pendant ce temps.
 >    `>_` en haut, ou **Ctrl + Alt + T**), tapez `cd prompteur`, puis relancez la
 >    ligne F7 **sans `sudo`**, avec le même mot de passe entre guillemets, puis
 >    tapez `sudo reboot` ;
-> 2. dans le menu bleu, **« Console Autologin »** a été choisi au lieu de
->    **Desktop** Autologin — refaites le réglage n° 1 de l'étape E, puis
+> 2. dans le menu bleu, **« Console »** a été choisi au lieu de **Desktop** —
+>    refaites le réglage n° 1 de l'étape E, puis `sudo reboot` ;
+> 3. *(si votre menu avait deux lignes séparées)* la ligne **Boot** a bien été
+>    réglée sur **Desktop**, mais la ligne **Auto Login** a été oubliée — c'est
+>    d'ailleurs le cas si le boîtier vous a réclamé votre mot de passe avant
+>    d'arriver au bureau. Refaites le réglage n° 1 de l'étape E, cas 2, puis
 >    `sudo reboot`.
 >
 > **L'écran reste noir, ou affiche un texte blanc sur fond noir sans jamais
@@ -1107,7 +1142,7 @@ clavier, une souris, un écran, un câble Ethernet et Internet.
 |---|---|
 | **L'écran reste noir au démarrage** | Le câble micro-HDMI est sur le mauvais port. Rebranchez-le sur celui **le plus proche de la prise d'alimentation USB-C**. Sinon : éteignez tout, allumez **l'écran d'abord**, le boîtier ensuite. En dernier recours, testez sur une télévision ordinaire. |
 | **L'image est décalée, coupée sur les bords, ou minuscule** | C'est fréquent avec les petits écrans HDMI. Dans l'ordre : (1) si l'écran possède ses propres boutons de réglage, cherchez-y un mode « plein écran » / « auto » / « 16:9 » ; (2) éteignez le boîtier, allumez **l'écran d'abord**, puis le boîtier ; (3) contrôle simple : **la ligne rouge doit traverser l'écran d'un bord à l'autre** — sinon l'image est mal cadrée. Si rien n'y fait, signalez le problème à un dépanneur **avec la marque et le modèle exacts de l'écran**. |
-| **Le boîtier démarre sur le bureau, pas sur le prompteur** | Deux causes possibles : (1) la ligne **F7** a été lancée avec `sudo` — ouvrez la fenêtre noire, tapez `cd prompteur`, relancez la ligne F7 **sans** `sudo` (même mot de passe entre guillemets), puis `sudo reboot` ; (2) dans le menu bleu, « Console Autologin » a été choisi au lieu de **Desktop** Autologin — refaites le réglage n° 1 de l'étape E. |
+| **Le boîtier démarre sur le bureau, pas sur le prompteur** | Trois causes possibles : (1) la ligne **F7** a été lancée avec `sudo` — ouvrez la fenêtre noire, tapez `cd prompteur`, relancez la ligne F7 **sans** `sudo` (même mot de passe entre guillemets), puis `sudo reboot` ; (2) dans le menu bleu, « Console » a été choisi au lieu de **Desktop** — refaites le réglage n° 1 de l'étape E ; (3) si votre menu avait **deux lignes séparées**, la ligne **Auto Login** a été oubliée — refaites le réglage n° 1 de l'étape E, cas 2. |
 | **L'écran affiche une page blanche, ou un message d'erreur en anglais du navigateur** (« This site can't be reached ») | Le boîtier a démarré plus vite que son propre programme : l'affichage s'est ouvert trop tôt et **ne se répare pas tout seul**. Branchez le clavier de la sacoche et appuyez sur **F5** (ou **Ctrl + R**) pour recharger la page. Si le prompteur ne revient pas : éteignez proprement, attendez 10 secondes, rallumez, et laissez **une minute complète** sans rien toucher. |
 | **L'écran devient noir tout seul au bout de quelques minutes** | C'est la mise en veille. Refaites le **réglage n° 3 de l'étape E** (Display Options → Screen Blanking → NON), puis redémarrez. Vérifiez aussi la mise en veille **propre à l'écran 7 pouces**, s'il en a une dans ses propres boutons. |
 | **Le réseau WiFi `Prompteur` n'apparaît pas sur le téléphone** | Attendez d'abord **une minute complète** après l'allumage. Toujours rien : sur le boîtier, ouvrez la fenêtre noire (**Ctrl + Alt + T**) et tapez la ligne ci-dessous, qui rallume le réseau du boîtier. Attendez 30 secondes et regardez à nouveau la liste des WiFi du téléphone.<br>`sudo nmcli connection up Prompteur`<br>Si le réseau n'apparaît toujours pas, **alors seulement** : rebranchez le câble Ethernet et relancez la **ligne F7** de l'étape F. *(Attention : voir l'adresse s'afficher sur l'écran du boîtier ne prouve PAS que le WiFi fonctionne — la seule preuve valable est de voir le réseau dans la liste du téléphone.)* |

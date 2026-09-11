@@ -96,6 +96,9 @@ sudo raspi-config
 
 1. **Démarrage automatique du bureau** *(indispensable pour que le prompteur s'affiche seul)* :
    `System Options` → `Boot / Auto Login` → **Desktop Autologin**
+   *(Sur les versions récentes de `raspi-config`, ce réglage est scindé en **deux lignes
+   distinctes** dans `System Options` : réglez **`Boot`** sur **Desktop**, puis activez
+   **`Auto Login`** — « Desktop Auto Login », ou `<Yes>`. Les deux sont nécessaires.)*
 2. **Système graphique X11** *(recommandé — le mode kiosque est plus fiable qu'en Wayland)* :
    `Advanced Options` → `Wayland` → **X11**
 
