@@ -215,6 +215,35 @@
     requestAnimationFrame(frame);
   }
 
+  // --- Quitter le prompteur (Échap) ----------------------------------------
+  // C'est le SEUL endroit où l'on est prisonnier : la télécommande et l'écran de
+  // régie sont des pages web ordinaires, qu'on ferme quand on veut. Ici le
+  // navigateur est en plein écran sans barre ni onglet, et jusqu'ici la seule
+  // sortie était Alt+F4 puis un redémarrage pour revenir.
+  // Une page web ne peut pas se fermer elle-même : c'est le serveur qui ferme le
+  // navigateur, via la même route que le bouton « Fermer » de la télécommande.
+  // Confirmation en deux temps : une touche unique suffirait à couper l'écran en
+  // pleine prise si un clavier de secours est branché.
+  const quitAsk = document.getElementById("quitAsk");
+  let quitPending = false;
+
+  function askQuit() {
+    quitPending = true;
+    quitAsk.style.display = "block";
+  }
+  function cancelQuit() {
+    quitPending = false;
+    quitAsk.style.display = "none";
+  }
+  function doQuit() {
+    cancelQuit();
+    fetch("/api/kiosk/close", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    }).catch(() => {});
+  }
+
   // --- Touches (pédales + raccourcis) — meneur uniquement pour le pilotage --
   function keyName(e) {
     const map = { Down: "ArrowDown", Up: "ArrowUp", Left: "ArrowLeft", Right: "ArrowRight", Spacebar: " ", Esc: "Escape" };
@@ -228,6 +257,18 @@
       return;
     }
     if (isViewer) return; // spectateur = lecture seule, les pédales sont ignorées
+
+    // Échap : demande, puis confirme. Toute autre touche annule la demande.
+    if (k === "Escape") {
+      e.preventDefault();
+      if (quitPending) doQuit();
+      else askQuit();
+      return;
+    }
+    if (quitPending) {
+      cancelQuit();
+      return; // la touche qui annule ne fait rien d'autre : pas de pédale par surprise
+    }
 
     const s = settings || {};
     const kf = s.keyForward || "ArrowDown";

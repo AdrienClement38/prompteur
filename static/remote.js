@@ -39,6 +39,10 @@
   }
 
   let settings = {};
+  // Version connue de l'état du boîtier, et drapeau de saisie en cours : on ne
+  // remplace JAMAIS un texte que quelqu'un est en train d'écrire.
+  let knownVersion = null;
+  let textDirty = false;
 
   // --- Onglets --------------------------------------------------------------
   document.querySelectorAll(".tabbtns button").forEach((btn) => {
@@ -54,9 +58,46 @@
   async function loadState() {
     const s = await api("/api/state");
     settings = s.settings || {};
+    knownVersion = s.version;
     $("title").value = s.title || "";
     $("text").value = s.text || "";
+    textDirty = false;
     reflectSettings();
+    refreshLibrary();
+  }
+
+  // --- Synchronisation entre appareils --------------------------------------
+  // Plusieurs pages sont ouvertes en même temps : le téléphone du présentateur,
+  // l'écran du boîtier, l'ordinateur de la régie. Jusqu'ici, un réglage modifié
+  // par l'un n'apparaissait chez les autres qu'après un rechargement manuel.
+  // On interroge /api/version, qui ne renvoie que deux entiers, et on ne relit
+  // l'état complet que lorsqu'il a réellement changé. Pas de websocket : le seul
+  // chemin qui compte — pédale vers écran — ne passe par aucun réseau.
+  async function pollVersion() {
+    let v;
+    try {
+      v = await api("/api/version");
+    } catch {
+      return; // liaison perdue : on réessaiera au tour suivant
+    }
+    if (knownVersion === null || v.version === knownVersion) return;
+    knownVersion = v.version;
+    let st;
+    try {
+      st = await api("/api/state");
+    } catch {
+      return;
+    }
+    settings = st.settings || {};
+    reflectSettings();
+    if (textDirty) {
+      // Quelqu'un a envoyé un autre texte pendant qu'on écrivait : on prévient,
+      // mais on n'écrase pas la saisie en cours.
+      toast("Le texte a changé sur le boîtier");
+      return;
+    }
+    $("title").value = st.title || "";
+    $("text").value = st.text || "";
     refreshLibrary();
   }
 
@@ -86,6 +127,9 @@
     document.querySelectorAll(selector).forEach((b) =>
       b.classList.toggle("primary", b.dataset[attr] === String(value)));
   }
+
+  ["text", "title"].forEach((id) =>
+    $(id).addEventListener("input", () => { textDirty = true; }));
 
   // --- Envoi du texte -------------------------------------------------------
   $("send").addEventListener("click", async () => {
@@ -364,6 +408,12 @@
         setStat("Impossible : F est réservé au plein écran, une pédale réglée sur F ne marcherait jamais. Appuie sur une autre pédale.", "err");
         return;
       }
+      if (k === "Escape") {
+        // Échap ferme le prompteur : une pédale réglée dessus couperait l'écran
+        // au premier appui, en pleine lecture.
+        setStat("Impossible : Échap sert à quitter le prompteur. Une pédale réglée sur Échap fermerait l'écran au premier appui.", "err");
+        return;
+      }
       if (settings[otherKey] && k === settings[otherKey]) {
         setStat("Impossible : « " + keyLabel(k) + " » est déjà la touche de la " + PEDAL_LABEL[otherKey] +
           ". Les deux pédales doivent envoyer des touches différentes, sinon l'une des deux devient muette.", "err");
@@ -488,5 +538,6 @@
 
   loadState().catch(() => toast("Erreur de connexion au boîtier"));
   refreshKiosk();
+  setInterval(pollVersion, 1500);
   loadViewLink();
 })();

@@ -87,6 +87,19 @@
     #netinfo .addr { font:700 27px/1.4 'Consolas', monospace; color:#fff; margin-top:8px; letter-spacing:.5px; }
     #netinfo.hidden { opacity:0; pointer-events:none; }
 
+    /* Demande de confirmation avant de quitter le prompteur */
+    #quitAsk {
+      position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+      z-index:30; text-align:center; display:none;
+      background:rgba(18,22,30,.96); border:1px solid rgba(255,255,255,.2);
+      color:#eef1f6; padding:26px 34px; border-radius:18px;
+      font:500 24px/1.5 system-ui, sans-serif;
+      min-width:min(86vw, 520px);
+      box-shadow:0 10px 50px rgba(0,0,0,.6);
+    }
+    #quitAsk b { color:#ffd400; }
+    #quitAsk .sub { font-size:17px; color:rgba(255,255,255,.6); margin-top:10px; }
+
     /* Badge affiché uniquement sur les écrans spectateurs (régie) */
     #specBadge {
       position:fixed; left:12px; top:10px; z-index:25;
@@ -107,8 +120,14 @@
   <div id="speedTag">▶︎ 70</div>
   <div id="specBadge">SPECTATEUR — suit l'écran principal</div>
   <div id="netinfo" class="hidden"></div>
+  <div id="quitAsk">
+    Quitter le prompteur ?
+    <div class="sub">
+      <b>Échap</b> pour confirmer &nbsp;·&nbsp; n'importe quelle autre touche pour rester
+    </div>
+  </div>
   <div id="hud">
-    Pédale droite = avancer · gauche = reculer · Espace = lecture/pause · +/− = vitesse · M = miroir · F = plein écran · i = adresse PC
+    Pédale droite = avancer · gauche = reculer · Espace = lecture/pause · +/− = vitesse · M = miroir · F = plein écran · i = adresse PC · Échap = quitter
   </div>
   <div id="empty">
     <div>Aucun texte.<br>Envoie ton texte depuis le téléphone (WiFi « Prompteur ») ou par clé USB.</div>
