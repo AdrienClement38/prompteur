@@ -57,6 +57,23 @@ ExecStart=/usr/bin/python3 "$PROJECT_DIR/server.py"
 Restart=always
 RestartSec=2
 
+# Durcissement. Sur Raspberry Pi OS, l'utilisateur cree a la premiere mise en
+# route est generalement autorise a faire « sudo » sans mot de passe : sans ces
+# lignes, tout code qui s'executerait dans le serveur pourrait donc devenir root.
+# NoNewPrivileges ferme cette porte — le service n'a besoin d'aucun privilege, il
+# ne fait que lire et ecrire dans son propre dossier et ouvrir un navigateur.
+NoNewPrivileges=yes
+# PAS de PrivateTmp : le service partage volontairement /tmp avec la session
+# graphique, ou kiosk.sh ecrit son fichier PID. Un /tmp prive lui ferait perdre
+# de vue le navigateur du kiosque, donc les boutons « afficher / fermer ».
+ProtectSystem=full
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+
 [Install]
 WantedBy=multi-user.target
 EOF

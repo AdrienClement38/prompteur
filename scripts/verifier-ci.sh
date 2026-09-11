@@ -31,7 +31,7 @@ etape "Ruff — format"
 python -m ruff format --check .
 
 etape "Bandit — analyse de sécurité"
-python -m bandit -c pyproject.toml -r server.py textextract.py
+python -m bandit -c pyproject.toml -r .
 
 etape "pip-audit — vulnérabilités des dépendances"
 python -m pip_audit -r requirements.txt

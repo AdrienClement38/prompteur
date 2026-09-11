@@ -886,3 +886,82 @@ def test_tailles_et_couleurs_hors_palette_refusees(client):
         },
     )
     assert client.get("/api/state").get_json()["marks"] == [{"start": 6, "end": 8, "size": "l"}]
+
+
+# ============================================================================
+# Points de vigilance de l'audit
+# ============================================================================
+
+
+def test_reglage_refuse_repond_400(client):
+    """Avant, la reponse etait « ok » meme quand rien n'avait ete accepte : la
+    telecommande colorait le bouton et l'on croyait avoir change de mode."""
+    r = client.post("/api/settings", json={"mode": "pirate"})
+    assert r.status_code == 400
+    assert r.get_json()["refused"] == ["mode"]
+
+
+def test_reglage_inconnu_refuse(client):
+    r = client.post("/api/settings", json={"couleurDuCiel": "bleu"})
+    assert r.status_code == 400
+    assert "couleurDuCiel" in r.get_json()["refused"]
+
+
+def test_les_reglages_valides_du_meme_envoi_sont_appliques(client):
+    """On ne punit pas les reglages corrects a cause d'un voisin invalide."""
+    r = client.post("/api/settings", json={"fontSize": 90, "mode": "pirate"})
+    assert r.status_code == 400
+    assert client.get("/api/state").get_json()["settings"]["fontSize"] == 90
+
+
+def test_lecture_pause_ne_fait_pas_reteledecharger_le_texte(client):
+    """cmdSeq suffit a propager la commande. Faire avancer la version obligerait
+    chaque ecran a retelecharger tout le script a chaque appui sur Lecture."""
+    avant = client.get("/api/version").get_json()
+    for commande in ("play", "pause", "toggle", "restart", "top"):
+        client.post("/api/command", json={"cmd": commande})
+    apres = client.get("/api/version").get_json()
+    assert apres["version"] == avant["version"]
+    assert apres["cmdSeq"] == avant["cmdSeq"] + 5
+
+
+def test_changer_la_vitesse_fait_bien_avancer_la_version(client):
+    """Celles-la modifient reellement un reglage : les ecrans doivent le voir."""
+    avant = client.get("/api/version").get_json()["version"]
+    client.post("/api/command", json={"cmd": "faster"})
+    assert client.get("/api/version").get_json()["version"] > avant
+
+
+def test_entetes_de_securite_du_contenu(client):
+    r = client.get("/display")
+    csp = r.headers.get("Content-Security-Policy", "")
+    assert "script-src 'self'" in csp
+    assert "frame-ancestors 'none'" in csp
+    assert r.headers.get("X-Frame-Options") == "DENY"
+
+
+def test_pas_de_script_en_ligne_dans_les_pages(client):
+    """La politique interdit les scripts ecrits dans la page : il ne doit donc
+    plus en rester, sinon l'ecran ne demarrerait pas du tout."""
+    import re as _re
+
+    for chemin in ("/", "/display", "/view"):
+        html = client.get(chemin).get_data(as_text=True)
+        for balise in _re.findall(r"<script[^>]*>(.*?)</script>", html, _re.S):
+            assert balise.strip() == "", chemin
+
+
+def test_liste_usb_mise_en_cache(client, monkeypatch):
+    """Le parcours disque ne doit pas etre relancable en boucle par n'importe
+    quel appareil du WiFi."""
+    appels = {"n": 0}
+
+    def compte():
+        appels["n"] += 1
+        return []
+
+    monkeypatch.setattr(server, "find_usb_text_files", compte)
+    server._usb_cache["files"] = None
+    for _ in range(5):
+        client.get("/api/usb")
+    assert appels["n"] == 1

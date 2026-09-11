@@ -33,7 +33,9 @@ jobs:
       - name: Ruff — format (propreté)
         run: ruff format --check .
       - name: Bandit — analyse de sécurité (SAST)
-        run: bandit -c pyproject.toml -r server.py textextract.py
+        # Le dossier entier, et non une liste de fichiers : un nouveau module
+        # n'aurait jamais ete analyse. Les exclusions sont dans pyproject.toml.
+        run: bandit -c pyproject.toml -r .
       - name: pip-audit — vulnérabilités des dépendances
         run: pip-audit -r requirements.txt
       - name: Pytest — tests fonctionnels

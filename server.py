@@ -319,11 +319,23 @@ def load_state():
 
 
 def _save_state_unlocked(state):
-    """Écrit state.json de façon atomique. Le verrou _lock DOIT être détenu."""
+    """Écrit state.json de façon atomique. Le verrou _lock DOIT être détenu.
+
+    flush + fsync AVANT le renommage : le renommage est atomique, mais sans cette
+    synchronisation les données du fichier temporaire peuvent n'être pas encore
+    sur la carte au moment d'une coupure de courant. On retrouve alors un JSON
+    tronqué, que load_state() écarte EN SILENCE — le journaliste rallume et
+    retrouve le texte de bienvenue, sans la moindre explication.
+    """
     tmp = STATE_FILE.with_suffix(".json.tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(state, f, ensure_ascii=False, indent=2)
-    tmp.replace(STATE_FILE)
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(state, f, ensure_ascii=False)
+            f.flush()
+            os.fsync(f.fileno())
+        tmp.replace(STATE_FILE)
+    except OSError:
+        pass
 
 
 def bump(state):
@@ -563,15 +575,24 @@ def api_settings():
     data = request.get_json(silent=True) or {}
     with _lock:
         changed = False
+        refuses = []
         for key, value in data.items():
             chk = SETTING_VALIDATORS.get(key)
             if chk and chk(value):
                 STATE["settings"][key] = value
                 changed = True
+            else:
+                refuses.append(key)
         if changed:
             bump(STATE)
             _save_state_unlocked(STATE)
         settings = copy.deepcopy(STATE["settings"])
+    # Un réglage refusé DOIT le dire. Jusqu'ici la réponse était « ok » même quand
+    # rien n'avait été accepté : la télécommande colorait le bouton, et l'on
+    # croyait avoir change de mode alors que rien n'avait bouge. Les reglages
+    # valides du meme envoi sont quand meme appliques — on ne punit pas le reste.
+    if refuses:
+        return jsonify({"ok": False, "error": "réglage refusé", "refused": refuses, "settings": settings}), 400
     return jsonify({"ok": True, "settings": settings})
 
 
@@ -595,7 +616,13 @@ def api_command():
         STATE["control"]["cmdSeq"] = int(STATE["control"].get("cmdSeq", 0)) + 1
         if cmd in ("play", "pause"):
             STATE["control"]["playing"] = cmd == "play"
-        bump(STATE)  # en mémoire seulement, pas d'écriture disque
+        # On ne fait avancer la version QUE si un réglage a réellement changé.
+        # cmdSeq suffit à propager la commande ; faire avancer la version
+        # obligerait chaque écran à retélécharger TOUT le script à chaque appui
+        # sur Lecture ou Pause — plusieurs mégaoctets sur le WiFi du boîtier, pour
+        # rien, au moment précis où l'on a besoin de réactivité.
+        if cmd in ("faster", "slower"):
+            bump(STATE)  # en mémoire seulement, pas d'écriture disque
         seq = STATE["control"]["cmdSeq"]
         speed = STATE["settings"]["speed"]
     return jsonify({"ok": True, "cmdSeq": seq, "speed": speed})
@@ -720,9 +747,27 @@ def _wants_apply(value):
 # --------------------------------------------------------------------------
 # API — import clé USB
 # --------------------------------------------------------------------------
+# Le parcours des clés USB visite jusqu'à 8 000 entrées sur six niveaux. La route
+# n'a pas d'authentification : sans garde-fou, n'importe quel appareil du WiFi
+# peut la rappeler en boucle et occuper le disque du boîtier en pleine lecture.
+# Un résultat de quelques secondes suffit largement : on branche une clé, on
+# appuie sur « Clé USB », on charge.
+_usb_cache = {"at": 0.0, "files": None}
+USB_CACHE_TTL = 3.0
+
+
 @app.route("/api/usb")
 def api_usb():
-    return jsonify(find_usb_text_files())
+    maintenant = time.monotonic()
+    with _lock:
+        frais = _usb_cache["files"] is not None and maintenant - _usb_cache["at"] < USB_CACHE_TTL
+        if frais:
+            return jsonify(_usb_cache["files"])
+    files = find_usb_text_files()
+    with _lock:
+        _usb_cache["at"] = time.monotonic()
+        _usb_cache["files"] = files
+    return jsonify(files)
 
 
 @app.route("/api/usb/load", methods=["POST"])
@@ -1049,6 +1094,15 @@ def api_info():
 def security_headers(resp):
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["Referrer-Policy"] = "no-referrer"
+    # Filet de dernier recours depuis que le prompteur affiche du contenu mis en
+    # forme : même si une faille laissait passer du balisage, rien d'extérieur ne
+    # pourrait être chargé ni exécuté. Tout vient du boîtier, qui est hors-ligne.
+    resp.headers["Content-Security-Policy"] = (
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; "
+        "base-uri 'none'; form-action 'none'; object-src 'none'"
+    )
+    resp.headers["X-Frame-Options"] = "DENY"
     return resp
 
 

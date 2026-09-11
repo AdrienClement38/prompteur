@@ -1,6 +1,6 @@
 /* Prompteur — logique de l'écran (défilement + pédales + synchro temps réel).
 
-   Deux modes (injectés par le serveur via window.PROMPTEUR_MODE) :
+   Deux modes (indiqués par le serveur via l'attribut data-mode du script) :
    - "presenter" (/display) : écran MENEUR. Piloté aux pédales EN LOCAL (latence nulle),
      il DIFFUSE sa position de défilement au serveur.
    - "viewer" (/view) : écran SPECTATEUR (régie…). Lecture seule : il SUIT le meneur en
@@ -12,7 +12,9 @@
 (() => {
   "use strict";
 
-  const MODE = window.PROMPTEUR_MODE === "viewer" ? "viewer" : "presenter";
+  // Le serveur indique la surface par un attribut sur la balise de script :
+  // aucun script en ligne, donc rien qui contrevienne a la politique de securite.
+  const MODE = document.currentScript?.dataset.mode === "viewer" ? "viewer" : "presenter";
   const isViewer = MODE === "viewer";
 
   const scroller = document.getElementById("scroller");
@@ -498,22 +500,32 @@
   }
 
   const QUIT_TITLE = "Revenir à la page d'accueil ?";
-  const QUIT_SUB = document.getElementById("quitSub").innerHTML;
+  // On mémorise les NŒUDS d'origine, pas du balisage : rien n'est reconstruit à
+  // partir d'une chaîne, donc rien à échapper.
+  const QUIT_SUB_NODES = [...document.getElementById("quitSub").childNodes];
 
   function restoreQuitText() {
     document.getElementById("quitTitle").textContent = QUIT_TITLE;
-    document.getElementById("quitSub").innerHTML = QUIT_SUB;
+    document.getElementById("quitSub").replaceChildren(...QUIT_SUB_NODES);
   }
 
   // Refus de quitter : on le dit dans la même fenêtre, et elle se referme seule.
   function refuseQuit() {
     quitPending = false;
     document.getElementById("quitTitle").textContent = "Impossible de revenir à l'accueil.";
-    document.getElementById("quitSub").innerHTML =
-      "La liaison avec le boîtier est perdue : la page d'accueil ne répondrait pas, " +
-      "et il n'y a pas de flèche retour ici.<br>" +
-      "<span style=\"font-size:15px;\">Le texte reste lisible et les pédales fonctionnent. " +
-      "Réessayez quand le bandeau rouge aura disparu.</span>";
+    const petit = document.createElement("span");
+    petit.style.fontSize = "15px";
+    petit.textContent =
+      "Le texte reste lisible et les pédales fonctionnent. " +
+      "Réessayez quand le bandeau rouge aura disparu.";
+    document.getElementById("quitSub").replaceChildren(
+      document.createTextNode(
+        "La liaison avec le boîtier est perdue : la page d'accueil ne répondrait pas, " +
+          "et il n'y a pas de flèche retour ici."
+      ),
+      document.createElement("br"),
+      petit
+    );
     quitAsk.style.display = "block";
     setTimeout(() => {
       if (!quitPending) cancelQuit();
@@ -767,12 +779,35 @@
       const primary = addresses[0] || "10.42.0.1";
       const main = `http://${primary}:${port}/display`;
       const spec = `http://${primary}:${port}/view`;
-      netinfo.innerHTML =
-        "Écran principal (PC / tablette) :" +
-        `<div class="addr">${main}</div>` +
-        '<div style="margin-top:10px">Écran <b>spectateur / régie</b> (suit en direct) :</div>' +
-        `<div class="addr" style="color:#ffd400">${spec}</div>` +
-        '<div style="font-size:14px;opacity:.65;margin-top:8px">connecte l\'appareil au WiFi <b>Prompteur</b></div>';
+      // Construit element par element : les adresses viennent du systeme, et
+      // aucune chaine de balisage n'est assemblee a la main.
+      const bloc = (cls, texte, style) => {
+        const d = document.createElement("div");
+        if (cls) d.className = cls;
+        if (style) d.setAttribute("style", style);
+        d.textContent = texte;
+        return d;
+      };
+      const ligneSpec = document.createElement("div");
+      ligneSpec.setAttribute("style", "margin-top:10px");
+      ligneSpec.append(
+        document.createTextNode("Écran "),
+        Object.assign(document.createElement("b"), { textContent: "spectateur / régie" }),
+        document.createTextNode(" (suit en direct) :")
+      );
+      const ligneWifi = document.createElement("div");
+      ligneWifi.setAttribute("style", "font-size:14px;opacity:.65;margin-top:8px");
+      ligneWifi.append(
+        document.createTextNode("connecte l'appareil au WiFi "),
+        Object.assign(document.createElement("b"), { textContent: "Prompteur" })
+      );
+      netinfo.replaceChildren(
+        document.createTextNode("Écran principal (PC / tablette) :"),
+        bloc("addr", main),
+        ligneSpec,
+        bloc("addr", spec, "color:#ffd400"),
+        ligneWifi
+      );
       const addrSpan = document.getElementById("emptyAddr");
       if (addrSpan) addrSpan.textContent = main;
     } catch {

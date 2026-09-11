@@ -22,6 +22,17 @@
   const postJSON = (path, body) =>
     api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
+  // Construction d'elements : on n'ecrit JAMAIS de HTML depuis du JavaScript.
+  // Les noms de fichiers et de textes viennent du boitier ; passer par du balisage
+  // obligerait a se fier a un echappement, alors que textContent ne peut pas se
+  // tromper. La CI interdit desormais innerHTML (voir eslint.config.mjs).
+  function el(tag, cls, texte) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (texte != null) n.textContent = texte;
+    return n;
+  }
+
   // récupère le message d'erreur lisible renvoyé par le serveur (corps JSON)
   function errText(err) {
     try { return JSON.parse(err && err.message).error; } catch { return null; }
@@ -442,12 +453,12 @@
   async function refreshLibrary() {
     const items = await api("/api/library");
     const box = $("libList");
-    box.innerHTML = "";
-    if (!items.length) { box.innerHTML = '<div class="muted">Aucun texte enregistré.</div>'; return; }
+    box.replaceChildren();
+    if (!items.length) { box.appendChild(el("div", "muted", "Aucun texte enregistré.")); return; }
     items.forEach((it) => {
       const row = document.createElement("div");
       row.className = "item";
-      row.innerHTML = `<span class="name">${escapeHtml(it.name)}</span>`;
+      row.appendChild(el("span", "name", it.name));
       const load = mkBtn("Charger", "primary");
       const del = mkBtn("✕", "danger");
       load.onclick = async () => {
@@ -457,7 +468,17 @@
         toast("« " + res.title + " » chargé");
       };
       del.onclick = async () => {
-        await postJSON("/api/library/delete", { name: it.name });
+        // Suppression definitive : ni corbeille, ni sauvegarde, et le dossier des
+        // textes n'est pas versionne. Un doigt qui derape un jour de tournage
+        // effacerait le script sans aucun recours. On demande donc confirmation,
+        // et on dit si le boitier a refuse.
+        if (!confirm("Supprimer definitivement « " + it.name + " » ? Cette action est irreversible.")) return;
+        try {
+          await postJSON("/api/library/delete", { name: it.name });
+          toast("« " + it.name + " » supprime");
+        } catch (err) {
+          toast(errText(err) || "Suppression impossible");
+        }
         refreshLibrary();
       };
       row.appendChild(load); row.appendChild(del);
@@ -511,12 +532,16 @@
     toast("Recherche de clés USB…");
     const files = await api("/api/usb");
     const box = $("usbList");
-    box.innerHTML = "";
-    if (!files.length) { box.innerHTML = '<div class="muted">Aucun fichier détecté sur une clé USB. Branche la clé sur le boîtier puis réessaie.</div>'; return; }
+    box.replaceChildren();
+    if (!files.length) {
+      box.appendChild(el("div", "muted",
+        "Aucun fichier détecté sur une clé USB. Branchez la clé sur le boîtier puis réessayez."));
+      return;
+    }
     files.forEach((f) => {
       const row = document.createElement("div");
       row.className = "item";
-      row.innerHTML = `<span class="name">${escapeHtml(f.name)}</span>`;
+      row.appendChild(el("span", "name", f.name));
       const load = mkBtn("Charger", "primary");
       load.onclick = async () => {
         try {
@@ -563,7 +588,7 @@
       $(id + "Val").textContent = fmt(v);
       const value = transform ? transform(v) : v;
       settings[key] = value;
-      postJSON("/api/settings", { [key]: value });
+      pousserReglage({ [key]: value });
     };
     el.addEventListener("input", () => { $(id + "Val").textContent = fmt(Number(el.value)); });
     el.addEventListener("change", apply);
@@ -577,7 +602,7 @@
   function bindToggle(id, key) {
     $(id).addEventListener("change", (e) => {
       settings[key] = e.target.checked;
-      postJSON("/api/settings", { [key]: e.target.checked });
+      pousserReglage({ [key]: e.target.checked });
     });
   }
   bindToggle("mirrorH", "mirrorH");
@@ -585,12 +610,33 @@
   bindToggle("guide", "guide");
 
   // --- Réglages : boutons (align / police / mode) --------------------------
+  // Envoi d'un réglage. Le serveur répond 400 si la valeur est refusée : sans ce
+  // traitement, le bouton resterait coloré et l'on croirait avoir changé de mode
+  // alors que rien n'aurait bougé sur l'écran. On le dit, et on remet l'interface
+  // en accord avec l'état RÉEL du boîtier.
+  async function pousserReglage(corps) {
+    try {
+      await postJSON("/api/settings", corps);
+      return true;
+    } catch (err) {
+      toast(errText(err) || "Réglage refusé par le boîtier");
+      try {
+        const st = await api("/api/state");
+        settings = st.settings || {};
+        reflectSettings();
+      } catch {
+        /* liaison perdue : la boucle de synchronisation reprendra la main */
+      }
+      return false;
+    }
+  }
+
   function bindChoice(selector, attr, key) {
     document.querySelectorAll(selector).forEach((b) =>
       b.addEventListener("click", () => {
         settings[key] = b.dataset[attr];
         markSel(selector, attr, b.dataset[attr]);
-        postJSON("/api/settings", { [key]: b.dataset[attr] });
+        pousserReglage({ [key]: b.dataset[attr] });
       }));
   }
   bindChoice(".alignBtn", "align", "align");
@@ -606,14 +652,14 @@
   }
   function fillSwatches(id, colors, current, key) {
     const box = $(id);
-    box.innerHTML = "";
+    box.replaceChildren();
     colors.forEach((c) => {
       const s = document.createElement("div");
       s.className = "swatch" + (c.toLowerCase() === String(current).toLowerCase() ? " sel" : "");
       s.style.background = c;
       s.onclick = () => {
         settings[key] = c;
-        postJSON("/api/settings", { [key]: c });
+        pousserReglage({ [key]: c });
         fillSwatches(id, colors, c, key);
       };
       box.appendChild(s);
@@ -743,7 +789,7 @@
       show("saving");
       setStat("Envoi au boîtier…", "");
       try {
-        await postJSON("/api/settings", { [key]: k });
+        await postJSON("/api/settings", { [key]: k }); // relecture dédiée juste après
         // Relecture de l'état réel du boîtier : seule preuve fiable que c'est gardé.
         const st = await api("/api/state");
         settings = st.settings || settings;
@@ -836,17 +882,27 @@
     $("boxbar").classList.remove("hide");
     if (info.running === null) {
       // État indéterminé : on le dit, plutôt que de faire disparaître la barre.
-      $("kioskState").innerHTML =
-        "État de l'écran <b>indéterminé</b> : le script de lancement n'a pas pu être " +
-        "exécuté ici. Ces boutons ne fonctionnent que sur le boîtier lui-même.";
+      $("kioskState").replaceChildren(
+        document.createTextNode("État de l'écran "),
+        el("b", null, "indéterminé"),
+        document.createTextNode(
+          " : le script de lancement n'a pas pu être exécuté ici. " +
+            "Ces boutons ne fonctionnent que sur le boîtier lui-même."
+        )
+      );
       $("kioskLaunch").disabled = true;
       $("kioskClose").disabled = true;
       return;
     }
     const running = !!info.running;
-    $("kioskState").innerHTML = running
-      ? "Le prompteur est <b>affiché</b> sur l'écran du boîtier."
-      : "Le prompteur est <b>fermé</b> : l'écran du boîtier montre le bureau.";
+    const etat = $("kioskState");
+    etat.replaceChildren(
+      document.createTextNode("Le prompteur est "),
+      el("b", null, running ? "affiché" : "fermé"),
+      document.createTextNode(
+        running ? " sur l'écran du boîtier." : " : l'écran du boîtier montre le bureau."
+      )
+    );
     $("kioskLaunch").disabled = running;
     $("kioskClose").disabled = !running;
   }
@@ -881,10 +937,6 @@
     b.textContent = label;
     if (cls) b.className = cls;
     return b;
-  }
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
   loadState().catch(() => toast("Erreur de connexion au boîtier"));

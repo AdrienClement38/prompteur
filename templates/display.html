@@ -210,7 +210,9 @@
     </div>
   </div>
 
-  <script>window.PROMPTEUR_MODE = "{{ mode | default('presenter') }}";</script>
-  <script src="/static/display.js"></script>
+  <!-- Le mode passe par un attribut, et non par un <script> en ligne : la
+       politique de sécurité (script-src 'self') interdit desormais tout script
+       ecrit dans la page. Un attribut data- est une donnee, pas du code. -->
+  <script src="/static/display.js" data-mode="{{ mode | default('presenter') }}"></script>
 </body>
 </html>
