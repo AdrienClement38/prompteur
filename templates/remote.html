@@ -36,6 +36,10 @@
       display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px;
     }
     button:active{transform:translateY(1px);}
+    /* Un bouton inactif doit EN AVOIR L'AIR : sans cela « Ouvrir le prompteur »
+       reste vert vif alors qu'il ne fait rien, et on le presse en boucle. */
+    button:disabled{opacity:.45; cursor:default;}
+    button:disabled:active{transform:none;}
     button.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
     button.go{background:var(--accent2); border-color:var(--accent2); color:#04240f;}
     button.ghost{background:transparent;}
@@ -78,12 +82,44 @@
     .pedalstat.err{color:var(--danger);}
     .pedal.capture input[type=text]{border-color:var(--accent); color:var(--accent); font-size:13px; font-weight:600;}
     .pedal.pending input[type=text]{border-color:var(--accent2); color:var(--accent2);}
+    /* Barre « Écran du boîtier » : dépliante, et affichée uniquement quand la page
+       est ouverte SUR le boîtier — ces boutons agissent sur son écran, pas sur le
+       téléphone. Repliée par défaut : on ne veut pas la frôler en direct. */
+    .boxbar{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:14px;}
+    .boxbar summary{cursor:pointer; padding:12px 14px; font-size:14px; font-weight:600;
+      list-style:none; display:flex; align-items:center; gap:8px;}
+    .boxbar summary::-webkit-details-marker{display:none;}
+    .boxbar summary::after{content:"▾"; margin-left:auto; color:var(--muted);}
+    .boxbar[open] summary::after{content:"▴";}
+    .boxbar .inner{padding:0 14px 14px;}
+    .boxbar .state{font-size:13px; color:var(--muted); margin-bottom:10px;}
+    .boxbar .state b{color:var(--fg);}
     .hide{display:none;}
   </style>
 </head>
 <body>
   <h1><span class="dot"></span> Prompteur</h1>
   <div class="sub">Télécommande — connecté au boîtier, sans internet.</div>
+
+  <details class="boxbar hide" id="boxbar">
+    <summary>Écran du boîtier</summary>
+    <div class="inner">
+      <div class="state" id="kioskState">…</div>
+      <div class="grid2">
+        <button class="go" id="kioskLaunch">Ouvrir le prompteur</button>
+        <button id="kioskClose">Fermer le prompteur</button>
+      </div>
+      <div class="grid2" style="margin-top:10px;">
+        <button class="ghost" id="openView">Écran régie</button>
+        <button class="ghost" id="kioskRefresh">Actualiser</button>
+      </div>
+      <p class="muted" style="margin-top:10px;">
+        <b>Fermer</b> revient au bureau du Raspberry ; <b>Ouvrir</b> réaffiche le prompteur
+        en plein écran. Le texte et la position ne sont pas perdus.<br>
+        Pour éteindre vraiment le boîtier, utilisez son <b>bouton physique</b>.
+      </p>
+    </div>
+  </details>
 
   <div class="tabbtns">
     <button data-tab="texte" class="active">Texte</button>

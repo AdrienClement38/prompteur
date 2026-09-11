@@ -376,3 +376,46 @@ def test_document_normal_toujours_accepte(client):
     assert client.post("/api/text", json={"text": normal}).status_code == 200
     r = _upload(client, _docx_bytes(["Titre", "Corps du texte."]), "normal.docx")
     assert r.status_code == 200
+
+
+# ============================================================================
+# Ouverture / fermeture de l'écran du prompteur
+# ----------------------------------------------------------------------------
+# Ces commandes agissent sur L'ÉCRAN DU BOÎTIER. Depuis un téléphone elles
+# n'auraient aucun sens — il n'affiche pas le prompteur — et un appui accidentel
+# fermerait l'écran en pleine prise. Elles sont donc réservées au local.
+# ============================================================================
+
+DEPUIS_UN_TELEPHONE = {"REMOTE_ADDR": "10.42.0.57"}
+
+
+def test_kiosque_non_propose_depuis_un_telephone(client):
+    r = client.get("/api/kiosk", environ_base=DEPUIS_UN_TELEPHONE)
+    assert r.status_code == 200
+    assert r.get_json()["available"] is False
+
+
+def test_kiosque_fermeture_refusee_depuis_un_telephone(client):
+    r = client.post("/api/kiosk/close", json={}, environ_base=DEPUIS_UN_TELEPHONE)
+    assert r.status_code == 403
+
+
+def test_kiosque_ouverture_refusee_depuis_un_telephone(client):
+    r = client.post("/api/kiosk/launch", json={}, environ_base=DEPUIS_UN_TELEPHONE)
+    assert r.status_code == 403
+
+
+def test_kiosque_interrogeable_en_local(client):
+    """En local la route répond toujours, même là où le script ne peut pas tourner."""
+    r = client.get("/api/kiosk")
+    assert r.status_code == 200
+    assert "available" in r.get_json()
+
+
+def test_kiosque_protege_aussi_par_l_anti_csrf(client):
+    """Une page tierce ne doit pas pouvoir fermer le prompteur."""
+    pirate = {"Origin": "http://pub.example"}
+    assert client.post("/api/kiosk/close", json={}, headers=pirate).status_code == 403
+    assert client.post("/api/kiosk/launch", json={}, headers=pirate).status_code == 403
+    r = client.post("/api/kiosk/close", data="{}", content_type="text/plain")
+    assert r.status_code == 415

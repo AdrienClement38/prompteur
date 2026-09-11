@@ -145,15 +145,44 @@ mkdir -p "$RUN_HOME/.config/lxsession/LXDE-pi"
 LX_AUTOSTART="$RUN_HOME/.config/lxsession/LXDE-pi/autostart"
 grep -q "kiosk.sh" "$LX_AUTOSTART" 2>/dev/null || echo "@$KIOSK" >> "$LX_AUTOSTART"
 
-# c) Entrée .desktop générique
-mkdir -p "$RUN_HOME/.config/autostart"
-cat > "$RUN_HOME/.config/autostart/prompteur-kiosk.desktop" <<EOF
+# c) Raccourci .desktop, posé à TROIS endroits depuis une seule définition :
+#    le démarrage automatique, le menu des applications, et le bureau.
+#    Le démarrage automatique reste en place : brancher le boîtier doit suffire à
+#    afficher le prompteur, sans le moindre geste. L'icône ne le remplace pas,
+#    elle permet de le RELANCER après l'avoir fermé, sans redémarrer la machine.
+DESKTOP_ENTRY="$(mktemp)"
+cat > "$DESKTOP_ENTRY" <<EOF
 [Desktop Entry]
 Type=Application
-Name=Prompteur Kiosque
+Name=Le Prompteur
+Comment=Affiche le prompteur en plein ecran
 Exec=$KIOSK
+Icon=video-display
+Terminal=false
+Categories=AudioVideo;
 X-GNOME-Autostart-enabled=true
 EOF
+
+for target in "$RUN_HOME/.config/autostart" "$RUN_HOME/.local/share/applications"; do
+  mkdir -p "$target"
+  install -m 755 "$DESKTOP_ENTRY" "$target/prompteur-kiosk.desktop"
+done
+
+# Bureau : le nom du dossier dépend de la langue du système (Desktop / Bureau).
+# Le script tourne deja sous l'utilisateur visé : pas de su, qui réclamerait un
+# mot de passe et bloquerait l'installation sur une invite que personne n'attend.
+DESKTOP_DIR="$(xdg-user-dir DESKTOP 2>/dev/null || true)"
+[ -d "${DESKTOP_DIR:-}" ] || DESKTOP_DIR="$RUN_HOME/Bureau"
+[ -d "$DESKTOP_DIR" ] || DESKTOP_DIR="$RUN_HOME/Desktop"
+if [ -d "$DESKTOP_DIR" ]; then
+  # Exécutable : sans cela le gestionnaire de fichiers demande confirmation
+  # à chaque double-clic au lieu de lancer directement.
+  install -m 755 "$DESKTOP_ENTRY" "$DESKTOP_DIR/prompteur-kiosk.desktop"
+  echo "    Icône « Le Prompteur » posée sur le bureau ($DESKTOP_DIR)."
+else
+  echo "    /!\\ Dossier du bureau introuvable : icône non posée (sans conséquence)."
+fi
+rm -f "$DESKTOP_ENTRY"
 
 echo
 echo "============================================================"
@@ -162,5 +191,7 @@ echo "  • Serveur     : http://localhost:$PORT/display (écran)"
 echo "  • Téléphone   : connecte-toi au WiFi « $WIFI_SSID »"
 echo "                  (mot de passe : $WIFI_PASS)"
 echo "                  puis ouvre http://10.42.0.1:$PORT"
+echo "  • Icône        : « Le Prompteur » sur le bureau (pour le relancer"
+echo "                   après l'avoir fermé, sans redémarrer)"
 echo "  • Redémarre le Raspberry Pi pour tout activer :  sudo reboot"
 echo "============================================================"

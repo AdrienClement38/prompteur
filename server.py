@@ -32,6 +32,7 @@ import platform
 import re
 import socket
 import string
+import subprocess  # nosec B404 - script local du projet, arguments fixes, sans shell
 import threading
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -46,6 +47,7 @@ import textextract
 BASE_DIR = Path(__file__).resolve().parent
 SCRIPTS_DIR = BASE_DIR / "scripts"  # bibliothèque des textes enregistrés (.txt)
 STATE_FILE = BASE_DIR / "state.json"  # texte courant + réglages + commandes
+KIOSK_SCRIPT = BASE_DIR / "install" / "kiosk.sh"  # ouverture/fermeture de l'écran
 SCRIPTS_DIR.mkdir(exist_ok=True)
 
 MAX_BODY = 6 * 1024 * 1024  # taille max d'un corps de requête (protège RAM/disque)
@@ -666,6 +668,125 @@ def local_ips():
 def current_port():
     """Port d'écoute : PROMPTEUR_PORT (boîtier), sinon PORT (assigné par l'hôte), sinon 5000."""
     return int(os.environ.get("PROMPTEUR_PORT") or os.environ.get("PORT") or "5000")
+
+
+# --------------------------------------------------------------------------
+# API — ouverture et fermeture de l'écran du prompteur
+# --------------------------------------------------------------------------
+# Le prompteur devient une application qu'on ouvre et qu'on ferme, au lieu d'un
+# mode dans lequel la machine démarre : plus besoin de « sudo reboot » pour y
+# revenir. install/kiosk.sh reste la source unique (démarrage automatique, icône
+# de bureau, et ces routes).
+#
+# AUCUN privilège n'est nécessaire : le serveur et le navigateur du kiosque
+# tournent sous le même utilisateur. Rien à voir avec l'extinction de la machine,
+# qui reste le bouton physique du boîtier.
+
+
+def _request_is_local():
+    """Vrai si la requête vient du boîtier lui-même, et non d'un téléphone.
+
+    Ces commandes agissent sur L'ÉCRAN DU BOÎTIER. Elles n'ont aucun sens depuis
+    un téléphone — qui n'affiche pas le prompteur — et un appui accidentel y
+    fermerait l'écran en pleine prise. On ne les expose donc qu'en local.
+    """
+    return request.remote_addr in ("127.0.0.1", "::1")
+
+
+def _kiosk_env():
+    """Environnement nécessaire pour ouvrir une fenêtre depuis le service systemd.
+
+    DISPLAY désigne l'écran, XAUTHORITY porte l'autorisation de s'y connecter.
+    Sans XAUTHORITY, Chromium est refusé par le serveur graphique et le lancement
+    échoue SANS message — c'est le piège classique d'un programme graphique
+    démarré depuis un service. Le service tourne sous le même utilisateur que la
+    session graphique : son fichier d'autorisation est donc le bon.
+    """
+    env = dict(os.environ)
+    env.setdefault("DISPLAY", ":0")
+    if "XAUTHORITY" not in env:
+        candidates = [Path.home() / ".Xauthority"]
+        # os.getuid n'existe pas sous Windows (poste de développement) : ce chemin
+        # n'a de sens que sur le boîtier.
+        if hasattr(os, "getuid"):
+            candidates.append(Path(f"/run/user/{os.getuid()}/gdm/Xauthority"))
+        for candidate in candidates:
+            try:
+                if candidate.exists():
+                    env["XAUTHORITY"] = str(candidate)
+                    break
+            except OSError:
+                continue
+    env["PROMPTEUR_PORT"] = str(current_port())
+    return env
+
+
+def _kiosk(*args):
+    """Appelle install/kiosk.sh. Renvoie (ok, code de retour)."""
+    if not KIOSK_SCRIPT.exists():
+        return False, None
+    env = _kiosk_env()
+    try:
+        proc = subprocess.run(  # nosec B603 - chemin fixe du projet, pas de shell
+            ["/bin/bash", str(KIOSK_SCRIPT), *args],
+            env=env,
+            capture_output=True,
+            timeout=20,
+            check=False,
+        )
+        return True, proc.returncode
+    except (OSError, subprocess.SubprocessError):
+        return False, None
+
+
+def _kiosk_launch():
+    """Lance le prompteur sans attendre : le script patiente jusqu'à ce que le
+    serveur réponde, ce qui bloquerait la requête en cours."""
+    if not KIOSK_SCRIPT.exists():
+        return False
+    env = _kiosk_env()
+    try:
+        subprocess.Popen(  # nosec B603 - chemin fixe du projet, pas de shell
+            ["/bin/bash", str(KIOSK_SCRIPT)],
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        return True
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+@app.route("/api/kiosk")
+def api_kiosk():
+    """État de l'écran du prompteur. « available » dit à la télécommande s'il
+    faut afficher les boutons : inutile de les montrer sur un téléphone."""
+    if not _request_is_local():
+        return jsonify({"available": False})
+    ok, code = _kiosk("--status")
+    if not ok:
+        return jsonify({"available": False})
+    return jsonify({"available": True, "running": code == 0})
+
+
+@app.route("/api/kiosk/close", methods=["POST"])
+def api_kiosk_close():
+    if not _request_is_local():
+        return jsonify({"ok": False, "error": "commande réservée à l'écran du boîtier"}), 403
+    ok, _ = _kiosk("--stop")
+    if not ok:
+        return jsonify({"ok": False, "error": "script du kiosque introuvable"}), 500
+    return jsonify({"ok": True, "running": False})
+
+
+@app.route("/api/kiosk/launch", methods=["POST"])
+def api_kiosk_launch():
+    if not _request_is_local():
+        return jsonify({"ok": False, "error": "commande réservée à l'écran du boîtier"}), 403
+    if not _kiosk_launch():
+        return jsonify({"ok": False, "error": "script du kiosque introuvable"}), 500
+    return jsonify({"ok": True})
 
 
 @app.route("/api/info")

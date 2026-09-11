@@ -417,6 +417,50 @@
   bindKeyLearn("keyForward", "keyBackward");
   bindKeyLearn("keyBackward", "keyForward");
 
+  // --- Barre « Écran du boîtier » ------------------------------------------
+  // Le prompteur est une application qu'on ouvre et qu'on ferme : plus besoin de
+  // redémarrer le boîtier pour y revenir. Le serveur ne déclare ces commandes
+  // disponibles que si la page est ouverte SUR le boîtier : depuis un téléphone,
+  // elles n'auraient aucun sens (il n'affiche pas le prompteur) et un appui
+  // accidentel fermerait l'écran en pleine prise.
+  async function refreshKiosk() {
+    let info;
+    try {
+      info = await api("/api/kiosk");
+    } catch {
+      return; // serveur muet : on laisse la barre cachée plutôt que d'afficher un état faux
+    }
+    if (!info.available) return;
+    $("boxbar").classList.remove("hide");
+    const running = !!info.running;
+    $("kioskState").innerHTML = running
+      ? "Le prompteur est <b>affiché</b> sur l'écran du boîtier."
+      : "Le prompteur est <b>fermé</b> : l'écran du boîtier montre le bureau.";
+    $("kioskLaunch").disabled = running;
+    $("kioskClose").disabled = !running;
+  }
+
+  function bindKiosk() {
+    const act = async (btn, path, attente) => {
+      btn.disabled = true;
+      $("kioskState").textContent = attente;
+      try {
+        await postJSON(path, {});
+      } catch (err) {
+        toast(errText(err) || "Commande impossible");
+      }
+      // Chromium met un instant à s'ouvrir ou à se fermer : on relit après.
+      setTimeout(refreshKiosk, 1200);
+    };
+    $("kioskLaunch").addEventListener("click", (e) =>
+      act(e.currentTarget, "/api/kiosk/launch", "Ouverture du prompteur…"));
+    $("kioskClose").addEventListener("click", (e) =>
+      act(e.currentTarget, "/api/kiosk/close", "Fermeture du prompteur…"));
+    $("kioskRefresh").addEventListener("click", refreshKiosk);
+    $("openView").addEventListener("click", () => window.open("/view", "_blank"));
+  }
+  bindKiosk();
+
   // --- Utilitaires ----------------------------------------------------------
   function mkBtn(label, cls) {
     const b = document.createElement("button");
@@ -430,5 +474,6 @@
   }
 
   loadState().catch(() => toast("Erreur de connexion au boîtier"));
+  refreshKiosk();
   loadViewLink();
 })();
