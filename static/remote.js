@@ -177,10 +177,63 @@
       if (id === "text") {
         remapMarks(texteAvant, $("text").value);
         texteAvant = $("text").value;
+        refreshApercu();
       }
       textDirty = true;
       refreshUnsent();
     }));
+
+  // --- Aperçu de la mise en forme -------------------------------------------
+  // Une zone de saisie ne sait pas afficher du gras : sans cet aperçu, on
+  // applique un style sans jamais voir ce qu'il donne, et on croit que le bouton
+  // ne fait rien. Mêmes classes que l'écran, donc même rendu.
+  const SIZE_CLASS = { s: "ms", l: "ml", xl: "mxl" };
+
+  function classesAt(index) {
+    let cls = "";
+    let taille = null;
+    let couleur = null;
+    for (const m of marks) {
+      if (index < m.start || index >= m.end) continue;
+      if (m.b && !cls.includes("mb")) cls += " mb";
+      if (m.i && !cls.includes("mi")) cls += " mi";
+      if (m.u && !cls.includes("mu")) cls += " mu";
+      if (SIZE_CLASS[m.size]) taille = SIZE_CLASS[m.size];
+      if (m.color >= 1 && m.color <= 5) couleur = "c" + m.color;
+    }
+    if (taille) cls += " " + taille;
+    if (couleur) cls += " " + couleur;
+    return cls.trim();
+  }
+
+  function refreshApercu() {
+    const zone = $("apercu");
+    if (!marks.length) {
+      zone.classList.add("hide");
+      return;
+    }
+    zone.classList.remove("hide");
+    const texte = $("text").value;
+    const bornes = [0];
+    for (const m of marks) bornes.push(m.start, m.end);
+    bornes.push(texte.length);
+    const coupes = [...new Set(bornes)].filter((b) => b >= 0 && b <= texte.length).sort((a, b) => a - b);
+    const cible = $("apercuTexte");
+    cible.replaceChildren();
+    for (let k = 0; k < coupes.length - 1; k++) {
+      const morceau = texte.slice(coupes[k], coupes[k + 1]);
+      if (!morceau) continue;
+      const cls = classesAt(coupes[k]);
+      if (!cls) {
+        cible.appendChild(document.createTextNode(morceau));
+      } else {
+        const span = document.createElement("span");
+        span.className = cls;
+        span.textContent = morceau; // textContent -> aucun risque d'injection
+        cible.appendChild(span);
+      }
+    }
+  }
 
   // --- Mise en forme : gras / italique / souligné ---------------------------
   // Le texte reste une CHAÎNE BRUTE ; la mise en forme est une liste de plages
@@ -191,10 +244,10 @@
   function refreshFmtInfo() {
     $("fmtInfo").textContent = marks.length
       ? marks.length + (marks.length > 1 ? " passages mis en forme." : " passage mis en forme.")
-      : "Sélectionnez un passage, puis G, I ou S.";
+      : "Sélectionnez un passage, puis un bouton. Rappuyez dessus pour l'enlever.";
   }
 
-  function applyFormat(style) {
+  function applyAttr(cle, valeur) {
     const ta = $("text");
     const debut = ta.selectionStart;
     const fin = ta.selectionEnd;
@@ -203,22 +256,25 @@
       return;
     }
     // Déjà entièrement dans ce style ? On l'enlève. Sinon on l'ajoute.
-    const dedans = marks.filter((m) => m[style] && m.start <= debut && m.end >= fin);
+    // Rappuyer sur le meme bouton retire le style : c'est la seule facon de
+    // revenir en arriere sans tout effacer.
+    const dedans = marks.filter((m) => m[cle] === valeur && m.start <= debut && m.end >= fin);
     if (dedans.length) {
       marks = marks.flatMap((m) => {
-        if (!m[style] || m.start > debut || m.end < fin) return [m];
+        if (m[cle] !== valeur || m.start > debut || m.end < fin) return [m];
         const morceaux = [];
         if (m.start < debut) morceaux.push({ ...m, end: debut });
         if (m.end > fin) morceaux.push({ ...m, start: fin });
         return morceaux;
       });
     } else {
-      marks.push({ start: debut, end: fin, [style]: true });
+      marks.push({ start: debut, end: fin, [cle]: valeur });
     }
     if (marks.length > 500) marks = marks.slice(-500);
     textDirty = true;
     refreshUnsent();
     refreshFmtInfo();
+    refreshApercu();
     ta.focus();
     ta.setSelectionRange(debut, fin);
   }
@@ -251,16 +307,29 @@
       })
       .filter(Boolean);
     refreshFmtInfo();
+    refreshApercu();
   }
 
-  $("fmtB").addEventListener("click", () => applyFormat("b"));
-  $("fmtI").addEventListener("click", () => applyFormat("i"));
-  $("fmtU").addEventListener("click", () => applyFormat("u"));
+  // mousedown + preventDefault : le bouton ne prend pas le focus, donc la
+  // sélection reste en place dans la zone de texte au moment du clic. Sans cela,
+  // certains navigateurs la vident avant même que le clic soit traité.
+  document.querySelectorAll(".fmtbar button, .fmtcolors button").forEach((b) =>
+    b.addEventListener("mousedown", (e) => e.preventDefault()));
+
+  $("fmtB").addEventListener("click", () => applyAttr("b", true));
+  $("fmtI").addEventListener("click", () => applyAttr("i", true));
+  $("fmtU").addEventListener("click", () => applyAttr("u", true));
+  $("fmtS").addEventListener("click", () => applyAttr("size", "s"));
+  $("fmtL").addEventListener("click", () => applyAttr("size", "l"));
+  $("fmtXL").addEventListener("click", () => applyAttr("size", "xl"));
+  document.querySelectorAll(".swatchBtn").forEach((b) =>
+    b.addEventListener("click", () => applyAttr("color", Number(b.dataset.color))));
   $("fmtClear").addEventListener("click", () => {
     marks = [];
     textDirty = true;
     refreshUnsent();
     refreshFmtInfo();
+    refreshApercu();
     toast("Mise en forme effacée");
   });
 
@@ -743,6 +812,7 @@
 
   loadState().catch(() => toast("Erreur de connexion au boîtier"));
   refreshFmtInfo();
+  refreshApercu();
   refreshKiosk();
   setInterval(pollVersion, 1500);
   const mainBtn = document.querySelector(".readbtn.main");

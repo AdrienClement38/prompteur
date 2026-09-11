@@ -218,6 +218,14 @@ def _guard_state_changing_requests():
 # --------------------------------------------------------------------------
 MAX_MARKS = 500  # au-delà, c'est un document, pas une mise en évidence
 
+# Tailles RELATIVES et non en pixels : un passage mis en avant doit le rester
+# quand on change la taille générale du texte pour s'éloigner de l'écran.
+MARK_SIZES = ("s", "l", "xl")
+# Palette FERMÉE, toutes lisibles sur fond sombre. Un choix libre permettrait
+# d'écrire en bleu marine sur noir, donc de rendre un passage invisible en
+# tournage — au moment précis où l'on comptait sur lui.
+MARK_COLORS = (1, 2, 3, 4, 5)
+
 
 def sanitize_marks(marks, length):
     """Ne garde que des plages valides et confinées au texte.
@@ -242,6 +250,15 @@ def sanitize_marks(marks, length):
         if end <= start:
             continue
         styles = {key: True for key in ("b", "i", "u") if mark.get(key) is True}
+        taille = mark.get("size")
+        if taille in MARK_SIZES:
+            styles["size"] = taille
+        try:
+            couleur = int(mark.get("color"))
+        except (TypeError, ValueError):
+            couleur = None
+        if couleur in MARK_COLORS:
+            styles["color"] = couleur
         if not styles:
             continue
         clean.append({"start": start, "end": end, **styles})

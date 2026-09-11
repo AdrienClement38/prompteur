@@ -90,14 +90,23 @@
   // Construit l'affichage à partir du texte : les lignes « # / ## / ### » deviennent
   // des TITRES (gros/gras) ; les autres lignes et les lignes vides sont préservées.
   // Classes de mise en forme actives a une position donnee du texte.
+  const SIZE_CLASS = { s: "ms", l: "ml", xl: "mxl" };
+
   function styleClassesAt(marks, index) {
     let cls = "";
+    let taille = null;
+    let couleur = null;
     for (const m of marks) {
       if (index < m.start || index >= m.end) continue;
       if (m.b && !cls.includes("mb")) cls += " mb";
       if (m.i && !cls.includes("mi")) cls += " mi";
       if (m.u && !cls.includes("mu")) cls += " mu";
+      // Taille et couleur ne s'additionnent pas : la derniere plage l'emporte.
+      if (SIZE_CLASS[m.size]) taille = SIZE_CLASS[m.size];
+      if (m.color >= 1 && m.color <= 5) couleur = "c" + m.color;
     }
+    if (taille) cls += " " + taille;
+    if (couleur) cls += " " + couleur;
     return cls.trim();
   }
 

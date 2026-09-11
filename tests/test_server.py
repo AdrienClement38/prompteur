@@ -857,3 +857,32 @@ def test_la_liste_de_la_bibliotheque_n_expose_pas_les_fichiers_de_plages(client)
     )
     noms = [item["name"] for item in client.get("/api/library").get_json()]
     assert noms == ["Sujet"]
+
+
+def test_taille_et_couleur_par_passage(client):
+    client.post(
+        "/api/text",
+        json={
+            "text": "Titre puis texte",
+            "marks": [{"start": 0, "end": 5, "size": "xl", "color": 1}],
+        },
+    )
+    assert client.get("/api/state").get_json()["marks"] == [{"start": 0, "end": 5, "size": "xl", "color": 1}]
+
+
+def test_tailles_et_couleurs_hors_palette_refusees(client):
+    """Palette fermee : un choix libre permettrait d ecrire en bleu marine sur
+    noir, donc de rendre un passage invisible en tournage."""
+    client.post(
+        "/api/text",
+        json={
+            "text": "Un texte",
+            "marks": [
+                {"start": 0, "end": 2, "size": "enorme"},
+                {"start": 2, "end": 4, "color": 99},
+                {"start": 4, "end": 6, "color": "#000000"},
+                {"start": 6, "end": 8, "size": "l"},
+            ],
+        },
+    )
+    assert client.get("/api/state").get_json()["marks"] == [{"start": 6, "end": 8, "size": "l"}]

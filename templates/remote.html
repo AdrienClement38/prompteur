@@ -132,6 +132,29 @@
     .fmtbar button{min-height:40px; padding:8px 0; flex:1; font-size:16px;}
     .fmtbar button:last-child{flex:2; font-size:13px;}
     #fmtInfo{margin-top:6px;}
+    /* Apercu : une zone de saisie ne peut pas afficher du gras. Sans lui, on
+       applique une mise en forme sans jamais voir ce qu'elle donne. */
+    .apercu{margin-top:10px; padding:10px 12px; border-radius:10px;
+      background:#000; border:1px solid var(--line); max-height:220px; overflow:auto;}
+    .apercuTitre{font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+      color:var(--muted); margin-bottom:6px;}
+    #apercuTexte{white-space:pre-wrap; word-wrap:break-word; color:#fff; font-size:15px; line-height:1.45;}
+    #apercuTexte .mb{font-weight:800;}
+    #apercuTexte .mi{font-style:italic;}
+    #apercuTexte .mu{text-decoration:underline; text-underline-offset:.12em;}
+    #apercuTexte .ms{font-size:.8em;}
+    #apercuTexte .ml{font-size:1.28em;}
+    #apercuTexte .mxl{font-size:1.5em;}
+    #apercuTexte .c1{color:#ffd400;}
+    #apercuTexte .c2{color:#ff7a68;}
+    #apercuTexte .c3{color:#5ee08a;}
+    #apercuTexte .c4{color:#7cc4ff;}
+    #apercuTexte .c5{color:#a9b2c2;}
+    .fmtbar button#fmtL{font-size:17px; font-weight:700;}
+    .fmtbar button#fmtXL{font-size:19px; font-weight:800;}
+    .fmtbar button#fmtS{font-size:12px;}
+    .fmtcolors{display:flex; gap:8px; margin-top:8px;}
+    .fmtcolors button{flex:1; min-height:34px; border-radius:9px; border:1px solid var(--line);}
     .hide{display:none;}
   </style>
 </head>
@@ -196,7 +219,23 @@
         <button id="fmtU" title="Souligné"><u>S</u></button>
         <button class="ghost" id="fmtClear">Tout effacer</button>
       </div>
+      <div class="fmtbar">
+        <button id="fmtS" title="Plus petit">petit</button>
+        <button id="fmtL" title="Titre">Titre</button>
+        <button id="fmtXL" title="Grand titre">Grand titre</button>
+      </div>
+      <div class="fmtcolors">
+        <button class="swatchBtn" data-color="1" style="background:#ffd400"></button>
+        <button class="swatchBtn" data-color="2" style="background:#ff7a68"></button>
+        <button class="swatchBtn" data-color="3" style="background:#5ee08a"></button>
+        <button class="swatchBtn" data-color="4" style="background:#7cc4ff"></button>
+        <button class="swatchBtn" data-color="5" style="background:#a9b2c2"></button>
+      </div>
       <div class="muted" id="fmtInfo">Sélectionnez un passage, puis G, I ou S.</div>
+      <div class="apercu hide" id="apercu">
+        <div class="apercuTitre">Aperçu — ce que l'écran affichera</div>
+        <div id="apercuTexte"></div>
+      </div>
 
       <div class="unsent hide" id="unsent">
         Ce texte n'est <b>pas encore à l'écran</b> — appuyez sur « Envoyer à l'écran ».
