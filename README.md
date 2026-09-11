@@ -117,6 +117,11 @@ vérifier qu'il fonctionne. **Python 3** doit y être installé.
 > été ajouté depuis : trois lignes à recopier, ce qui change pour le journaliste,
 > et une liste de vérification. Écrite pour quelqu'un qui n'est pas informaticien.
 
+> 🪤 **Pour qui reprend ce projet** : **[PIEGES.md](PIEGES.md)**
+> ([PDF](Pieges-Prompteur.pdf)) — tout ce qui a mordu, ou failli, pendant la
+> construction. La plupart de ces pièges échouent SANS message : les consigner
+> évite de les redécouvrir.
+
 > 🖥️ **Le petit écran tactile du boîtier** : **[ECRAN-TACTILE.md](ECRAN-TACTILE.md)**
 > ([PDF](Ecran-Tactile-Prompteur.pdf)) — les deux montages possibles, et comment
 > savoir lequel s'applique.
