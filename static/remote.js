@@ -68,8 +68,7 @@
     $("mirrorH").checked = !!settings.mirrorH;
     $("mirrorV").checked = !!settings.mirrorV;
     $("guide").checked = !!settings.guide;
-    $("keyForward").value = settings.keyForward || "ArrowDown";
-    $("keyBackward").value = settings.keyBackward || "ArrowUp";
+    refreshPedals();
     markSel(".alignBtn", "align", settings.align || "left");
     markSel(".fontBtn", "font", settings.font || "sans-serif");
     markSel(".modeBtn", "mode", settings.mode || "hold");
@@ -275,20 +274,140 @@
   }
 
   // --- Apprentissage des touches de pédale ---------------------------------
-  function bindKeyLearn(id, key) {
-    const el = $(id);
-    el.addEventListener("focus", () => { el.value = "… appuie sur la pédale"; });
-    el.addEventListener("keydown", (e) => {
+  // Deux garanties, apprises d'un incident réel :
+  //  1. RIEN n'est envoyé au boîtier tant que « Enregistrer » n'a pas été appuyé ;
+  //  2. la confirmation n'est affichée qu'après RELECTURE de l'état du boîtier —
+  //     « enregistré » veut donc dire réellement enregistré, pas « envoyé en aveugle ».
+  // On refuse aussi les deux cas qui rendent une pédale muette sans prévenir :
+  // la touche F (interceptée avant les pédales) et une touche déjà prise par l'autre pédale.
+  const PEDAL_LABEL = { keyForward: "pédale droite (avancer)", keyBackward: "pédale gauche (reculer)" };
+  const RESERVED = {
+    " ": "Espace (lecture/pause)",
+    r: "R (retour au début)", R: "R (retour au début)",
+    m: "M (miroir)", M: "M (miroir)",
+    h: "H (bandeau d'aide)", H: "H (bandeau d'aide)",
+    i: "I (adresse du boîtier)", I: "I (adresse du boîtier)",
+    "+": "+ (plus vite)", "=": "+ (plus vite)",
+    "-": "− (moins vite)", _: "− (moins vite)",
+  };
+  // Touches seules qui ne sont pas des touches de pédale : on continue d'attendre.
+  const IGNORED = ["Shift", "Control", "Alt", "AltGraph", "Meta", "CapsLock", "Dead", "Unidentified"];
+  // Certaines touches s'affichent « vides » : sans ça, l'utilisateur croit qu'aucune touche
+  // n'est réglée alors qu'il y en a une. On garde la valeur technique, on affiche un libellé.
+  const KEY_LABEL = { " ": "Espace" };
+  const keyLabel = (k) => (k ? KEY_LABEL[k] || k : "");
+
+  const pedals = {};
+  let capturing = null; // un seul apprentissage à la fois
+
+  function refreshPedals() {
+    Object.keys(pedals).forEach((k) => pedals[k].refresh());
+  }
+
+  function bindKeyLearn(key, otherKey) {
+    const el = $(key);
+    const box = $("pedal-" + key);
+    const stat = $(key + "Stat");
+    const bLearn = $(key + "Learn");
+    const bSave = $(key + "Save");
+    const bCancel = $(key + "Cancel");
+    const self = { pending: null };
+    pedals[key] = self;
+
+    function setStat(msg, cls) {
+      stat.textContent = msg;
+      stat.className = "pedalstat" + (cls ? " " + cls : "");
+    }
+    function show(state) {
+      box.classList.toggle("capture", state === "capture");
+      box.classList.toggle("pending", state === "pending");
+      bLearn.classList.toggle("hide", state !== "idle");
+      bSave.classList.toggle("hide", state !== "pending");
+      bCancel.classList.toggle("hide", state === "idle");
+      bSave.disabled = state === "saving";
+      bCancel.disabled = state === "saving";
+    }
+    function toIdle(msg, cls) {
+      self.pending = null;
+      if (capturing === self) capturing = null;
+      el.value = keyLabel(settings[key]);
+      show("idle");
+      setStat(msg, cls);
+    }
+
+    self.refresh = () => {
+      if (self.pending || capturing === self) return; // ne casse pas un apprentissage en cours
+      const cur = settings[key];
+      if (!cur) return toIdle("Aucune touche réglée : cette pédale ne fera rien.", "warn");
+      if (RESERVED[cur]) {
+        return toIdle("Active sur le boîtier, mais « " + keyLabel(cur) + " » est aussi le raccourci " +
+          RESERVED[cur] + " : ce raccourci ne marche plus.", "warn");
+      }
+      toIdle("Touche active sur le boîtier.", "ok");
+    };
+    self.cancel = () => toIdle("Annulé — rien n'a été changé.", "");
+
+    // Appel depuis l'écouteur global : la pédale envoie sa touche à la page entière.
+    self.capture = (e) => {
+      const k = e.key;
+      if (IGNORED.indexOf(k) !== -1) return;
       e.preventDefault();
-      settings[key] = e.key;
-      el.value = e.key;
-      postJSON("/api/settings", { [key]: e.key });
-      toast("Touche enregistrée : " + e.key);
-      el.blur();
+      if (k === "f" || k === "F") {
+        setStat("Impossible : F est réservé au plein écran, une pédale réglée sur F ne marcherait jamais. Appuie sur une autre pédale.", "err");
+        return;
+      }
+      if (settings[otherKey] && k === settings[otherKey]) {
+        setStat("Impossible : « " + keyLabel(k) + " » est déjà la touche de la " + PEDAL_LABEL[otherKey] +
+          ". Les deux pédales doivent envoyer des touches différentes, sinon l'une des deux devient muette.", "err");
+        return;
+      }
+      self.pending = k;
+      el.value = keyLabel(k);
+      show("pending");
+      setStat("Touche détectée : « " + keyLabel(k) + " ». Rien n'est encore envoyé au boîtier — appuie sur Enregistrer." +
+        (RESERVED[k] ? " ⚠ Cette touche sert aussi au raccourci " + RESERVED[k] + ", qui sera remplacé." : ""), "warn");
+    };
+
+    bLearn.addEventListener("click", () => {
+      if (capturing && capturing !== self) capturing.cancel();
+      capturing = self;
+      self.pending = null;
+      el.value = "Appuie sur la pédale…";
+      show("capture");
+      setStat("En attente. Appuie une fois sur la " + PEDAL_LABEL[key] + ". Rien n'est enregistré à ce stade.", "");
+    });
+
+    bCancel.addEventListener("click", () => self.cancel());
+
+    bSave.addEventListener("click", async () => {
+      const k = self.pending;
+      if (!k) return;
+      show("saving");
+      setStat("Envoi au boîtier…", "");
+      try {
+        await postJSON("/api/settings", { [key]: k });
+        // Relecture de l'état réel du boîtier : seule preuve fiable que c'est gardé.
+        const st = await api("/api/state");
+        settings = st.settings || settings;
+        if (settings[key] === k) {
+          toIdle("✓ Enregistré sur le boîtier : « " + keyLabel(k) + " ».", "ok");
+          toast("Touche enregistrée : " + keyLabel(k));
+        } else {
+          toIdle("✗ Le boîtier n'a pas accepté cette touche. Rien n'a été changé.", "err");
+        }
+      } catch {
+        toIdle("✗ Échec : le boîtier n'a pas répondu. Rien n'a été changé.", "err");
+      }
+      if (pedals[otherKey]) pedals[otherKey].refresh();
     });
   }
-  bindKeyLearn("keyForward", "keyForward");
-  bindKeyLearn("keyBackward", "keyBackward");
+
+  // Les pédales envoient leur touche à la page, pas à un champ précis : on écoute globalement,
+  // et on ne réagit que pendant un apprentissage explicitement démarré.
+  window.addEventListener("keydown", (e) => { if (capturing) capturing.capture(e); });
+
+  bindKeyLearn("keyForward", "keyBackward");
+  bindKeyLearn("keyBackward", "keyForward");
 
   // --- Utilitaires ----------------------------------------------------------
   function mkBtn(label, cls) {

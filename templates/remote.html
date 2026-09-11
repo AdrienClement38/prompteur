@@ -68,6 +68,16 @@
     .tabbtns{display:flex; gap:8px; margin-bottom:12px;}
     .tabbtns button{flex:1; min-height:42px; font-size:14px;}
     .tabbtns button.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+    .pedal input[type=text]{text-align:center; font-weight:700; font-size:17px;}
+    .pedalbtns{display:flex; gap:6px; margin-top:6px;}
+    .pedalbtns button{flex:1; min-height:40px; font-size:13px; padding:8px 6px;}
+    .pedalbtns button:disabled{opacity:.5;}
+    .pedalstat{font-size:12.5px; line-height:1.35; margin-top:6px; min-height:3.2em; color:var(--muted);}
+    .pedalstat.ok{color:var(--accent2);}
+    .pedalstat.warn{color:#e5b53a;}
+    .pedalstat.err{color:var(--danger);}
+    .pedal.capture input[type=text]{border-color:var(--accent); color:var(--accent); font-size:13px; font-weight:600;}
+    .pedal.pending input[type=text]{border-color:var(--accent2); color:var(--accent2);}
     .hide{display:none;}
   </style>
 </head>
@@ -198,16 +208,38 @@
         <b>Impulsion</b> : une pression sur la pédale droite lance/arrête ; la gauche revient au début.
       </p>
       <div class="grid2" style="margin-top:10px;">
-        <div>
+        <div class="pedal" id="pedal-keyForward">
           <label>Touche pédale droite (avancer)</label>
-          <input type="text" id="keyForward" readonly placeholder="clique puis appuie sur la pédale">
+          <input type="text" id="keyForward" readonly placeholder="—">
+          <div class="pedalbtns">
+            <button class="ghost" id="keyForwardLearn">Réapprendre</button>
+            <button class="go hide" id="keyForwardSave">Enregistrer</button>
+            <button class="ghost hide" id="keyForwardCancel">Annuler</button>
+          </div>
+          <div class="pedalstat" id="keyForwardStat"></div>
         </div>
-        <div>
+        <div class="pedal" id="pedal-keyBackward">
           <label>Touche pédale gauche (reculer)</label>
-          <input type="text" id="keyBackward" readonly placeholder="clique puis appuie sur la pédale">
+          <input type="text" id="keyBackward" readonly placeholder="—">
+          <div class="pedalbtns">
+            <button class="ghost" id="keyBackwardLearn">Réapprendre</button>
+            <button class="go hide" id="keyBackwardSave">Enregistrer</button>
+            <button class="ghost hide" id="keyBackwardCancel">Annuler</button>
+          </div>
+          <div class="pedalstat" id="keyBackwardStat"></div>
         </div>
       </div>
-      <p class="muted" style="margin-top:8px;">Astuce : clique dans un champ puis appuie sur la pédale pour « apprendre » sa touche.</p>
+      <p class="muted" style="margin-top:10px;">
+        <b>Marche à suivre :</b> « Réapprendre » → appuyez <b>une fois</b> sur la pédale → la touche
+        s'affiche → <b>« Enregistrer »</b>. Tant que vous n'avez pas appuyé sur Enregistrer,
+        <b>rien n'est envoyé au boîtier</b>, et la confirmation verte n'apparaît qu'après
+        vérification auprès du boîtier.
+      </p>
+      <p class="muted">
+        ⚠️ L'apprentissage ne fonctionne que sur <b>l'appareil où le pédalier est branché</b>
+        (le boîtier lui-même, ou un ordinateur portable connecté au WiFi « Prompteur »).
+        Depuis un téléphone, aucune touche ne sera détectée : les pédales n'y sont pas branchées.
+      </p>
     </div>
   </section>
 
