@@ -443,6 +443,23 @@ simplifié — et le titre qui apparaît dans la liste « Mes textes enregistré
 
 ### Voie n° 2 — Importer un document depuis le téléphone
 
+> ⚠️ **PIÈGE — À PRÉPARER AVANT DE VOUS CONNECTER AU BOÎTIER.** Le bouton « Fichier » ouvre le
+> sélecteur de documents **de votre téléphone** : le document doit donc **déjà se trouver dans
+> le téléphone**. Or, dès que votre téléphone rejoint le réseau « Prompteur », **il n'a plus
+> Internet** : vous ne pouvez plus ouvrir votre boîte mail, ni votre espace de stockage
+> (Drive, iCloud, WeTransfer…) pour aller chercher votre script.
+>
+> **Un script qui dort dans vos mails n'est PAS dans votre téléphone.**
+>
+> **Parade, à faire chez vous ou dans la voiture, avant le tournage :** ouvrez la pièce jointe
+> et **enregistrez-la dans le téléphone** (sur Android : « Télécharger » ; sur iPhone :
+> partager → **« Enregistrer dans Fichiers »**). Vérifiez ensuite que vous la retrouvez bien
+> dans les documents du téléphone. **Ensuite seulement**, connectez-vous au boîtier.
+>
+> *Si vous vous en apercevez sur place : quittez le réseau « Prompteur », repassez sur la 4G,
+> téléchargez le document, puis revenez sur « Prompteur ». Ou, plus rapide, ouvrez le mail sur
+> la 4G et **copiez-collez** le texte (voie n° 1), qui ne demande aucun fichier.*
+
 1. Onglet **Texte**, deuxième carte **« Importer »**.
 2. Appuyez sur le bouton **« Fichier »**.
 3. Le sélecteur de fichiers de votre téléphone s'ouvre : choisissez votre document.
@@ -914,6 +931,10 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
 - [ ] Mes textes sont préparés au format **Word (`.docx`)**, avec des noms de fichiers simples
       (lettres, chiffres, espaces, tirets) — pas de PDF scanné, pas de document protégé par
       mot de passe.
+- [ ] **Mes documents sont ENREGISTRÉS DANS LE TÉLÉPHONE**, pas seulement dans mes mails ou sur
+      un espace de stockage en ligne — et je les ai retrouvés une fois dans les documents du
+      téléphone. *Une fois connecté au boîtier, je n'aurai plus Internet pour aller les
+      chercher (chapitre 6, voie n° 2).*
 - [ ] Mon texte est **découpé en séquences courtes**, enregistrées avec des titres numérotés
       (chapitre 8).
 - [ ] J'ai gardé **une copie de mes textes ailleurs** (mail, ordinateur, clé USB) : le boîtier
@@ -1011,6 +1032,9 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
 > Pédale gauche = reculer, par petits coups brefs.
 >
 > ---
+>
+> 📥 **AVANT de se connecter au réseau Prompteur : enregistrer son script DANS le téléphone.**
+> Une fois connecté, plus d'Internet — donc plus d'accès aux mails ni au stockage en ligne.
 >
 > 📱 **Le téléphone n'est pas nécessaire pendant la prise : les pédales fonctionnent seules.**
 >
