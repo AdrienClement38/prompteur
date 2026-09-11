@@ -22,6 +22,60 @@ from pathlib import Path
 
 SUPPORTED_EXTS = (".txt", ".md", ".text", ".rtf", ".docx", ".doc", ".odt", ".pdf")
 
+# --------------------------------------------------------------------------
+# Bornes de sécurité
+# --------------------------------------------------------------------------
+# Un texte démesuré ne fait pas que ralentir : display.js crée un <div> par ligne
+# dans une page qui anime un transform à 60 images/s. Quelques dizaines de milliers
+# de lignes suffisent à figer l'écran du prompteur. Et comme le texte est persisté
+# dans state.json, LE GEL SURVIT AU REDÉMARRAGE : la seule sortie serait un clavier
+# et un terminal, ce qui, en tournage, revient à un boîtier mort.
+#
+# Deux façons d'y arriver, toutes deux mesurées :
+#   * un .docx de 35 Ko dont le XML se décompresse en 8,9 Mo (ratio 256:1) donne
+#     7,7 Mo de texte et 40 000 lignes ; à la limite de 5 Mo par fichier, on
+#     atteindrait ~1,3 Go en mémoire, avant même le nettoyage caractère par caractère ;
+#   * un simple copier-coller très long envoyé à /api/text.
+# Ce n'est pas qu'un scénario d'attaque : un PDF de catalogue importé par erreur
+# produit le même effet.
+MAX_ZIP_ENTRY = 40 * 1024 * 1024  # XML décompressé accepté dans un .docx / .odt
+MAX_TEXT_CHARS = 300_000  # ~100 pages : très au-delà d'un script de tournage
+MAX_TEXT_LINES = 20_000
+
+
+class TextTooLarge(ValueError):
+    """Le document dépasse ce que le prompteur peut afficher sans se figer."""
+
+
+def check_size(text):
+    """Refuse un texte qui figerait l'affichage. Renvoie le texte inchangé sinon."""
+    if len(text) > MAX_TEXT_CHARS:
+        raise TextTooLarge(
+            f"Document trop volumineux pour le prompteur : {len(text):,} caractères "
+            f"(maximum {MAX_TEXT_CHARS:,}). Découpez-le en plusieurs séquences.".replace(",", " ")
+        )
+    lines = text.count("\n") + 1
+    if lines > MAX_TEXT_LINES:
+        raise TextTooLarge(
+            f"Document trop long pour le prompteur : {lines:,} lignes "
+            f"(maximum {MAX_TEXT_LINES:,}). Découpez-le en plusieurs séquences.".replace(",", " ")
+        )
+    return text
+
+
+def _read_zip_entry(z, name):
+    """Lit une entrée de zip APRÈS avoir vérifié sa taille décompressée.
+
+    ZipInfo.file_size se lit dans l'en-tête, sans rien décompresser : c'est ce qui
+    permet de refuser une « bombe de décompression » avant qu'elle n'occupe la RAM.
+    """
+    if z.getinfo(name).file_size > MAX_ZIP_ENTRY:
+        raise TextTooLarge(
+            "Ce document est trop volumineux une fois décompressé pour être lu "
+            "par le prompteur. Réenregistrez-le en texte ou découpez-le."
+        )
+    return z.read(name)
+
 
 # --------------------------------------------------------------------------
 # Nettoyage du texte
@@ -107,7 +161,7 @@ def _mark(level, text):
 
 def _from_docx(data):
     with zipfile.ZipFile(io.BytesIO(data)) as z:
-        xml = z.read("word/document.xml").decode("utf-8", "replace")
+        xml = _read_zip_entry(z, "word/document.xml").decode("utf-8", "replace")
     lines = []
     for m in re.finditer(r"<w:p\b(?:[^>]*/>|[^>]*>.*?</w:p>)", xml, flags=re.S):
         p = m.group(0)
@@ -117,7 +171,7 @@ def _from_docx(data):
 
 def _from_odt(data):
     with zipfile.ZipFile(io.BytesIO(data)) as z:
-        xml = z.read("content.xml").decode("utf-8", "replace")
+        xml = _read_zip_entry(z, "content.xml").decode("utf-8", "replace")
     lines = []
     for m in re.finditer(r"<text:(p|h)\b([^>]*)>(.*?)</text:\1>", xml, flags=re.S):
         tag, attrs, inner = m.group(1), m.group(2), m.group(3)
@@ -209,4 +263,7 @@ def extract_text(filename, data):
         raise
     except Exception as e:  # noqa: BLE001 - on renvoie un message lisible à l'utilisateur
         raise ValueError(f"Impossible de lire ce fichier ({ext or 'inconnu'}) : {e}") from e
-    return clean_text(raw)
+    # Borné DEUX fois : sur le texte brut d'abord, car clean_text parcourt la chaîne
+    # caractère par caractère et coûterait des dizaines de secondes sur un Pi ; puis
+    # sur le résultat, qui est ce qui partira réellement à l'écran.
+    return check_size(clean_text(check_size(raw)))

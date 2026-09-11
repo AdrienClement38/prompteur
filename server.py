@@ -200,6 +200,26 @@ def _sanitize_settings(settings):
     return clean
 
 
+_TRUNCATED_NOTE = "\n\n[Texte tronqué : il dépassait ce que le prompteur peut afficher.]"
+
+
+def _truncate_text(text):
+    """Ramène un texte trop volumineux dans les bornes, sans jamais échouer.
+
+    Utilisé au CHARGEMENT de state.json uniquement : à ce moment-là, refuser
+    reviendrait à empêcher le boîtier de démarrer. Sur les entrées (API, import),
+    c'est textextract.check_size qui refuse proprement, avec un message.
+    """
+    if not isinstance(text, str):
+        return ""
+    lines = text.split("\n")
+    if len(lines) > textextract.MAX_TEXT_LINES:
+        text = "\n".join(lines[: textextract.MAX_TEXT_LINES]) + _TRUNCATED_NOTE
+    if len(text) > textextract.MAX_TEXT_CHARS:
+        text = text[: textextract.MAX_TEXT_CHARS] + _TRUNCATED_NOTE
+    return text
+
+
 def load_state():
     if STATE_FILE.exists():
         try:
@@ -211,6 +231,11 @@ def load_state():
                     merged[k] = v
             merged["settings"] = _sanitize_settings(data.get("settings", {}))
             merged["control"].update(data.get("control", {}))
+            # Filet de dernier recours : si un texte démesuré a malgré tout été
+            # enregistré (version antérieure, fichier modifié à la main), on le
+            # tronque au chargement. Sans cela l'écran resterait figé À CHAQUE
+            # DÉMARRAGE, et il faudrait un clavier et un terminal pour s'en sortir.
+            merged["text"] = _truncate_text(merged.get("text", ""))
             return merged
         except (json.JSONDecodeError, OSError, TypeError, AttributeError):
             pass
@@ -429,8 +454,13 @@ def api_scroll():
 @app.route("/api/text", methods=["POST"])
 def api_text():
     data = request.get_json(silent=True) or {}
+    try:
+        text = textextract.check_size(str(data.get("text", "")))
+    except ValueError as e:
+        # Un texte demesure fige l'affichage, et le gel survit au redemarrage.
+        return jsonify({"ok": False, "error": str(e)}), 400
     with _lock:
-        STATE["text"] = str(data.get("text", ""))
+        STATE["text"] = text
         if "title" in data:
             STATE["title"] = str(data.get("title") or "Sans titre")
         bump(STATE)
@@ -537,7 +567,10 @@ def api_library_load():
     path = _library_path(str(data.get("name", "")))
     if path is None or not path.exists():
         return jsonify({"ok": False, "error": "introuvable"}), 404
-    text = read_text_file(path)
+    try:
+        text = textextract.check_size(read_text_file(path))
+    except ValueError as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
     with _lock:
         STATE["text"] = text
         STATE["title"] = path.stem

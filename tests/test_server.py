@@ -17,6 +17,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import server  # noqa: E402
+import textextract  # noqa: E402
+
+LF = chr(10)  # saut de ligne, nommé pour la lisibilité des cas de test
 
 
 @pytest.fixture
@@ -300,3 +303,76 @@ def test_lectures_non_genees_par_le_garde_fou(client):
     for path in ("/api/state", "/api/version", "/api/scroll", "/api/library", "/api/info"):
         r = client.get(path, headers={"Origin": "http://pub.example"})
         assert r.status_code == 200, path
+
+
+# ============================================================================
+# Bornes de taille du texte
+# ----------------------------------------------------------------------------
+# display.js crée un <div> par ligne dans une page qui anime un transform à
+# 60 images/s : quelques dizaines de milliers de lignes figent l'écran. Et comme
+# le texte est persisté dans state.json, le gel SURVIVRAIT AU REDÉMARRAGE.
+# Mesuré avant correctif : un .docx de 35 Ko -> 7,7 Mo de texte, 40 000 lignes.
+# Ce n'est pas qu'une attaque : un gros PDF importé par erreur fait la même chose.
+# ============================================================================
+
+
+def _docx_bombe(paragraphes=40000, taille=200):
+    """Un .docx parfaitement valide, mais dont le XML se décompresse énormément."""
+    para = "<w:p><w:r><w:t>" + ("A" * taille) + "</w:t></w:r></w:p>"
+    xml = '<?xml version="1.0"?><w:document xmlns:w="x"><w:body>' + para * paragraphes + "</w:body></w:document>"
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        z.writestr("word/document.xml", xml)
+    return buf.getvalue()
+
+
+def test_docx_bombe_refuse_et_etat_intact(client):
+    client.post("/api/text", json={"text": "script du jour"})
+    bombe = _docx_bombe()
+    assert len(bombe) < 200 * 1024  # le fichier envoyé est minuscule
+    r = _upload(client, bombe, "piege.docx")
+    assert r.status_code == 400
+    assert "error" in r.get_json()
+    assert client.get("/api/state").get_json()["text"] == "script du jour"
+
+
+def test_texte_trop_long_refuse(client):
+    client.post("/api/text", json={"text": "script du jour"})
+    r = client.post("/api/text", json={"text": "x" * (textextract.MAX_TEXT_CHARS + 1)})
+    assert r.status_code == 400
+    assert client.get("/api/state").get_json()["text"] == "script du jour"
+
+
+def test_trop_de_lignes_refuse(client):
+    trop = LF.join("l" for _ in range(textextract.MAX_TEXT_LINES + 10))
+    assert client.post("/api/text", json={"text": trop}).status_code == 400
+
+
+def test_txt_trop_long_refuse_a_l_import(client):
+    gros = ("x" * (textextract.MAX_TEXT_CHARS + 1)).encode("utf-8")
+    assert _upload(client, gros, "enorme.txt").status_code == 400
+
+
+def test_bibliotheque_texte_trop_long_refuse(client):
+    """Un .txt démesuré déposé à la main dans scripts/ ne part pas à l'antenne."""
+    gros = "x" * (textextract.MAX_TEXT_CHARS + 1)
+    (server.SCRIPTS_DIR / "enorme.txt").write_text(gros, encoding="utf-8")
+    assert client.post("/api/library/load", json={"name": "enorme"}).status_code == 400
+
+
+def test_state_json_empoisonne_se_tronque_au_demarrage(client, tmp_path):
+    """Filet de dernier recours : le boîtier doit redémarrer, pas rester figé."""
+    poison = LF.join("l" for _ in range(textextract.MAX_TEXT_LINES * 2))
+    (tmp_path / "state.json").write_text(json.dumps({"text": poison}), encoding="utf-8")
+    server.STATE_FILE = tmp_path / "state.json"
+    st = server.load_state()
+    assert st["text"].count(LF) + 1 <= textextract.MAX_TEXT_LINES + 3
+    assert "tronqué" in st["text"]
+
+
+def test_document_normal_toujours_accepte(client):
+    """Non-régression : un script de tournage réaliste passe sans encombre."""
+    normal = LF.join("Ligne de script numéro %d." % i for i in range(500))
+    assert client.post("/api/text", json={"text": normal}).status_code == 200
+    r = _upload(client, _docx_bytes(["Titre", "Corps du texte."]), "normal.docx")
+    assert r.status_code == 200
