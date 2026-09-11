@@ -624,28 +624,25 @@ en plus précis. Faites-la glisser, puis lâchez, puis regardez le grand écran.
 > **Parade : laissez le mode sur « Maintien » et n'y touchez pas.** Le mode actif est celui dont
 > le bouton est coloré en bleu.
 
-> ⚠️ **LES DEUX CASES TOUT EN BAS DE L'ONGLET RÉGLAGES.** Sous « Mode », deux cases indiquent
-> quelle touche correspond à chaque pédale (`ArrowDown` pour la droite, `ArrowUp` pour la gauche).
-> Elles servent à **réapprendre** la touche envoyée par chaque pédale.
+> 📌 **LES DEUX PÉDALES, TOUT EN BAS DE L'ONGLET RÉGLAGES.** Sous « Mode », deux blocs indiquent
+> quelle touche correspond à chaque pédale (`ArrowDown` pour la droite, `ArrowUp` pour la gauche),
+> avec un bouton **« Réapprendre »** et une ligne d'état verte quand tout va bien.
 >
-> **Depuis un téléphone, y toucher est sans conséquence** : la case affiche simplement
-> « … appuie sur la pédale », il suffit de toucher ailleurs (ou de recharger la page) pour en
-> sortir, et rien n'est modifié.
+> **Vous ne pouvez rien casser en regardant.** Rien n'est envoyé au boîtier tant que vous n'avez
+> pas appuyé sur **« Enregistrer »**, et un bouton **« Annuler »** remet tout comme avant.
 >
-> **Si malgré tout les pédales ne répondent plus après un passage dans ces cases, la réparation
-> se fait sur place, sans installateur :**
+> **Si les pédales ne répondent plus, la réparation se fait sur place, sans installateur :**
 > 1. Prenez un **ordinateur portable** (ou une tablette avec un vrai clavier) et connectez-le au
 >    réseau **Prompteur**.
 > 2. Ouvrez sur cet appareil la même page `http://10.42.0.1:5000`, onglet **Réglages**,
 >    carte **Pédales**.
-> 3. Cliquez dans la case **« Touche pédale droite (avancer) »**, puis appuyez sur la touche
->    **Flèche bas** du clavier de cet appareil.
-> 4. Cliquez dans la case **« Touche pédale gauche (reculer) »**, puis appuyez sur la touche
->    **Flèche haut**.
+> 3. Pédale droite : **« Réapprendre »** → appuyez sur la touche **Flèche bas** du clavier de cet
+>    appareil → **« Enregistrer »**.
+> 4. Pédale gauche : **« Réapprendre »** → touche **Flèche haut** → **« Enregistrer »**.
 >
-> *Ce que vous devez voir : le message « Touche enregistrée : ArrowDown » (puis « ArrowUp »), et
-> la case qui affiche ce nom.* Les pédales refonctionnent immédiatement.
-> **Important** : ces cases écoutent le clavier de **l'appareil qui affiche cette page**. Depuis
+> *Ce que vous devez voir : la ligne d'état passe au vert, « ✓ Enregistré sur le boîtier », et le
+> nom de la touche s'affiche.* Les pédales refonctionnent immédiatement.
+> **Important** : ces blocs écoutent le clavier de **l'appareil qui affiche cette page**. Depuis
 > un téléphone sans clavier physique, la réparation est impossible : il faut un vrai clavier.
 > En dernier recours seulement, appelez la personne qui a installé le boîtier.
 

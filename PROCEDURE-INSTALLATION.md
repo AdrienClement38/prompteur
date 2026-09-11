@@ -161,7 +161,8 @@ Branchez le **pédalier USB** sur le Pi. Objectif : pédale **droite = touche Fl
 Deux méthodes, au choix :
 
 - **A) Programmer le pédalier** (recommandé pour du matériel type PCsensor) : avec le petit logiciel du fabricant (sur un PC), assignez `Flèche bas` à la pédale droite et `Flèche haut` à la pédale gauche.
-- **B) Adapter le logiciel au pédalier** : sur la télécommande (voir étape 8) → onglet **Réglages** → section **Pédales** → cliquez dans le champ « pédale droite », **appuyez sur la pédale** (elle est « apprise »), idem pour la gauche.
+- **B) Adapter le logiciel au pédalier** *(recommandé : aucun PC Windows requis)* : sur la télécommande (voir étape 8) → onglet **Réglages** → section **Pédales** → **« Réapprendre »**, **appuyez sur la pédale**, puis **« Enregistrer »** ; idem pour la gauche. Rien n'est envoyé au boîtier avant la confirmation, et la ligne d'état ne passe au vert qu'après relecture de l'état réel du boîtier. La touche `F` et les doublons entre les deux pédales sont refusés.
+  ⚠️ L'apprentissage écoute le clavier de **l'appareil qui affiche la page** : il faut donc le faire depuis le boîtier lui-même, ou depuis un ordinateur portable sur lequel le pédalier est branché — jamais depuis un téléphone.
 
 **Test** : maintenez la pédale droite → le texte défile ; relâchez → il s'arrête ; pédale gauche → il recule.
 

@@ -171,8 +171,11 @@ en est le prompteur, en ouvrant l'adresse spectateur : `http://10.42.0.1:5000/vi
 - **Mode pédale** :
   - **Maintien** : pédale enfoncée = ça défile ; relâchée = ça s'arrête *(recommandé)*
   - **Impulsion** : une pression lance/arrête ; la pédale gauche revient au début
-- **Apprentissage des touches** de pédale : clique dans le champ puis appuie sur
-  la pédale pour enregistrer la touche qu'elle envoie.
+- **Apprentissage des touches** de pédale, en trois temps : **« Réapprendre »**,
+  appui sur la pédale, puis **« Enregistrer »**. Rien n'est envoyé au boîtier
+  avant la confirmation, et l'enregistrement n'est annoncé qu'après relecture de
+  l'état réel du boîtier. La touche `F` et une touche déjà prise par l'autre
+  pédale sont refusées ; les collisions avec un raccourci sont signalées.
 
 ---
 

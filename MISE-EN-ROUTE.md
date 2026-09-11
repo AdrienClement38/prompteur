@@ -918,19 +918,22 @@ Le prompteur sait « apprendre » quelle touche envoie chaque pédale. Cet
 apprentissage se fait dans l'onglet **Réglages** de la télécommande, tout en bas,
 dans la carte **« Pédales »**.
 
-> **⚠️ Ce que fait réellement le champ d'apprentissage — à lire avant de cliquer.**
-> Ces deux champs enregistrent **la première touche appuyée, quelle qu'elle
-> soit** — y compris Échap, Tab ou une lettre. Il n'existe **aucun bouton
-> d'annulation**. Donc : **ne cliquez dedans que si vous voulez vraiment
-> réapprendre une pédale**, et appuyez alors immédiatement sur la pédale.
-> **Pour annuler sans rien changer** : cliquez ailleurs dans la page, puis
-> **rechargez la page** — tant qu'aucune touche n'a été appuyée, rien n'a été
-> modifié, même si le champ affiche encore « … appuie sur la pédale ».
+> **📌 Rien n'est enregistré sans votre accord — vous pouvez explorer sans crainte.**
+> L'apprentissage se fait en **trois temps** : **« Réapprendre »**, puis l'appui
+> sur la pédale, puis **« Enregistrer »**. Tant que vous n'avez pas appuyé sur
+> **Enregistrer**, **rien n'est envoyé au boîtier** et un bouton **« Annuler »**
+> remet tout comme avant. Sous chaque pédale, une ligne d'état vous dit en
+> permanence où vous en êtes.
 >
-> **Depuis un téléphone, cet apprentissage ne peut de toute façon pas
-> fonctionner** : le champ écoute le clavier de **l'appareil qui affiche la
-> page**, or les pédales sont branchées sur le boîtier. Leurs appuis n'arrivent
-> jamais jusqu'au téléphone.
+> Et le logiciel **refuse tout seul** les deux mauvais choix : la touche **F**
+> (une pédale réglée sur F ne fonctionnerait jamais) et une touche **déjà
+> utilisée par l'autre pédale** (l'une des deux deviendrait muette). Il vous
+> prévient aussi si la touche choisie écrase un raccourci existant.
+>
+> **⚠️ Depuis un téléphone, cet apprentissage ne peut pas fonctionner** : la page
+> écoute le clavier de **l'appareil qui l'affiche**, or les pédales sont
+> branchées sur le boîtier. Leurs appuis n'arrivent jamais jusqu'au téléphone.
+> *(La page vous le rappelle elle-même, juste sous les deux pédales.)*
 
 **La bonne méthode — aucun logiciel à installer, aucun PC Windows requis.**
 
@@ -939,9 +942,10 @@ dans la carte **« Pédales »**.
 - [ ] Branchez le pédalier **sur cet ordinateur portable** (pas sur le boîtier).
 - [ ] Connectez cet ordinateur au WiFi `Prompteur`, exactement comme le téléphone.
 - [ ] Ouvrez `http://10.42.0.1:5000` dans son navigateur. **✅ Vous devez voir la même page à trois onglets que sur le téléphone.**
-- [ ] Onglet **Réglages** → carte **Pédales** → cliquez dans le champ **« Touche pédale droite (avancer) »**. **✅ Le champ se vide et affiche « … appuie sur la pédale ».**
-- [ ] **Appuyez sur la pédale de droite.** **✅ Une bulle du type « Touche enregistrée : ArrowDown » apparaît, et le champ affiche ce nom.**
-- [ ] Recommencez avec le champ **« Touche pédale gauche (reculer) »** et la pédale de gauche.
+- [ ] Onglet **Réglages** → carte **Pédales** → sous **« Touche pédale droite (avancer) »**, appuyez sur **« Réapprendre »**. **✅ Le champ affiche « Appuie sur la pédale… » et la ligne d'état dit qu'elle attend.**
+- [ ] **Appuyez une fois sur la pédale de droite.** **✅ Le nom de la touche s'affiche (par exemple `ArrowDown`) et la ligne d'état précise : « Rien n'est encore envoyé au boîtier — appuie sur Enregistrer ».**
+- [ ] Appuyez sur **« Enregistrer »**. **✅ La ligne d'état passe au vert : « ✓ Enregistré sur le boîtier ». C'est la preuve que le boîtier l'a réellement accepté — pas seulement que l'envoi est parti.**
+- [ ] Recommencez les trois gestes pour **« Touche pédale gauche (reculer) »** avec la pédale de gauche.
 - [ ] **Rebranchez le pédalier sur le boîtier** : le réglage est mémorisé **par le boîtier**, pas par l'ordinateur. Retestez comme au paragraphe I.1.
 
 **Méthode 2 — sur le boîtier lui-même**
@@ -961,17 +965,19 @@ gênant mais impose un redémarrage ensuite.
 > **Pour revenir un jour aux réglages d'origine** (ces deux mots ne se tapent pas
 > au clavier : les champs n'acceptent que la touche réellement appuyée) :
 > branchez **un clavier** sur le boîtier, ouvrez la télécommande, onglet
-> **Réglages** → carte **Pédales**, cliquez dans le champ **« Touche pédale
-> droite »** et appuyez sur la touche **Flèche bas** du clavier ; puis cliquez
-> dans le champ **« Touche pédale gauche »** et appuyez sur la touche **Flèche
-> haut**. Les mots `ArrowDown` et `ArrowUp` doivent alors s'afficher : c'est la
-> preuve que tout est remis d'origine.
+> **Réglages** → carte **Pédales**. Pour la pédale droite : **« Réapprendre »**,
+> appuyez sur la touche **Flèche bas** du clavier, puis **« Enregistrer »**.
+> Pour la pédale gauche : **« Réapprendre »**, touche **Flèche haut**,
+> **« Enregistrer »**. Les mots `ArrowDown` et `ArrowUp` doivent alors s'afficher
+> en vert : c'est la preuve que tout est remis d'origine.
 
-> **⚠️ PIÈGE — ne donnez pas à une pédale une touche déjà utilisée** (Espace, R,
-> M, H, I, + ou -) : la pédale prendrait la place du raccourci, qui cesserait de
-> fonctionner. **Et surtout jamais la touche F** : avec F, ce serait **la pédale
-> elle-même qui cesserait complètement de fonctionner**, ce qui est bien plus
-> difficile à comprendre. En cas de doute, revenez aux flèches du haut et du bas.
+> **💡 Les mauvais choix sont maintenant refusés par le logiciel lui-même.**
+> La touche **F** est rejetée d'office (une pédale réglée sur F ne fonctionnerait
+> jamais, car F est réservée au plein écran), et une touche **déjà affectée à
+> l'autre pédale** l'est aussi. Si vous choisissez une touche qui sert déjà à un
+> raccourci (Espace, R, M, H, I, + ou -), l'enregistrement reste possible mais un
+> avertissement vous dit **quel raccourci vous perdez**.
+> En cas de doute, revenez aux flèches du haut et du bas.
 
 ### I.3 — Le mode des pédales : laissez « Maintien »
 
@@ -1294,7 +1300,7 @@ six règles, qui résument tout ce qui peut mal tourner :
 2. **Pas de bulle de confirmation = ce n'est pas parti.** C'est la seule preuve qu'un texte a bien été envoyé.
 3. **Ne jamais toucher la petite croix rouge** de la liste des textes enregistrés : elle efface définitivement, sans rien demander. Pour rappeler un texte, c'est le bouton **bleu « Charger »**.
 4. **Ne rien charger, ni importer, ni corriger pendant une prise** : tout cela remplace instantanément le texte à l'écran et remet le défilement tout en haut.
-5. **Ne pas cliquer dans les deux cases du bas de l'onglet Réglages** (les touches des pédales) : la première touche appuyée y devient la nouvelle touche de la pédale, et il n'y a pas d'annulation. Depuis un téléphone, cet apprentissage ne peut de toute façon pas fonctionner.
+5. **Les deux blocs « Pédales » du bas de l'onglet Réglages ne se touchent qu'en cas de besoin.** On ne risque rien à les regarder : rien n'est envoyé au boîtier tant qu'on n'a pas appuyé sur « Enregistrer », et « Annuler » remet tout comme avant. Mais depuis un téléphone, cet apprentissage ne peut de toute façon pas fonctionner : il faut un appareil doté d'un vrai clavier, ou le pédalier branché dessus.
 6. **Récupérez toujours vos textes AVANT de rejoindre le réseau `Prompteur`.** Tant que le téléphone est sur ce réseau, **il n'a plus Internet** : ni mail, ni messagerie, ni document en ligne.
    *La manœuvre, quand un texte arrive à la dernière minute :* quitter le réseau `Prompteur` (repasser en 4G) → ouvrir le mail → **copier** le texte → revenir sur le réseau `Prompteur` → ouvrir la télécommande → **coller** dans la zone de texte → **« Envoyer à l'écran »**.
 
