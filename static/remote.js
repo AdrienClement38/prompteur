@@ -68,7 +68,7 @@
     settings = s.settings || {};
     knownVersion = s.version;
     $("title").value = s.title || "";
-    $("text").value = s.text || "";
+    setText(s.text || "");
     sentText = s.text || "";
     texteAvant = s.text || "";
     marks = Array.isArray(s.marks) ? s.marks : [];
@@ -84,7 +84,7 @@
   // voit rien changer, et on croit que le boîtier ne répond plus — une bizarrerie
   // signalée serait devenue une panne perçue, en plein tournage.
   function refreshUnsent() {
-    const differe = sentText !== null && $("text").value !== sentText;
+    const differe = sentText !== null && getText() !== sentText;
     $("unsent").classList.toggle("hide", !differe);
   }
 
@@ -129,7 +129,7 @@
       return;
     }
     $("title").value = st.title || "";
-    $("text").value = st.text || "";
+    setText(st.text || "");
     sentText = st.text || "";
     texteAvant = st.text || "";
     marks = Array.isArray(st.marks) ? st.marks : [];
@@ -175,19 +175,29 @@
   ["text", "title"].forEach((id) =>
     $(id).addEventListener("input", () => {
       if (id === "text") {
-        remapMarks(texteAvant, $("text").value);
-        texteAvant = $("text").value;
-        refreshApercu();
+        // On NE reconstruit PAS la zone a chaque frappe : cela deplacerait le
+        // curseur a chaque caractere. Les plages sont recalees, le rendu suit au
+        // prochain bouton de mise en forme.
+        remapMarks(texteAvant, getText());
+        texteAvant = getText();
       }
       textDirty = true;
       refreshUnsent();
     }));
 
-  // --- Aperçu de la mise en forme -------------------------------------------
-  // Une zone de saisie ne sait pas afficher du gras : sans cet aperçu, on
-  // applique un style sans jamais voir ce qu'il donne, et on croit que le bouton
-  // ne fait rien. Mêmes classes que l'écran, donc même rendu.
+  // --- Zone de saisie riche -------------------------------------------------
+  // Une <textarea> ne sait afficher que du texte nu : c'est ce qui avait imposé
+  // un aperçu à côté. Ici la mise en forme se voit LÀ OÙ L'ON TAPE, avec les
+  // mêmes classes que l'écran, donc le même rendu.
+  //
+  // « plaintext-only » est essentiel : le navigateur n'insère alors que du texte
+  // et des sauts de ligne, jamais ses propres balises, et un collage arrive
+  // débarrassé de la mise en forme de sa provenance. Le texte reste donc une
+  // chaîne brute, et la mise en forme reste notre liste de plages.
+  const editor = $("text");
   const SIZE_CLASS = { s: "ms", l: "ml", xl: "mxl" };
+
+  const getText = () => editor.textContent;
 
   function classesAt(index) {
     let cls = "";
@@ -206,33 +216,98 @@
     return cls.trim();
   }
 
-  function refreshApercu() {
-    const zone = $("apercu");
-    if (!marks.length) {
-      zone.classList.add("hide");
-      return;
-    }
-    zone.classList.remove("hide");
-    const texte = $("text").value;
-    const bornes = [0];
+  // Reconstruit la zone à partir du texte et des plages. On ne coupe qu'aux
+  // FRONTIÈRES des plages, pas à chaque caractère.
+  function renderEditor(texte) {
+    const bornes = [0, texte.length];
     for (const m of marks) bornes.push(m.start, m.end);
-    bornes.push(texte.length);
-    const coupes = [...new Set(bornes)].filter((b) => b >= 0 && b <= texte.length).sort((a, b) => a - b);
-    const cible = $("apercuTexte");
-    cible.replaceChildren();
+    const coupes = [...new Set(bornes)]
+      .filter((b) => b >= 0 && b <= texte.length)
+      .sort((a, b) => a - b);
+    editor.replaceChildren();
     for (let k = 0; k < coupes.length - 1; k++) {
       const morceau = texte.slice(coupes[k], coupes[k + 1]);
       if (!morceau) continue;
       const cls = classesAt(coupes[k]);
       if (!cls) {
-        cible.appendChild(document.createTextNode(morceau));
+        editor.appendChild(document.createTextNode(morceau));
       } else {
         const span = document.createElement("span");
         span.className = cls;
         span.textContent = morceau; // textContent -> aucun risque d'injection
-        cible.appendChild(span);
+        editor.appendChild(span);
       }
     }
+  }
+
+  function setText(texte) {
+    renderEditor(texte || "");
+  }
+
+  // --- Position de la sélection, en indices de caractères -------------------
+  // Dans une zone éditable, la sélection désigne un nœud et un décalage dans ce
+  // nœud. Nos plages, elles, sont des indices dans le texte entier : il faut donc
+  // traduire dans les deux sens.
+  function offsetDe(noeud, decalage) {
+    if (noeud === editor) {
+      let total = 0;
+      for (let i = 0; i < decalage && i < editor.childNodes.length; i++) {
+        total += editor.childNodes[i].textContent.length;
+      }
+      return total;
+    }
+    let total = 0;
+    const marcheur = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = marcheur.nextNode())) {
+      if (n === noeud) return total + decalage;
+      total += n.nodeValue.length;
+    }
+    return total;
+  }
+
+  function selectionCourante() {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
+    const plage = sel.getRangeAt(0);
+    if (!editor.contains(plage.startContainer) && plage.startContainer !== editor) return null;
+    const a = offsetDe(plage.startContainer, plage.startOffset);
+    const b = offsetDe(plage.endContainer, plage.endOffset);
+    return { debut: Math.min(a, b), fin: Math.max(a, b) };
+  }
+
+  function replacerSelection(debut, fin) {
+    const marcheur = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    let total = 0;
+    let noeudD = null;
+    let decD = 0;
+    let noeudF = null;
+    let decF = 0;
+    let n;
+    while ((n = marcheur.nextNode())) {
+      const longueur = n.nodeValue.length;
+      if (noeudD === null && debut <= total + longueur) {
+        noeudD = n;
+        decD = debut - total;
+      }
+      if (fin <= total + longueur) {
+        noeudF = n;
+        decF = fin - total;
+        break;
+      }
+      total += longueur;
+    }
+    if (!noeudD) return;
+    if (!noeudF) {
+      noeudF = noeudD;
+      decF = decD;
+    }
+    const plage = document.createRange();
+    plage.setStart(noeudD, Math.max(0, Math.min(decD, noeudD.nodeValue.length)));
+    plage.setEnd(noeudF, Math.max(0, Math.min(decF, noeudF.nodeValue.length)));
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(plage);
   }
 
   // --- Mise en forme : gras / italique / souligné ---------------------------
@@ -248,13 +323,12 @@
   }
 
   function applyAttr(cle, valeur) {
-    const ta = $("text");
-    const debut = ta.selectionStart;
-    const fin = ta.selectionEnd;
-    if (fin <= debut) {
+    const sel = selectionCourante();
+    if (!sel || sel.fin <= sel.debut) {
       toast("Sélectionnez d'abord un passage");
       return;
     }
+    const { debut, fin } = sel;
     // Déjà entièrement dans ce style ? On l'enlève. Sinon on l'ajoute.
     // Rappuyer sur le meme bouton retire le style : c'est la seule facon de
     // revenir en arriere sans tout effacer.
@@ -274,9 +348,12 @@
     textDirty = true;
     refreshUnsent();
     refreshFmtInfo();
-    refreshApercu();
-    ta.focus();
-    ta.setSelectionRange(debut, fin);
+    // On reconstruit la zone, puis on remet la sélection là où elle était : sans
+    // cela le passage qu'on vient de marquer se désélectionne, et enchaîner
+    // gras puis italique devient impossible.
+    renderEditor(getText());
+    editor.focus();
+    replacerSelection(debut, fin);
   }
 
   // Le texte change : on recale les plages sur les parties intactes.
@@ -307,7 +384,6 @@
       })
       .filter(Boolean);
     refreshFmtInfo();
-    refreshApercu();
   }
 
   // mousedown + preventDefault : le bouton ne prend pas le focus, donc la
@@ -329,13 +405,13 @@
     textDirty = true;
     refreshUnsent();
     refreshFmtInfo();
-    refreshApercu();
+    renderEditor(getText());
     toast("Mise en forme effacée");
   });
 
   // --- Envoi du texte -------------------------------------------------------
   $("send").addEventListener("click", async () => {
-    const envoye = $("text").value;
+    const envoye = getText();
     await postJSON("/api/text", { text: envoye, title: $("title").value, marks });
     sentText = envoye;
     textDirty = false;
@@ -347,7 +423,7 @@
     const name = ($("title").value || "").trim() || "Sans titre";
     const r = await fetch("/api/library/save", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, text: $("text").value, overwrite: !!overwrite, marks }),
+      body: JSON.stringify({ name, text: getText(), overwrite: !!overwrite, marks }),
     });
     if (r.status === 409) {
       // un texte du même nom existe déjà : on demande confirmation au lieu d'écraser
@@ -391,7 +467,7 @@
 
   // Remplit la zone de saisie avec un texte importé, sans rien diffuser.
   function fillFromImport(res) {
-    $("text").value = res.text || "";
+    setText(res.text || "");
     $("title").value = res.title || "";
     texteAvant = res.text || "";
     marks = []; // nouveau texte : les anciennes plages n'ont plus de sens
@@ -812,7 +888,6 @@
 
   loadState().catch(() => toast("Erreur de connexion au boîtier"));
   refreshFmtInfo();
-  refreshApercu();
   refreshKiosk();
   setInterval(pollVersion, 1500);
   const mainBtn = document.querySelector(".readbtn.main");

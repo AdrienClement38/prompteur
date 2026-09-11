@@ -132,24 +132,27 @@
     .fmtbar button{min-height:40px; padding:8px 0; flex:1; font-size:16px;}
     .fmtbar button:last-child{flex:2; font-size:13px;}
     #fmtInfo{margin-top:6px;}
-    /* Apercu : une zone de saisie ne peut pas afficher du gras. Sans lui, on
-       applique une mise en forme sans jamais voir ce qu'elle donne. */
-    .apercu{margin-top:10px; padding:10px 12px; border-radius:10px;
-      background:#000; border:1px solid var(--line); max-height:220px; overflow:auto;}
-    .apercuTitre{font-size:11px; text-transform:uppercase; letter-spacing:.05em;
-      color:var(--muted); margin-bottom:6px;}
-    #apercuTexte{white-space:pre-wrap; word-wrap:break-word; color:#fff; font-size:15px; line-height:1.45;}
-    #apercuTexte .mb{font-weight:800;}
-    #apercuTexte .mi{font-style:italic;}
-    #apercuTexte .mu{text-decoration:underline; text-underline-offset:.12em;}
-    #apercuTexte .ms{font-size:.8em;}
-    #apercuTexte .ml{font-size:1.28em;}
-    #apercuTexte .mxl{font-size:1.5em;}
-    #apercuTexte .c1{color:#ffd400;}
-    #apercuTexte .c2{color:#ff7a68;}
-    #apercuTexte .c3{color:#5ee08a;}
-    #apercuTexte .c4{color:#7cc4ff;}
-    #apercuTexte .c5{color:#a9b2c2;}
+    /* Zone de saisie RICHE : la mise en forme se voit la ou l'on tape, ce qu'une
+       <textarea> ne sait pas faire. Memes classes que l'ecran, donc meme rendu. */
+    .editor{
+      width:100%; min-height:150px; max-height:340px; overflow:auto; resize:vertical;
+      background:var(--card2); color:var(--fg); border:1px solid var(--line);
+      border-radius:10px; padding:12px; font-size:16px; line-height:1.5;
+      white-space:pre-wrap; word-wrap:break-word; outline:none;
+    }
+    .editor:focus{border-color:var(--accent);}
+    .editor:empty::before{content:attr(data-vide); color:var(--muted);}
+    .editor .mb{font-weight:800;}
+    .editor .mi{font-style:italic;}
+    .editor .mu{text-decoration:underline; text-underline-offset:.12em;}
+    .editor .ms{font-size:.8em;}
+    .editor .ml{font-size:1.28em;}
+    .editor .mxl{font-size:1.5em;}
+    .editor .c1{color:#ffd400;}
+    .editor .c2{color:#ff7a68;}
+    .editor .c3{color:#5ee08a;}
+    .editor .c4{color:#7cc4ff;}
+    .editor .c5{color:#a9b2c2;}
     .fmtbar button#fmtL{font-size:17px; font-weight:700;}
     .fmtbar button#fmtXL{font-size:19px; font-weight:800;}
     .fmtbar button#fmtS{font-size:12px;}
@@ -212,7 +215,8 @@
       <label>Titre</label>
       <input type="text" id="title" placeholder="Ex : Intro épisode 12">
       <label>Texte du prompteur</label>
-      <textarea id="text" placeholder="Colle ici ton texte…"></textarea>
+      <div id="text" class="editor" contenteditable="plaintext-only"
+           data-vide="Colle ici ton texte…"></div>
       <div class="fmtbar">
         <button id="fmtB" title="Gras"><b>G</b></button>
         <button id="fmtI" title="Italique"><i>I</i></button>
@@ -232,10 +236,6 @@
         <button class="swatchBtn" data-color="5" style="background:#a9b2c2"></button>
       </div>
       <div class="muted" id="fmtInfo">Sélectionnez un passage, puis G, I ou S.</div>
-      <div class="apercu hide" id="apercu">
-        <div class="apercuTitre">Aperçu — ce que l'écran affichera</div>
-        <div id="apercuTexte"></div>
-      </div>
 
       <div class="unsent hide" id="unsent">
         Ce texte n'est <b>pas encore à l'écran</b> — appuyez sur « Envoyer à l'écran ».
