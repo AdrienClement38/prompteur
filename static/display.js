@@ -215,13 +215,18 @@
     requestAnimationFrame(frame);
   }
 
-  // --- Quitter le prompteur (Échap) ----------------------------------------
+  // --- Revenir à la page d'accueil (Échap) ----------------------------------
   // C'est le SEUL endroit où l'on est prisonnier : la télécommande et l'écran de
   // régie sont des pages web ordinaires, qu'on ferme quand on veut. Ici le
-  // navigateur est en plein écran sans barre ni onglet, et jusqu'ici la seule
-  // sortie était Alt+F4 puis un redémarrage pour revenir.
-  // Une page web ne peut pas se fermer elle-même : c'est le serveur qui ferme le
-  // navigateur, via la même route que le bouton « Fermer » de la télécommande.
+  // navigateur est en plein écran, sans barre ni onglet.
+  //
+  // Échap RAMÈNE À L'ACCUEIL, il ne ferme pas le navigateur. Deux actions
+  // distinctes, pour deux besoins distincts :
+  //   Échap ................. revient à la page d'accueil, partout, toujours ;
+  //   « Fermer le prompteur » (barre de l'accueil) ferme le navigateur et rend
+  //                           la main au bureau du Raspberry.
+  // Faire tuer le navigateur par une touche serait à la fois plus risqué et sans
+  // effet visible hors du mode kiosque — là où l'on teste, justement.
   // Confirmation en deux temps : une touche unique suffirait à couper l'écran en
   // pleine prise si un clavier de secours est branché.
   const quitAsk = document.getElementById("quitAsk");
@@ -237,11 +242,7 @@
   }
   function doQuit() {
     cancelQuit();
-    fetch("/api/kiosk/close", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: "{}",
-    }).catch(() => {});
+    window.location.href = "/";
   }
 
   // --- Touches (pédales + raccourcis) — meneur uniquement pour le pilotage --
