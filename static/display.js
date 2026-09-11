@@ -377,8 +377,40 @@
   function cancelQuit() {
     quitPending = false;
     quitAsk.style.display = "none";
+    restoreQuitText();
+  }
+
+  const QUIT_TITLE = "Revenir à la page d'accueil ?";
+  const QUIT_SUB = document.getElementById("quitSub").innerHTML;
+
+  function restoreQuitText() {
+    document.getElementById("quitTitle").textContent = QUIT_TITLE;
+    document.getElementById("quitSub").innerHTML = QUIT_SUB;
+  }
+
+  // Refus de quitter : on le dit dans la même fenêtre, et elle se referme seule.
+  function refuseQuit() {
+    quitPending = false;
+    document.getElementById("quitTitle").textContent = "Impossible de revenir à l'accueil.";
+    document.getElementById("quitSub").innerHTML =
+      "La liaison avec le boîtier est perdue : la page d'accueil ne répondrait pas, " +
+      "et il n'y a pas de flèche retour ici.<br>" +
+      "<span style=\"font-size:15px;\">Le texte reste lisible et les pédales fonctionnent. " +
+      "Réessayez quand le bandeau rouge aura disparu.</span>";
+    quitAsk.style.display = "block";
+    setTimeout(() => {
+      if (!quitPending) cancelQuit();
+    }, 6000);
   }
   function doQuit() {
+    // En kiosque il n'y a NI barre d'adresse NI flèche retour : si le serveur est
+    // tombé, partir vers « / » mènerait à une page d'erreur sans aucun moyen de
+    // revenir. On refuse donc de quitter tant que la liaison est perdue, et on le
+    // dit — mieux vaut rester sur un texte lisible que s'échouer sur une impasse.
+    if (failures >= FAILURES_BEFORE_WARNING) {
+      refuseQuit();
+      return;
+    }
     cancelQuit();
     leavingOnPurpose = true;
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
