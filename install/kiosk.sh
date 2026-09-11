@@ -14,6 +14,8 @@
 #      kiosk.sh --restart    le ferme puis le relance
 #      kiosk.sh --stop       le ferme et revient au bureau
 #      kiosk.sh --status     affiche « running » ou « stopped » (code 0 / 1)
+#      kiosk.sh --menu       ouvre le tableau de bord sur le SECOND écran
+#      kiosk.sh --menu-stop  le ferme
 # =============================================================================
 set -u
 
@@ -24,6 +26,9 @@ URL="http://localhost:${PORT}/display"
 # service systemd (qui ne les a pas forcément identiques). Un chemin dérivé de
 # l'un ou de l'autre donnerait deux fichiers différents, et un état faux.
 PIDFILE="/tmp/prompteur-kiosk-$(id -u).pid"
+# Fichier PID distinct pour le tableau de bord : les deux fenêtres vivent leur
+# vie, fermer le prompteur ne doit pas faire disparaître le menu du technicien.
+MENUPID="/tmp/prompteur-menu-$(id -u).pid"
 
 # --- État --------------------------------------------------------------------
 kiosk_pid() {
@@ -53,8 +58,72 @@ stop_kiosk() {
   rm -f "$PIDFILE"
 }
 
+# --- Tableau de bord (second écran) ------------------------------------------
+# Position de la fenêtre : le petit écran est à droite du grand dans le bureau
+# étendu. On lit sa position réelle avec xrandr plutôt que de la deviner ; à
+# défaut, PROMPTEUR_MENU_POS permet de l'imposer (« 1024,0 »).
+menu_geometry() {
+  if [ -n "${PROMPTEUR_MENU_POS:-}" ]; then
+    echo "$PROMPTEUR_MENU_POS"
+    return
+  fi
+  # Sortie connectée la plus à droite : c'est le second écran.
+  xrandr --query 2>/dev/null |
+    sed -n 's/^[^ ]* connected[^0-9]*\([0-9]\+\)x\([0-9]\+\)+\([0-9]\+\)+\([0-9]\+\).*/\3 \1 \4/p' |
+    sort -rn | head -1 | awk '{print $1 "," $3}'
+}
+
+menu_pid() {
+  [ -f "$MENUPID" ] || return 1
+  local pid
+  pid="$(cat "$MENUPID" 2>/dev/null)"
+  case "$pid" in
+    '' | *[!0-9]*) return 1 ;;
+  esac
+  kill -0 "$pid" 2>/dev/null || return 1
+  echo "$pid"
+}
+
+stop_menu() {
+  local pid
+  if pid="$(menu_pid)"; then
+    kill "$pid" 2>/dev/null || true
+  fi
+  rm -f "$MENUPID"
+}
+
 # --- Sous-commandes ----------------------------------------------------------
 case "${1:-}" in
+  --menu-stop)
+    stop_menu
+    echo "Tableau de bord ferme."
+    exit 0
+    ;;
+  --menu)
+    if menu_pid >/dev/null; then
+      echo "Tableau de bord deja affiche."
+      exit 0
+    fi
+    BROWSER="$(command -v chromium-browser || command -v chromium || true)"
+    if [ -z "$BROWSER" ]; then
+      echo "Prompteur: Chromium introuvable." >&2
+      exit 1
+    fi
+    POS="$(menu_geometry)"
+    POS="${POS:-0,0}"
+    echo $$ >"$MENUPID"
+    exec "$BROWSER" \
+      --noerrdialogs \
+      --disable-infobars \
+      --disable-session-crashed-bubble \
+      --disable-features=Translate \
+      --check-for-update-interval=31536000 \
+      --window-position="${POS}" \
+      --window-size=480,320 \
+      --user-data-dir="/tmp/prompteur-menu-profil-$(id -u)" \
+      --class=PrompteurMenu \
+      --app="http://localhost:${PORT}/menu"
+    ;;
   --status)
     if kiosk_pid >/dev/null; then echo running; exit 0; else echo stopped; exit 1; fi
     ;;
@@ -75,7 +144,7 @@ case "${1:-}" in
     fi
     ;;
   *)
-    echo "Usage : $(basename "$0") [--restart|--stop|--status]" >&2
+    echo "Usage : $(basename "$0") [--restart|--stop|--status|--menu|--menu-stop]" >&2
     exit 2
     ;;
 esac

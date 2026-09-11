@@ -485,6 +485,18 @@ def index():
     return render_template("remote.html")
 
 
+@app.route("/menu")
+def menu():
+    """Tableau de bord du boîtier, taillé pour le petit écran tactile.
+
+    Ce n'est PAS la page de démarrage : brancher le boîtier doit continuer à
+    afficher le prompteur sans le moindre geste. Le menu s'ouvre en plus, sur le
+    second écran quand il y en a un, ou à la demande depuis n'importe quel
+    appareil.
+    """
+    return render_template("menu.html")
+
+
 @app.route("/display")
 def display():
     """Écran MENEUR (boîtier, kiosque) : piloté aux pédales, diffuse sa position."""
