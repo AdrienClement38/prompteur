@@ -74,6 +74,11 @@ télécommande apparaît sur l'écran. Sur l'écran, teste les touches :
 >   la personne qui lit face caméra. Aucune commande, une page d'essentiel en tête et une fiche à
 >   découper et coller sur le boîtier.
 
+> 💾 **Avant de bricoler le boîtier** : **[SAUVEGARDE-ET-RESTAURATION.md](SAUVEGARDE-ET-RESTAURATION.md)**
+> ([PDF](Sauvegarde-Restauration-Prompteur.pdf)) — quoi sauvegarder (peu de choses : seuls les textes
+> et les réglages sont irremplaçables), comment revenir en arrière quand l'écran reste noir, et
+> comment faire exécuter ces commandes à distance par quelqu'un qui n'est pas technicien.
+
 1. **Prépare la carte SD** avec *Raspberry Pi Imager* → « Raspberry Pi OS (64-bit) »
    (la version avec bureau). Note le nom d'utilisateur et le mot de passe que tu choisis.
 2. **Copie ce dossier `Prompteur`** sur le Pi (clé USB, ou `scp`), par ex. dans
