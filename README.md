@@ -66,6 +66,14 @@ télécommande apparaît sur l'écran. Sur l'écran, teste les touches :
 > voir **[PROCEDURE-INSTALLATION.md](PROCEDURE-INSTALLATION.md)** (déballage → boîtier opérationnel,
 > avec réglages système, pédales, dépannage et checklist de validation). Version résumée ci-dessous.
 
+> 🧑‍🏫 **Vous n'êtes pas à l'aise en informatique ?** Deux guides sans jargon, faits pour être imprimés :
+> - **[MISE-EN-ROUTE.md](MISE-EN-ROUTE.md)** ([PDF](Mise-En-Route-Prompteur.pdf)) — l'installation
+>   pas à pas pour quelqu'un qui n'a jamais ouvert un terminal : ce qu'il faut noter, ce qu'on doit
+>   voir à chaque étape, quoi faire quand ça bloque.
+> - **[MODE-EMPLOI.md](MODE-EMPLOI.md)** ([PDF](Mode-Emploi-Prompteur.pdf)) — l'usage quotidien pour
+>   la personne qui lit face caméra. Aucune commande, une page d'essentiel en tête et une fiche à
+>   découper et coller sur le boîtier.
+
 1. **Prépare la carte SD** avec *Raspberry Pi Imager* → « Raspberry Pi OS (64-bit) »
    (la version avec bureau). Note le nom d'utilisateur et le mot de passe que tu choisis.
 2. **Copie ce dossier `Prompteur`** sur le Pi (clé USB, ou `scp`), par ex. dans
