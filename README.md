@@ -1,240 +1,470 @@
-# 🎬 Prompteur — téléprompteur à pédales, hors-ligne
+# 🎬 Le Prompteur — téléprompteur à pédales, hors-ligne
 
-Un boîtier **dédié** (Raspberry Pi) qui fait défiler ton texte à l'écran, piloté
-aux **pédales** (gauche = reculer, droite = avancer). Tu importes ton texte
-**depuis ton téléphone** (le boîtier crée son propre WiFi) ou **par clé USB**.
-**Aucune connexion internet n'est nécessaire.**
+Un boîtier **dédié** (Raspberry Pi) qui fait défiler votre texte à l'écran, piloté
+aux **pédales**. Le texte s'envoie **depuis un téléphone** (le boîtier crée son
+propre WiFi) ou **par clé USB**. **Aucune connexion internet n'est nécessaire.**
+
+> 🧑‍🏫 **Vous n'êtes pas informaticien ? Cette page n'est pas faite pour vous.**
+> Deux documents le sont, sans une seule commande à taper :
+> - **[MISE-EN-ROUTE.md](MISE-EN-ROUTE.md)** ([PDF](Mise-En-Route-Prompteur.pdf)) —
+>   installer le boîtier, pas à pas, pour quelqu'un qui n'a jamais ouvert un terminal.
+> - **[MODE-EMPLOI.md](MODE-EMPLOI.md)** ([PDF](Mode-Emploi-Prompteur.pdf)) —
+>   l'usage quotidien pour la personne qui lit face caméra, avec une fiche à coller
+>   sur le boîtier.
+>
+> Le reste de cette page est technique.
+> *Le fichier `Guide-Prompteur.pdf`, à la racine du dossier, décrit une version
+> ancienne du logiciel : ne l'imprimez pas, ne le suivez pas.*
 
 ---
 
 ## 1. Liste de courses (matériel)
 
-| Élément | Rôle | Prix indicatif (juil. 2026) |
+| Élément | Rôle | Prix indicatif |
 |---|---|---|
-| **Kit Starter Raspberry Pi 5** (4 Go) — contient déjà carte + alimentation + boîtier + ventilateur + câble micro‑HDMI | Le cerveau + le nécessaire | **~175–185 €** |
-| **Écran** : petit moniteur HDMI 7″ (~55 €) **ou** écran tactile officiel 7″ (~80 €) | Affiche le texte | ~55–80 € |
-| **Pédalier USB programmable** (ex. PCsensor FS2020U, 3 pédales) | Pédales gauche/droite | ~30–45 € |
-| *(optionnel)* Vitre sans tain + support | Look « pro » face caméra | ~50–150 € |
+| **Kit Starter Raspberry Pi 5** (4 Go) — carte, alimentation, boîtier, ventilateur et câble micro‑HDMI compris | Le cerveau, et tout ce qu'il faut autour | ~175–185 € |
+| **Écran HDMI 7″** : moniteur simple (~55 €) **ou** écran tactile officiel (~80 €) | Affiche le texte | ~55–80 € |
+| **Pédalier USB programmable à 3 pédales** (par exemple PCsensor FS2020U) | Pédales gauche / centrale / droite | ~30–45 € |
 
-**Total (sans l'option) : ~265–310 €.** *Les tarifs Raspberry Pi ont fortement augmenté récemment (coût de la mémoire RAM) — à vérifier au moment de l'achat.*
+**Total : environ 265 à 310 €.** Prix relevés en **septembre 2026**, à vérifier au
+moment de l'achat : les tarifs Raspberry Pi ont fortement augmenté récemment
+(coût de la mémoire).
 
-> **Alternative à la carte** (sans kit) : Raspberry Pi 5 4 Go **~130 €** + carte microSD 32 Go (~8–12 € vierge à flasher, ou ~12–16 € pré‑installée) + alimentation officielle ~12 € + boîtier & ventilateur ~10–15 € + câble micro‑HDMI → HDMI ~7 €.
+*En option, pour lire en regardant l'objectif* : une vitre sans tain et son
+support, ~50 à 150 € (voir § 10).
 
-> 💡 Les pédales doivent être **programmables pour envoyer des touches clavier**
-> (flèche haut/bas, PageUp/PageDown, Espace…). C'est le cas de la plupart des
-> pédales USB de transcription et des « page turners » pour musiciens.
-> Par défaut : **pédale droite = Flèche bas**, **pédale gauche = Flèche haut**
-> (réglable dans l'appli, avec « apprentissage » de la touche).
+> 💡 **Les pédales doivent être programmables**, c'est-à-dire réglables pour
+> envoyer une touche du clavier (flèche haut, flèche bas…) quand on appuie dessus.
+> C'est le cas de la plupart des pédales USB de transcription et des pédales
+> « tourne-pages » pour musiciens. Par défaut : **pédale droite = Flèche bas**,
+> **pédale gauche = Flèche haut**, **pédale centrale = Flèche droite** — tout cela
+> se règle dans l'application (§ 6). Prenez un pédalier à **trois pédales** : la
+> troisième sert au mode **Dynamique**.
+
+> *Si vous préférez acheter pièce par pièce, sans kit* : Raspberry Pi 5 4 Go
+> ~130 € + carte microSD 32 Go (~8–12 € vierge, ~12–16 € pré‑installée) +
+> alimentation officielle ~12 € + boîtier et ventilateur ~10–15 € + câble
+> micro‑HDMI vers HDMI ~7 €.
 
 ---
 
-## 2. Tester le logiciel TOUT DE SUITE (sur ton PC, avant d'avoir le Pi)
+## 2. Les touches de l'écran de lecture
 
-Tu peux vérifier que tout fonctionne dans ton navigateur, sans matériel :
-
-```bash
-pip install flask
-python server.py
-```
-
-Puis ouvre dans ton navigateur :
-
-- **L'écran du prompteur** : http://localhost:5000/display
-- **La télécommande / import** : http://localhost:5000/
-
-Ouvre les deux dans deux onglets côte à côte : ce que tu envoies depuis la
-télécommande apparaît sur l'écran. Sur l'écran, teste les touches :
+**Sur l'écran principal, les touches suivantes répondent :**
 
 | Touche | Effet |
 |---|---|
-| **Flèche bas** (maintenue) | avance (= pédale droite) |
-| **Flèche haut** (maintenue) | recule (= pédale gauche) |
-| **Espace** | lecture / pause automatique |
+| **Flèche bas** = pédale droite | avancer |
+| **Flèche haut** = pédale gauche | reculer |
+| **Flèche droite** = pédale centrale | lecture / pause *(mode Dynamique uniquement)* |
+| **Espace** | lance ou arrête le défilement tout seul, à la vitesse réglée, sans toucher aux pédales *(mode Maintien uniquement)* |
 | **+ / −** | plus vite / moins vite |
-| **M** | miroir (pour la vitre sans tain) |
-| **F** | plein écran |
 | **R** | retour au début |
+| **M** | miroir |
+| **H** | masquer ou réafficher le bandeau d'aide |
+| **i** | affiche les adresses des deux écrans de lecture (§ 9) |
+| **F** | plein écran |
+| **Échap** | revenir à la page d'accueil (avec confirmation) |
 
-> C'est juste pour l'aperçu : en vrai, le logiciel tournera sur le boîtier Pi,
-> pas sur ton PC.
+- L'effet exact des flèches dépend du **mode de pédalier** choisi (§ 6) ; à la
+  livraison, c'est le mode **Maintien**.
+- **+ / −** et **M** n'agissent que sur l'écran où l'on appuie et **ne sont pas
+  enregistrés** : le prochain réglage envoyé depuis le téléphone les annulera.
+  Pour un réglage durable, passez par le téléphone (§ 7).
+- **Sur l'écran secondaire, seule F (plein écran) répond** : cet écran ne se
+  pilote pas, il suit. Pour le fermer, fermez simplement sa fenêtre.
+
+### Essai sur un ordinateur (réservé à un technicien)
+
+Le logiciel peut tourner sur un ordinateur ordinaire, sans aucun matériel, pour
+vérifier qu'il fonctionne. **Python 3** doit y être installé.
+
+1. Ouvrez un **terminal** (la fenêtre où l'on tape des commandes) dans le dossier
+   du projet, et lancez :
+
+   ```bash
+   pip install -r requirements.txt
+   python server.py
+   ```
+
+   *Ce que vous devez voir* : quelques lignes d'installation, puis une ligne du
+   type `Serving on http://0.0.0.0:5000`. **Laissez cette fenêtre ouverte** :
+   c'est le serveur, il s'arrête si vous la fermez. Pour l'arrêter volontairement,
+   revenez-y et faites **Ctrl + C**.
+2. Dans un navigateur, ouvrez **http://localhost:5000**. C'est la **page
+   d'accueil** : elle sert de télécommande et propose en haut deux gros boutons,
+   **« Écran principal »** et **« Écran secondaire »**.
+3. Cliquez sur **« Écran principal »**. *Ce que vous devez voir* : une fenêtre
+   noire s'ouvre en plein écran et recouvre tout l'ordinateur. Tant que rien n'a
+   été envoyé, elle affiche « Aucun texte. Envoie ton texte depuis le téléphone
+   (WiFi « Prompteur ») ou par clé USB. » — c'est normal, et ce WiFi n'existe pas
+   sur un ordinateur d'essai.
+4. **Pour sortir de cette fenêtre : Échap, puis Échap une seconde fois** pour
+   confirmer. Vous revenez à la page d'accueil. En gardant les deux côte à côte,
+   ce que vous envoyez depuis l'accueil apparaît aussitôt sur l'écran.
 
 ---
 
-## 3. Installation sur le Raspberry Pi
+## 3. Installation sur le Raspberry Pi (résumé)
 
-> 📋 **Procédure technique complète, pas à pas, à partir du matériel neuf** :
-> voir **[PROCEDURE-INSTALLATION.md](PROCEDURE-INSTALLATION.md)** (déballage → boîtier opérationnel,
-> avec réglages système, pédales, dépannage et checklist de validation). Version résumée ci-dessous.
+> 📋 Procédure complète, du déballage au boîtier opérationnel :
+> **[PROCEDURE-INSTALLATION.md](PROCEDURE-INSTALLATION.md)**. Avant toute
+> intervention sur un boîtier déjà en service :
+> **[SAUVEGARDE-ET-RESTAURATION.md](SAUVEGARDE-ET-RESTAURATION.md)**.
 
-> 🧑‍🏫 **Vous n'êtes pas à l'aise en informatique ?** Deux guides sans jargon, faits pour être imprimés :
-> - **[MISE-EN-ROUTE.md](MISE-EN-ROUTE.md)** ([PDF](Mise-En-Route-Prompteur.pdf)) — l'installation
->   pas à pas pour quelqu'un qui n'a jamais ouvert un terminal : ce qu'il faut noter, ce qu'on doit
->   voir à chaque étape, quoi faire quand ça bloque.
-> - **[MODE-EMPLOI.md](MODE-EMPLOI.md)** ([PDF](Mode-Emploi-Prompteur.pdf)) — l'usage quotidien pour
->   la personne qui lit face caméra. Aucune commande, une page d'essentiel en tête et une fiche à
->   découper et coller sur le boîtier.
+1. **Préparez la carte SD** avec *Raspberry Pi Imager* → « Raspberry Pi OS
+   (64-bit) », la version **avec bureau**. Notez le nom d'utilisateur et le mot de
+   passe choisis.
+2. Sur le Pi, ouvrez un terminal et récupérez le projet :
 
-> 💾 **Avant de bricoler le boîtier** : **[SAUVEGARDE-ET-RESTAURATION.md](SAUVEGARDE-ET-RESTAURATION.md)**
-> ([PDF](Sauvegarde-Restauration-Prompteur.pdf)) — quoi sauvegarder (peu de choses : seuls les textes
-> et les réglages sont irremplaçables), comment revenir en arrière quand l'écran reste noir, et
-> comment faire exécuter ces commandes à distance par quelqu'un qui n'est pas technicien.
+   ```bash
+   git clone https://github.com/AdrienClement38/prompteur.git
+   cd prompteur
+   ```
 
-1. **Prépare la carte SD** avec *Raspberry Pi Imager* → « Raspberry Pi OS (64-bit) »
-   (la version avec bureau). Note le nom d'utilisateur et le mot de passe que tu choisis.
-2. **Copie ce dossier `Prompteur`** sur le Pi (clé USB, ou `scp`), par ex. dans
-   `/home/<ton-user>/Prompteur`.
-3. Ouvre un terminal sur le Pi, dans le dossier, et lance :
+   Le dossier est alors `~/prompteur`. **Ne le déplacez pas, ne le renommez pas** :
+   le démarrage automatique et les mises à jour (`git pull`) s'y réfèrent.
+   *Si le Pi n'a pas d'accès internet*, vous pouvez copier le dossier par clé USB,
+   sous ce même nom — mais la mise à jour par `git pull` sera alors impossible :
+   il faudra recopier le dossier à chaque nouvelle version.
+3. Lancez l'installation :
 
    ```bash
    chmod +x install/setup.sh
    ./install/setup.sh
+   ```
+
+   *Ce que vous devez voir à la fin* : un encadré
+
+   ```
+   ============================================================
+    Installation terminée.
+     • Serveur     : http://localhost:5000/display (écran)
+     • Téléphone   : connecte-toi au WiFi « Prompteur »
+                     (mot de passe : ...)
+   ```
+
+   > ⚠️ **Recopiez ce mot de passe maintenant, sur papier.** Il est tiré au hasard,
+   > unique à ce boîtier, et **il n'est plus affiché nulle part après le
+   > redémarrage** : sans lui, plus aucun téléphone ne peut joindre le boîtier.
+   > *(Pour imposer le vôtre, relancez plutôt*
+   > `WIFI_PASS="votre_mot_de_passe" ./install/setup.sh`*.)*
+4. **Le mot de passe une fois noté**, redémarrez :
+
+   ```bash
    sudo reboot
    ```
 
-Le script installe tout, crée le WiFi du boîtier, et fait démarrer l'écran
-automatiquement. **Après le redémarrage, le prompteur s'affiche tout seul.**
+   **Après le redémarrage, le prompteur s'affiche tout seul.**
+
+Le script installe tout, crée le WiFi du boîtier, pose l'icône **« Le Prompteur »**
+sur le bureau et dans le menu des applications, et fait démarrer l'écran
+automatiquement à chaque allumage.
 
 ---
 
-## 4. Utilisation au quotidien
+## 4. Le prompteur s'ouvre et se ferme comme une application
 
-1. **Allume le boîtier** → l'écran affiche le prompteur automatiquement.
-2. **Sur ton téléphone**, connecte-toi au WiFi :
+Brancher le boîtier suffit toujours à afficher le texte : le démarrage
+automatique est conservé. Mais l'écran de lecture n'est plus une impasse — on en
+sort et on y revient sans redémarrer la machine.
+
+### La page d'accueil
+
+C'est ce que l'on ouvre sur le téléphone ou sur un ordinateur :
+**http://10.42.0.1:5000**. Elle sert de télécommande (onglets **Texte**,
+**Contrôle**, **Réglages**) et propose en haut **deux boutons** :
+
+- **« Écran principal »** — *celui qu'on pilote aux pédales*. Sur un ordinateur, il
+  s'ouvre **dans sa propre fenêtre**, sans barre d'adresse ni onglets ; sur un
+  téléphone, c'est un onglet ordinaire.
+- **« Écran secondaire »** — *régie, retour plateau, en lecture seule* (§ 8).
+
+### Un seul écran principal à la fois
+
+Le bouton **« Écran principal »** se grise et annonce **« déjà utilisé par un autre
+appareil »** dès qu'un écran principal est ouvert **quelque part** — y compris
+celui que vous venez d'ouvrir depuis cet appareil et qui est resté dans une autre
+fenêtre.
+
+**En fonctionnement normal, c'est l'écran du boîtier qui occupe la place : le
+bouton grisé sur le téléphone est le signe que tout va bien.**
+
+On peut malgré tout passer outre : l'écran affiche alors **« Un autre écran
+principal est déjà en cours. »** et propose **« Ouvrir en écran secondaire »** ou
+**« Prendre la main quand même »**. Ne prenez la main que si l'appareil qui lit est
+réellement inaccessible : l'écran du boîtier cesserait de piloter.
+
+Si quelqu'un prend la main, l'écran qui pilotait affiche **« Un autre appareil a
+pris la main. »** Le texte reste affiché, mais les pédales de cet écran ne font
+plus rien.
+
+Si l'appareil qui tenait la place disparaît (fenêtre fermée, WiFi coupé, boîtier
+redémarré), la place **se libère seule** au bout d'**une douzaine de secondes
+(12 s)**.
+
+### Revenir à l'accueil : la touche Échap
+
+Depuis l'écran principal, **Échap** demande **« Revenir à la page d'accueil ? »**.
+**Échap** une seconde fois confirme ; **n'importe quelle autre touche** annule et
+l'on reste en lecture.
+
+**Le texte, le titre et les réglages sont conservés ; la lecture, elle, repart du
+début du texte.**
+
+Sur **l'écran du boîtier** — celui qui s'ouvre tout seul, sans barre d'adresse ni
+fenêtre parente — **Échap refuse de partir tant que le bandeau rouge « Liaison avec
+le boîtier perdue » est affiché**, et l'explique (« Impossible de revenir à
+l'accueil. »). Un écran principal ouvert depuis la page d'accueil, lui, referme
+simplement sa fenêtre : l'accueil est déjà derrière.
+
+### Afficher ou fermer l'écran du boîtier
+
+Sur le boîtier lui-même, l'icône **« Le Prompteur »** (sur le bureau et dans le
+menu des applications) relance l'écran après l'avoir fermé.
+
+Depuis la page d'accueil, **sur n'importe quel appareil connecté au WiFi du boîtier
+— téléphone compris**, la barre **« Écran du boîtier »** fait la même chose à
+distance. Elle est **repliée par défaut** : appuyez sur son titre pour l'ouvrir.
+*Ce que vous devez voir à l'intérieur* :
+
+- une ligne d'état : **« Le prompteur est affiché sur l'écran du boîtier. »** ou
+  **« Le prompteur est fermé : l'écran du boîtier montre le bureau. »** ;
+- trois boutons : **« Afficher sur le boîtier »**, **« Fermer sur le boîtier »**,
+  **« Actualiser l'état »** — des deux premiers, celui qui n'a rien à faire est
+  grisé.
+
+**« Fermer sur le boîtier » demande d'abord confirmation** : « Fermer le prompteur
+sur l'écran du boîtier et revenir à son bureau ? ». Ces boutons agissent toujours
+sur **l'écran du boîtier**, jamais sur l'appareil depuis lequel on les touche. Le
+texte et les réglages ne sont pas perdus ; la lecture repart du début.
+
+> Pour **éteindre réellement** la machine, c'est toujours son **bouton physique**.
+
+---
+
+## 5. Mettre son texte
+
+Depuis la page d'accueil, onglet **Texte**.
+
+### Écrire, envoyer, enregistrer
+
+1. **Tapez ou collez** dans la zone de saisie. *Ce que vous devez voir* : un repère
+   jaune **« Ce texte n'est pas encore à l'écran — appuyez sur « Envoyer à
+   l'écran ». »**, qui reste tant que la zone diffère de ce qui est diffusé.
+2. **« Envoyer à l'écran »** — le seul geste qui met le texte à l'antenne.
+   *Ce que vous devez voir* : **« Texte envoyé à l'écran ✓ »**, et le repère jaune
+   disparaît.
+3. **Avant d'enregistrer, remplissez le champ « Titre ».** Sans titre, le texte est
+   rangé sous **« Sans titre »** — et le prochain enregistrement sans titre
+   proposera de l'écraser (« Un texte « Sans titre » existe déjà. L'écraser ? »).
+4. **« Enregistrer »** range le texte dans **« Mes textes enregistrés »** sans le
+   diffuser. *Ce que vous devez voir* : **« Enregistré ✓ »**, et le titre apparaît
+   dans la liste.
+
+### Importer un document ou une clé USB
+
+**« Fichier »** — un document présent sur l'appareil que vous tenez.
+Choisissez-le. *Ce que vous devez voir* : la zone de saisie se remplit et un
+message confirme **« Importé : … — appuyez sur « Envoyer à l'écran » »**.
+
+**« Clé USB »** — une clé branchée sur le boîtier. Cela se fait en **deux temps** :
+
+1. **« Clé USB »**. *Ce que vous devez voir* : la **liste des fichiers** trouvés sur
+   la clé apparaît sous les deux boutons. Si la clé n'est pas branchée sur le
+   boîtier, le message **« Aucun fichier détecté sur une clé USB »** s'affiche.
+2. **« Charger »**, en face du fichier voulu. *Ce que vous devez voir* : la zone de
+   saisie se remplit, avec le même message **« Importé : … »**.
+
+Dans les deux cas, rien n'est diffusé : vous relisez, vous corrigez, puis
+**« Envoyer à l'écran »**.
+
+> ⚠️ Attention, le bouton **« Charger »** de **« Mes textes enregistrés »** ne fait
+> pas la même chose : celui-là **envoie directement à l'écran**, et remplace aussi
+> ce que vous étiez en train d'écrire. C'est voulu — on y range des textes déjà
+> relus.
+
+Formats acceptés : **Word (.doc, .docx), PDF, LibreOffice (.odt), RTF, texte
+(.txt)**, **5 Mo maximum par fichier**. Le boîtier extrait et nettoie le texte
+automatiquement.
+
+### Mettre en forme le texte
+
+Sous la zone de saisie, une barre applique un style **au passage sélectionné** :
+
+- **G** (gras), **I** (italique), **S** (souligné) ;
+- **petit**, **Titre**, **Grand titre** ;
+- **cinq couleurs**.
+
+**Rappuyer sur le même bouton retire le style.** **« Tout effacer »** retire toute
+la mise en forme — *ce que vous devez voir* : **« Mise en forme effacée »** ; le
+texte, lui, reste intact.
+
+Le gras, l'italique, le souligné, les tailles et les couleurs **se voient
+directement dans la zone de saisie**. Trois choses n'y apparaissent pas et ne se
+voient que sur l'écran de lecture : la **taille générale** du texte, les
+**couleurs** de texte et de fond réglées dans Réglages, et les **titres**.
+
+Une ligne commençant par **#** (jusqu'à **###**) s'affiche en **titre** sur l'écran
+de lecture, sans rien avoir à sélectionner ; les **#** eux-mêmes ne s'affichent
+pas. C'est aussi la forme que prennent les titres d'un document Word importé.
+
+> Un import conserve les **titres**, mais **pas le gras ni l'italique** du document
+> d'origine : remettez-les avec la barre de mise en forme.
+
+---
+
+## 6. Lire au pied : les trois modes de pédalier
+
+Le mode se choisit dans l'onglet **Réglages**, section **Pédales**.
+
+| Mode | Pédale droite | Pédale gauche | Pédale centrale |
+|---|---|---|---|
+| **Maintien** *(recommandé)* | enfoncée = avance | enfoncée = recule | sans fonction |
+| **Impulsion** | une pression lance ; une seconde pression **sur la même pédale** met en pause | idem, en arrière | sans fonction |
+| **Dynamique** | accélère vers l'avant tant qu'on appuie | ralentit, puis repart en arrière de plus en plus vite | **lecture / pause** |
+
+- **Maintien** : pédale enfoncée = ça défile, relâchée = ça s'arrête.
+- **Impulsion** : le pied n'a plus à rester posé. Appuyer sur l'**autre** pédale
+  change de sens.
+- **Dynamique** : appuyez d'abord sur **« Dynamique »**. *Ce que vous devez voir* :
+  l'explication du mode s'affiche sous les trois boutons, et un curseur
+  **« Montée en vitesse (mode dynamique) »** apparaît juste en dessous, réglé sur
+  **10 s** — c'est la durée d'appui continu pour atteindre la vitesse maximale.
+  **La vitesse atteinte est conservée** quand on relâche : on la pose une fois au
+  pied, puis on lit. La vitesse se construisant au pied, le réglage **« Vitesse de
+  lecture » ne sert pas dans ce mode**.
+
+> En **Impulsion** et en **Dynamique**, la lecture et la pause se font **à la
+> pédale** : la touche **Espace** et les boutons **« Lecture »** / **« Pause »** de
+> l'onglet Contrôle n'y répondent pas.
+
+### Apprendre leurs touches aux pédales
+
+Trois pédales sont réglables : **droite (avancer)**, **gauche (reculer)** et
+**centrale (lecture/pause — mode Dynamique)**. Pour chacune :
+**« Réapprendre »** → appuyez **une fois** sur la pédale → la touche s'affiche →
+**« Enregistrer »**.
+
+Sont refusées : la touche **F** (réservée au plein écran), la touche **Échap**
+(elle sert à quitter) et **une touche déjà attribuée à une autre pédale** ; les
+collisions avec un raccourci de l'écran sont signalées.
+
+> ⚠️ L'apprentissage écoute le clavier de **l'appareil qui affiche la page** : il
+> faut le faire depuis le boîtier, ou depuis un ordinateur portable sur lequel le
+> pédalier est branché. Depuis un téléphone, aucune touche ne sera détectée.
+
+---
+
+## 7. Réglages disponibles (depuis le téléphone)
+
+- **Texte** : taille, interligne, marges latérales, alignement (**Gauche** ou **Centré**).
+- **Couleurs** : couleur du texte, couleur du fond.
+- **Vitesse de lecture** (onglet **Contrôle**) — sans effet en mode **Dynamique** (§ 6).
+- **Miroir horizontal / vertical**, pour la vitre sans tain face caméra.
+  **Le miroir ne s'applique qu'à l'écran principal** : les écrans secondaires
+  restent toujours à l'endroit, on les lit directement.
+- **Ligne de repère** de lecture.
+- **Pédales** : mode, montée en vitesse, apprentissage des touches (§ 6).
+
+> Il n'y a **plus de choix de police** : une seule subsiste, sans empattement
+> (« sans »), la seule vraiment lisible en défilement.
+
+---
+
+## 8. Plusieurs appareils en même temps
+
+### Tout se met à jour tout seul
+
+Toutes les pages ouvertes **se mettent à jour seules**, sans rechargement :
+
+- les **réglages** modifiés sur un appareil apparaissent sur les autres ;
+- le **texte à l'antenne** suit partout ;
+- la **liste des textes enregistrés** s'actualise à chaque ajout ou suppression.
+
+Une seule exception, volontaire : **un texte en cours de saisie n'est jamais
+écrasé**. Si quelqu'un diffuse un autre texte pendant que vous écrivez, un message
+prévient (« Le texte a changé sur le boîtier ») et votre saisie reste intacte.
+
+### 👀 Écran secondaire (régie, retour plateau)
+
+Un autre appareil connecté au WiFi « Prompteur » peut suivre la lecture en direct,
+avec le bouton **« Écran secondaire »** de l'accueil (adresse
+`http://10.42.0.1:5000/view`, rappelée dans l'onglet **Contrôle**).
+
+- Il **suit l'écran principal** : même texte, même position.
+- Il est en **lecture seule** : ses pédales et son clavier sont ignorés, **sauf F**
+  qui met la page en plein écran.
+- On peut en connecter **plusieurs** en même temps.
+- Le défilement reste **collé** à celui de l'écran principal : sa position est
+  relue une quinzaine de fois par seconde, et le mouvement est anticipé entre deux
+  lectures.
+
+### ⚡ Où brancher les pédales
+
+**Branchez toujours les pédales sur l'appareil qui affiche l'écran principal** (le
+boîtier, le plus souvent). Branchées ailleurs, elles réagiraient avec un retard
+visible.
+
+---
+
+## 9. Utilisation au quotidien
+
+1. **Allumez le boîtier** → l'écran affiche le prompteur automatiquement.
+2. **Sur le téléphone**, connectez-vous au WiFi :
    - Réseau : **Prompteur**
-   - Mot de passe : **unique par boîtier**, généré et **affiché à la fin de l'installation**
-     (note-le ; tu peux imposer le tien avec `WIFI_PASS=monsecret ./install/setup.sh`)
-3. Ouvre le navigateur du téléphone sur : **http://10.42.0.1:5000**
-4. **Colle ton texte**, ou importe un fichier **Word / PDF / ODT / RTF / txt** (ou une clé USB) → **« Envoyer à l'écran »**.
-5. **Branche les pédales** en USB sur le boîtier et lis :
-   pédale droite = avancer, pédale gauche = reculer.
+   - Mot de passe : celui **noté à l'installation**, unique à ce boîtier.
+3. Ouvrez le navigateur du téléphone sur **http://10.42.0.1:5000** : c'est la
+   télécommande.
+4. **Collez le texte**, ou importez un fichier ou une clé USB, puis
+   **« Envoyer à l'écran »**.
+5. Les pédales étant branchées sur l'appareil qui affiche l'écran principal, lisez.
 
-### Import de fichiers (téléphone ou clé USB)
-Tu peux importer du **Word (.doc, .docx), PDF, LibreOffice (.odt), RTF** et du
-**texte (.txt)**. Le boîtier **extrait et nettoie automatiquement le texte** : il
-retire la mise en forme et les caractères parasites, pour ne garder que le texte
-lisible, prêt à défiler. Dans la télécommande, onglet **Texte** : bouton
-**Fichier** (depuis l'appareil) ou **Clé USB** (branchée sur le boîtier) → **Charger**.
+> Sur l'écran du boîtier, la touche **i** affiche **les adresses des deux écrans de
+> lecture** : « Écran principal (PC / tablette) », qui se termine par **/display**,
+> et « Écran spectateur / régie », qui se termine par **/view** — à ouvrir sur un PC
+> ou une tablette connectés au WiFi « Prompteur ».
+> **L'adresse de la télécommande (étape 3) est la même, sans ce qui suit le port :
+> http://10.42.0.1:5000.**
 
 ---
 
-## 5. Deux façons d'afficher le prompteur (+ latence minimale)
+## 10. Le look « pro » face caméra (optionnel)
 
-Le texte est servi par le boîtier : **tout appareil connecté au boîtier peut
-afficher le prompteur.** Tu as donc deux options, au choix ou en même temps :
+Pour regarder l'objectif tout en lisant : montez devant la caméra un support à
+**vitre sans tain** (une vitre semi-réfléchissante, aussi appelée *beam splitter*),
+l'écran du boîtier posé à plat en dessous. Activez le **miroir horizontal** (§ 7)
+pour que le texte se lise à l'endroit dans le reflet.
 
-- 🖥️ **Écran HDMI** branché directement sur le Raspberry (s'affiche automatiquement au démarrage).
-- 💻 **PC / tablette** connecté au WiFi « Prompteur », qui ouvre
-  `http://10.42.0.1:5000/display` dans un navigateur (touche **F11** = plein écran).
+---
 
-> L'adresse exacte à taper s'affiche **directement sur l'écran** au démarrage
-> (et à tout moment avec la touche **i**).
+## 11. Dépannage
 
-### ⚡ Règle d'or : latence quasi nulle
+Chaque ligne va **du geste le plus simple au plus technique**. Les commandes se
+tapent dans un terminal **sur le boîtier** ;
+**[SAUVEGARDE-ET-RESTAURATION.md](SAUVEGARDE-ET-RESTAURATION.md)** explique comment
+les faire exécuter par quelqu'un qui n'est pas technicien.
 
-Le défilement réagit aux pédales **en local, dans l'appareil qui affiche** : le
-réseau n'intervient **jamais** dans le circuit « appui sur la pédale → texte qui
-bouge » (latence ≈ une image d'écran, ~15 ms, imperceptible).
-
-**➡️ Branche toujours les pédales sur l'appareil qui affiche le texte.**
-
-| Configuration | Latence |
+| Problème | Que faire, dans cet ordre |
 |---|---|
-| Écran HDMI du Raspberry **+ pédales sur le Raspberry** | ✅ quasi nulle |
-| PC affiche via l'IP **+ pédales sur le PC** | ✅ quasi nulle |
-| PC affiche via l'IP **mais pédales sur le Raspberry** | ❌ à éviter (passerait par le réseau) |
-
-La petite synchro ne sert **qu'à** recevoir le texte importé depuis le téléphone
-et à alimenter les écrans spectateurs ; elle n'a **aucun** effet sur la réactivité
-des pédales de l'écran meneur.
-
-### 👀 Mode régie / spectateur (synchronisé en temps réel)
-
-Un autre appareil (le **PC de la régie**, par exemple) peut **suivre en direct** où
-en est le prompteur, en ouvrant l'adresse spectateur : `http://10.42.0.1:5000/view`.
-
-- Cet écran **suit le meneur** (l'écran principal) : même texte, même position, en temps réel.
-- Il est en **lecture seule** : ses pédales/clavier sont ignorés (un seul meneur pilote).
-- On peut connecter **plusieurs spectateurs** en même temps.
-- La synchro est **quasi imperceptible** (~40 ms mesurés sur réseau local) : les écrans
-  spectateurs **anticipent** le mouvement entre deux mises à jour → défilement fluide et collé.
-
-> L'adresse spectateur est rappelée dans la télécommande (onglet **Contrôle**) et sur
-> l'écran principal au démarrage.
-
-## 6. Réglages disponibles (depuis le téléphone)
-
-- Taille du texte, interligne, marges, alignement, police
-- Couleurs du texte et du fond
-- Vitesse de lecture
-- **Miroir horizontal/vertical** (pour la vitre sans tain face caméra)
-- Ligne de repère de lecture
-- **Mode pédale** :
-  - **Maintien** : pédale enfoncée = ça défile ; relâchée = ça s'arrête *(recommandé)*
-  - **Impulsion** : une pression lance/arrête ; la pédale gauche revient au début
-- **Apprentissage des touches** de pédale, en trois temps : **« Réapprendre »**,
-  appui sur la pédale, puis **« Enregistrer »**. Rien n'est envoyé au boîtier
-  avant la confirmation, et l'enregistrement n'est annoncé qu'après relecture de
-  l'état réel du boîtier. La touche `F` et une touche déjà prise par l'autre
-  pédale sont refusées ; les collisions avec un raccourci sont signalées.
+| **L'écran du boîtier reste noir** | 1. Sur le boîtier : double-cliquez sur l'icône **« Le Prompteur »** du bureau. 2. Depuis le téléphone : barre **« Écran du boîtier »** → **« Afficher sur le boîtier »**. 3. Si l'écran ne revient pas, faites vérifier le service : `sudo systemctl status prompteur` — la réponse doit contenir **active (running)** en vert. |
+| **Le prompteur a été fermé sur le boîtier** | Icône **« Le Prompteur »** du bureau, ou barre **« Écran du boîtier »** → **« Afficher sur le boîtier »**. |
+| **« déjà utilisé par un autre appareil »** sur le bouton « Écran principal » | Un écran principal est déjà ouvert. En service, c'est celui du boîtier : tout va bien. Si c'est le vôtre, **revenez à sa fenêtre**. Sinon, prenez **« Écran secondaire »**, ou **« Prendre la main quand même »** — l'écran du boîtier cesserait alors de piloter. |
+| L'écran affiche **« Un autre appareil a pris la main. »** | Quelqu'un a ouvert un écran principal ailleurs : le texte reste affiché, mais les pédales de cet écran ne font plus rien. Pour reprendre : page d'accueil → **« Écran principal »** → **« Prendre la main quand même »**. |
+| **Les pédales ne font rien** | 1. Vérifiez que le pédalier est branché sur l'appareil qui affiche l'**écran principal** (§ 8). 2. Onglet **Réglages** → **Pédales** → réapprenez les touches (§ 6). 3. Vérifiez la programmation du pédalier lui-même. |
+| Bandeau rouge **« Liaison avec le boîtier perdue »** | Le texte affiché reste lisible et les pédales fonctionnent. 1. Reconnectez l'appareil au WiFi **« Prompteur »**. 2. Si cela ne suffit pas : `sudo systemctl restart prompteur`. |
+| Message **« Document trop volumineux pour le prompteur… Découpez-le en plusieurs séquences »** | Le document dépasse **300 000 caractères** ou **20 000 lignes** : découpez-le en plusieurs textes, enregistrés séparément (§ 5). |
+| **Le WiFi « Prompteur » n'apparaît pas** | 1. Relancez la recherche de réseaux sur le téléphone, plus près du boîtier. 2. S'il reste absent : `sudo nmcli connection up Prompteur` sur le boîtier — le réseau réapparaît en quelques secondes. |
+| **Rien de tout cela n'a marché** | Redémarrez le serveur : `sudo systemctl restart prompteur`. Pour comprendre ce qui se passe, lisez le journal du programme : `journalctl -u prompteur -f`. |
 
 ---
 
-## 7. Le look « pro » face caméra (optionnel)
+## 12. Ce qui protège le boîtier
 
-Pour regarder l'objectif tout en lisant : monte un **support à vitre sans tain
-(beam splitter)** devant la caméra, l'écran du boîtier posé à plat en dessous.
-Active le **miroir horizontal** dans les réglages pour que le texte se lise à
-l'endroit dans le reflet.
-
----
-
-## 8. Dépannage
-
-| Problème | Solution |
-|---|---|
-| L'écran reste noir | Vérifie le service : `sudo systemctl status prompteur` |
-| Le WiFi « Prompteur » n'apparaît pas | `sudo nmcli connection up Prompteur` |
-| Les pédales ne font rien | Onglet Réglages → réapprends les touches ; vérifie la programmation de la pédale |
-| Redémarrer le serveur | `sudo systemctl restart prompteur` |
-| Voir les logs | `journalctl -u prompteur -f` |
-
----
-
-## 9. Sécurité & fiabilité (durcissement)
-
-Le boîtier étant destiné à un usage professionnel, plusieurs protections sont en place :
-
-- **Pare-feu** : le port du prompteur n'est joignable que depuis le WiFi du boîtier
-  (interface `wlan0`) et en local — même si le Pi est un jour branché en Ethernet
-  (règles `nftables` réappliquées à chaque démarrage).
-- **Mot de passe WiFi unique** par appareil (généré aléatoirement à l'installation).
-  C'est la barrière d'accès principale, l'API étant sans authentification par conception.
-- **Serveur de production** (`waitress`) au lieu du serveur de développement, pour tenir
-  sur de longues sessions et résister aux connexions lentes/coupées.
-- **Limites d'entrée** : corps de requête plafonné (6 Mo), réglages validés et bornés
-  côté serveur, import USB confiné à la clé (liens symboliques ignorés).
-- **Robustesse écran** : les pédales sont relâchées si l'écran perd le focus (pas de
-  défilement « collé »), bornes de défilement correctes, état d'affichage cohérent.
-- **Ménagement de la carte SD** : les commandes de pilotage (lecture/pause/vitesse) ne
-  sont pas réécrites sur disque à chaque appui.
-
-Pour lancer en mode développement (rechargement + traces) : `PROMPTEUR_DEBUG=1 python server.py`.
-
-## Structure du projet
-
-```
-Prompteur/
-├── server.py            # serveur (affichage + télécommande + import)
-├── requirements.txt
-├── templates/
-│   ├── display.html     # écran du prompteur (boîtier)
-│   └── remote.html      # télécommande / import (téléphone)
-├── static/
-│   ├── display.js       # défilement + gestion des pédales
-│   └── remote.js        # logique de la télécommande
-├── install/
-│   ├── setup.sh         # installation automatique sur le Pi
-│   └── kiosk.sh         # lancement de l'écran en kiosque
-├── scripts/             # tes textes enregistrés (.txt)
-└── state.json           # texte courant + réglages (créé au 1er lancement)
-```
+- Le boîtier n'est joignable **que depuis son propre WiFi**, protégé par un mot de
+  passe **unique à chaque boîtier**.
+- **Rien ne sort du boîtier** : aucune connexion internet n'est utilisée, ni pour
+  lire, ni pour envoyer un texte.
+- Les textes et les réglages sont **conservés sur le boîtier** — voir
+  **[SAUVEGARDE-ET-RESTAURATION.md](SAUVEGARDE-ET-RESTAURATION.md)** pour les
+  sauvegarder et pour revenir en arrière si quelque chose se passe mal.

@@ -156,36 +156,50 @@ Si l'écran reste noir → voir **Dépannage** (annexe A).
 
 ## 7. Configurer les pédales
 
-Branchez le **pédalier USB** sur le Pi. Objectif : pédale **droite = touche Flèche bas**, pédale **gauche = touche Flèche haut**.
+Branchez le **pédalier USB** sur le Pi. **Trois** pédales sont gérées, avec ces touches par défaut :
+
+| Pédale | Touche par défaut | Rôle |
+|---|---|---|
+| Droite | `Flèche bas` | avancer |
+| Gauche | `Flèche haut` | reculer |
+| Centrale | `Flèche droite` | lecture / pause — **mode Dynamique uniquement** |
 
 Deux méthodes, au choix :
 
-- **A) Programmer le pédalier** (recommandé pour du matériel type PCsensor) : avec le petit logiciel du fabricant (sur un PC), assignez `Flèche bas` à la pédale droite et `Flèche haut` à la pédale gauche.
-- **B) Adapter le logiciel au pédalier** *(recommandé : aucun PC Windows requis)* : sur la télécommande (voir étape 8) → onglet **Réglages** → section **Pédales** → **« Réapprendre »**, **appuyez sur la pédale**, puis **« Enregistrer »** ; idem pour la gauche. Rien n'est envoyé au boîtier avant la confirmation, et la ligne d'état ne passe au vert qu'après relecture de l'état réel du boîtier. La touche `F` et les doublons entre les deux pédales sont refusés.
+- **A) Programmer le pédalier** (recommandé pour du matériel type PCsensor) : avec le petit logiciel du fabricant (sur un PC), assignez les touches ci-dessus.
+- **B) Adapter le logiciel au pédalier** *(recommandé : aucun PC Windows requis)* : sur la télécommande (voir étape 8) → onglet **Réglages** → section **Pédales** → **« Réapprendre »**, **appuyez une fois sur la pédale**, puis **« Enregistrer »** ; idem pour les autres. Rien n'est envoyé au boîtier avant la confirmation, et la ligne d'état ne passe au vert qu'après relecture de l'état réel du boîtier. Sont refusées : `F` (plein écran), `Échap` (retour à l'accueil) et toute touche déjà attribuée à une autre pédale.
   ⚠️ L'apprentissage écoute le clavier de **l'appareil qui affiche la page** : il faut donc le faire depuis le boîtier lui-même, ou depuis un ordinateur portable sur lequel le pédalier est branché — jamais depuis un téléphone.
 
-**Test** : maintenez la pédale droite → le texte défile ; relâchez → il s'arrête ; pédale gauche → il recule.
+### Le mode de pédalier
+
+Onglet **Réglages** → **Pédales** → **Mode**. Trois choix :
+
+- **Maintien** *(par défaut, recommandé)* : pédale enfoncée = ça défile, relâchée = ça s'arrête. Centrale sans fonction.
+- **Impulsion** : une pression lance le défilement, une seconde pression sur la **même** pédale met en pause ; l'autre pédale change de sens. Centrale sans fonction.
+- **Dynamique** : la **centrale** fait lecture/pause, la droite accélère vers l'avant, la gauche ralentit puis repart en arrière. **La vitesse atteinte est conservée** au relâchement. Le curseur **« Montée en vitesse »** règle les secondes d'appui continu pour atteindre la vitesse maximale (**10 s** par défaut).
+
+**Test** (en mode Maintien) : maintenez la pédale droite → le texte défile ; relâchez → il s'arrête ; pédale gauche → il recule.
 
 ---
 
 ## 8. Connecter un téléphone / PC et tester
 
 1. Sur le téléphone : rejoignez le WiFi **« Prompteur »** (mot de passe de l'étape 5).
-2. Ouvrez le navigateur sur **http://10.42.0.1:5000**
-3. Onglet **Texte** : collez un texte, **ou** importez un fichier (Word `.docx`, PDF, `.odt`, RTF, `.txt`) → **« Envoyer à l'écran »**.
+2. Ouvrez le navigateur sur **http://10.42.0.1:5000** (page d'accueil : télécommande + les boutons **« Écran principal »** / **« Écran secondaire »**).
+3. Onglet **Texte** : collez un texte, **ou** importez un fichier (Word `.docx`, PDF, `.odt`, RTF, `.txt`). L'import **remplit la zone de saisie** sans rien diffuser ; **« Envoyer à l'écran »** est le seul geste qui met le texte à l'antenne.
 4. Vérifiez le **défilement aux pédales** et les **réglages** (taille, vitesse, couleurs, miroir).
 
 ---
 
-## 9. (Optionnel) Écran régie / spectateur
+## 9. (Optionnel) Écran secondaire (régie)
 
-Sur un autre appareil connecté au WiFi « Prompteur » (le **PC de la régie**, par exemple), ouvrez :
+Sur un autre appareil connecté au WiFi « Prompteur » (le **PC de la régie**, par exemple), ouvrez la page d'accueil et cliquez sur **« Écran secondaire »** — ou directement :
 
 ```
 http://10.42.0.1:5000/view
 ```
 
-Il **suit l'écran principal en temps réel** (lecture seule). Plusieurs spectateurs possibles.
+Il **suit l'écran principal en temps réel** (lecture seule, jamais en miroir). Plusieurs écrans secondaires possibles.
 
 ---
 
@@ -196,6 +210,7 @@ Il **suit l'écran principal en temps réel** (lecture seule). Plusieurs spectat
 - [ ] **http://10.42.0.1:5000** s'ouvre depuis le téléphone
 - [ ] Un texte envoyé **apparaît à l'écran**
 - [ ] Pédales : **droite = avance**, **gauche = recule**, relâché = stop
+- [ ] **Échap** (deux fois) ramène à la page d'accueil, et l'icône **« Le Prompteur »** réaffiche l'écran
 - [ ] Un **.docx** importé garde ses **titres** (gros/gras) et ses paragraphes
 - [ ] **http://10.42.0.1:5000/view** suit l'écran principal en direct
 - [ ] Après extinction/rallumage, tout revient automatiquement
@@ -215,6 +230,13 @@ Il **suit l'écran principal en temps réel** (lecture seule). Plusieurs spectat
 | Chromium introuvable | `sudo apt install -y chromium-browser` (ou `chromium`) |
 | Changer le mot de passe WiFi | `sudo nmcli connection modify Prompteur wifi-sec.psk "NOUVEAU_MDP"` puis `sudo nmcli connection up Prompteur` |
 | Retrouver l'adresse à l'écran | sur l'écran du boîtier, appuyer sur la touche **i** |
+| **Sortir** de l'écran de lecture | **Échap**, puis **Échap** à nouveau pour confirmer (toute autre touche annule) |
+| Le prompteur a été **fermé** sur le boîtier | Icône **« Le Prompteur »** (bureau ou menu des applications), ou barre **« Écran du boîtier »** de l'accueil, ou `./install/kiosk.sh` |
+| Fermer / relancer / diagnostiquer le kiosque en ligne de commande | `./install/kiosk.sh --stop` · `--restart` · `--status` (répond `running` ou `stopped`) |
+| **« déjà utilisé par un autre appareil »** sur le bouton Écran principal | Un autre écran principal est ouvert. Prendre **« Écran secondaire »**, ou **« Prendre la main quand même »**. La place se libère seule ~12 s après la disparition de l'appareil |
+| Bandeau rouge **« Liaison avec le boîtier perdue »** | L'écran n'atteint plus le serveur ; le texte reste lisible et les pédales fonctionnent. `sudo systemctl status prompteur`, vérifier le WiFi. Tant que le bandeau est là, **Échap refuse** de revenir à l'accueil (c'est voulu) |
+| La barre **« Écran du boîtier »** n'apparaît pas | Normal depuis un téléphone : ces boutons ne sont proposés que sur le boîtier lui-même |
+| Une pédale est refusée à l'apprentissage | `F`, `Échap` et une touche déjà prise par une autre pédale sont interdites (étape 7) |
 
 ## Annexe B — Mettre à jour le logiciel plus tard
 
@@ -232,9 +254,9 @@ sudo systemctl restart prompteur
 
 | Adresse | Usage |
 |---|---|
-| `http://10.42.0.1:5000/` | Télécommande / import (téléphone, PC) |
-| `http://10.42.0.1:5000/display` | Écran **meneur** (piloté aux pédales) — affiché en kiosque sur le boîtier |
-| `http://10.42.0.1:5000/view` | Écran **spectateur / régie** (suit le meneur en direct) |
+| `http://10.42.0.1:5000/` | Page d'accueil : télécommande / import, et les deux boutons qui ouvrent les écrans |
+| `http://10.42.0.1:5000/display` | Écran **principal** (piloté aux pédales) — affiché en kiosque sur le boîtier ; **un seul à la fois** |
+| `http://10.42.0.1:5000/view` | Écran **secondaire / régie** (suit le principal en direct, lecture seule, jamais en miroir) |
 
 ---
 

@@ -29,11 +29,16 @@ Au quotidien, tout tient en six gestes.
 | | Le geste | Ce que vous devez voir |
 |---|---|---|
 | **1** | Allumez **l'écran d'abord**, puis branchez le boîtier au courant | Rien pendant une minute — c'est normal |
-| **2** | **Attendez une minute complète**, sans rien toucher | L'écran devient noir avec du gros texte blanc |
+| **2** | **Attendez une minute complète**, sans rien toucher | L'écran du boîtier devient noir avec du gros texte blanc |
 | **3** | Appuyez sur la **pédale de droite** et gardez le pied appuyé | Le texte monte ; en haut à droite, `⏸` devient `▶︎` |
 | **4** | Sur le téléphone : réseau sans fil **Prompteur** → **restez connecté** malgré le message « pas d'internet » | Le téléphone indique « connecté à Prompteur » |
-| **5** | Dans le navigateur du téléphone : `http://10.42.0.1:5000` | Une page sombre, trois onglets : Texte / Contrôle / Réglages |
+| **5** | Dans le navigateur du téléphone : `http://10.42.0.1:5000` | La page d'accueil : deux gros boutons **« Écran principal »** et **« Écran secondaire »**, puis trois onglets Texte / Contrôle / Réglages |
 | **6** | Onglet **Texte** → collez votre texte → **« Envoyer à l'écran »** | Le message **« Texte envoyé à l'écran ✓ »**, et votre texte apparaît en grand |
+
+> 📌 **Le bouton « Écran principal »** ouvre l'écran de lecture, celui qu'on pilote aux pédales.
+> **Sur le boîtier, il s'ouvre tout seul au branchement : vous n'avez rien à faire.** Depuis le
+> téléphone, il porte alors la mention **« déjà utilisé par un autre appareil »** : c'est normal,
+> et c'est bon signe. **« Écran secondaire »**, lui, ouvre un écran de suivi pour la régie.
 
 > **Et c'est tout.** Pendant la prise, **le téléphone ne sert plus à rien** : vous pilotez
 > uniquement au pied. Pédale droite maintenue = ça avance, pied levé = ça s'arrête.
@@ -47,7 +52,7 @@ Au quotidien, tout tient en six gestes.
 > boîtier, attendez 10 secondes, rebranchez, et recomptez une minute. Votre texte est
 > conservé — il repart simplement du début.
 
-**Besoin de plus ?** Le chapitre 5 détaille ce même rituel pas à pas, le chapitre 13 est le
+**Besoin de plus ?** Le chapitre 5 détaille ce même rituel pas à pas, le chapitre 14 est le
 tableau de dépannage, et la dernière page est une fiche à découper et coller sur le boîtier.
 
 ---
@@ -61,15 +66,16 @@ tableau de dépannage, et la dernière page est une fiche à découper et coller
 | **3** | **Le courant** | La prise, la rallonge, et ce qui se passe si le courant saute |
 | **4** | **Brancher** | L'ordre exact des branchements |
 | **5** | **À chaque utilisation** | Le rituel en 7 étapes, du matériel posé sur la table au texte qui défile |
-| **6** | **Mettre son texte** | Les trois façons d'apporter un texte |
-| **7** | **Lire au pied** | Les pédales, la vitesse, la fin du texte |
-| **8** | **Travailler par séquences** | Refaire une prise sans tout reprendre au début |
-| **9** | **Régler le confort de lecture** | Taille, couleurs, miroir, ligne de repère |
-| **10** | **L'écran de la régie** | Afficher le même texte sur un deuxième écran |
-| **11** | **Si le pédalier ou le téléphone lâche** | Les solutions de repli, sur place |
-| **12** | **Éteindre et ranger** | La bonne façon d'arrêter et de remballer |
-| **13** | **Si quelque chose cloche** | Le tableau de dépannage |
-| **14** | **Les bons réflexes avant un tournage** | Les check-lists, dont celle du sac |
+| **6** | **Mettre son texte** | Les trois façons d'apporter un texte, et le seul bouton qui diffuse |
+| **7** | **Mettre un passage en valeur** | Gras, italique, souligné, tailles et couleurs |
+| **8** | **Lire au pied** | Les pédales, les trois modes, la vitesse, la fin du texte |
+| **9** | **Travailler par séquences** | Refaire une prise sans tout reprendre au début |
+| **10** | **Régler le confort de lecture** | Taille, couleurs, miroir, ligne de repère |
+| **11** | **L'écran secondaire (régie)** | Afficher le même texte sur un deuxième écran |
+| **12** | **Si le pédalier ou le téléphone lâche** | Les solutions de repli, sur place |
+| **13** | **Fermer, éteindre et ranger** | La bonne façon d'arrêter et de remballer |
+| **14** | **Si quelque chose cloche** | Le tableau de dépannage |
+| **15** | **Les bons réflexes avant un tournage** | Les check-lists, dont celle du sac |
 | **✂️** | **Fiche à découper et coller sur le boîtier** | L'essentiel sur une seule page |
 
 ---
@@ -80,12 +86,12 @@ tableau de dépannage, et la dernière page est une fiche à découper et coller
 |---|---|---|
 | **Le boîtier** | Une petite boîte plastique de la taille d'un paquet de cartes épais, avec un petit ventilateur à l'intérieur | C'est le cerveau. Il contient votre texte et vos réglages. **Il n'a pas de batterie** : il lui faut une prise de courant pendant tout le tournage (chapitre 3). |
 | **L'écran 7 pouces** | Un écran plat d'environ 17 cm de large, avec **son propre bloc d'alimentation**, un petit bouton sur la tranche ou au dos, et souvent un mini-menu à boutons | C'est l'écran que vous lisez pendant le tournage. *La plupart de ces petits écrans ne sont pas tactiles : ne comptez pas dessus pour « toucher l'écran ».* |
-| **Le pédalier** | Une barre noire posée au sol avec **deux pédales**, reliée par un câble USB | La pédale de **droite** fait avancer le texte, celle de **gauche** le fait reculer. **Posez la barre au sol devant vous, le câble partant vers le boîtier** : posée dans l'autre sens, votre droite devient la gauche du système. |
+| **Le pédalier** | Une barre noire posée au sol avec **deux pédales** (certains modèles en ont trois), reliée par un câble USB | La pédale de **droite** fait avancer le texte, celle de **gauche** le fait reculer. La **centrale**, si vous en avez une, ne sert qu'au mode « Dynamique » (chapitre 8). **Posez la barre au sol devant vous, le câble partant vers le boîtier** : posée dans l'autre sens, votre droite devient la gauche du système. |
 | **L'alimentation du boîtier** | Elle part d'un **gros bloc branché au mur** ; son embout est **ovale et arrondi** | C'est ce qui allume le boîtier. |
 | **Le câble d'écran** | Il n'a **aucun bloc** : c'est un simple câble d'appareil à appareil. Embout **plat et légèrement trapézoïdal** côté boîtier, plus large côté écran | Il transporte l'image du boîtier vers l'écran. |
 | **Votre téléphone** | Le vôtre, Android ou iPhone | C'est votre télécommande : c'est par lui que vous envoyez le texte et réglez tout. |
-| **Une petite souris USB** | N'importe quelle souris USB ordinaire | Elle ne sert **qu'à un seul geste** (cliquer une fois sur l'écran du boîtier), mais sans elle ce geste est impossible. Gardez-la dans le sac. |
-| **Un clavier USB ordinaire** | Un clavier filaire quelconque | **Clavier de secours** : il ne sert à rien tant que tout va bien, et il remplace entièrement les pédales si elles lâchent (chapitre 11). |
+| **Une petite souris USB** | N'importe quelle souris USB ordinaire | Elle sert à cliquer sur l'écran du boîtier, et à rouvrir le prompteur par son icône s'il a été fermé (chapitre 13). Gardez-la dans le sac. |
+| **Un clavier USB ordinaire** | Un clavier filaire quelconque | **Clavier de secours** : il remplace entièrement les pédales si elles lâchent (chapitre 12), et c'est lui qui porte la touche **Échap**, celle qui ramène de l'écran de lecture à la page d'accueil. |
 | *(Facultatif)* **Une clé USB** | Une petite clé USB ordinaire | Une deuxième façon d'apporter vos textes, sans passer par le téléphone. |
 | *(Recommandé)* **Une deuxième carte mémoire** | Une petite carte préparée à l'identique par l'installateur | En cas de panne totale, l'échange prend deux minutes et se fait sans ordinateur. Demandez-la à l'installateur. |
 
@@ -118,8 +124,8 @@ sur un plateau.
 - [ ] J'ai noté si mon écran est **tactile ou non**. *(La plupart de ces petits écrans ne le sont
       pas ; dans ce cas, c'est la souris USB qui sert à cliquer dessus.)*
 - [ ] J'ai demandé à l'installateur : les touches réglées pour les pédales sont-elles bien
-      **Flèche bas** (droite) et **Flèche haut** (gauche) ? Le petit bouton du boîtier est-il
-      **accessible** à travers le plastique (voir chapitre 12) ? Peut-il me préparer une
+      **Flèche bas** (droite) et **Flèche haut** (gauche) ? Le petit bouton d'arrêt du boîtier
+      est-il **accessible** à travers le plastique (voir chapitre 13) ? Peut-il me préparer une
       **deuxième carte mémoire** de secours ?
 - [ ] J'ai fait un **essai complet à blanc, au moins trois jours avant le tournage** : brancher,
       voir le texte apparaître, connecter le téléphone, envoyer un texte, essayer les deux
@@ -245,24 +251,22 @@ il prend deux minutes.
   votre texte ;
 - une **fine ligne rouge** barre l'écran horizontalement, un peu au-dessus du milieu, avec un
   **petit repère triangulaire rouge à chaque extrémité** ;
-- un **panneau sombre** s'affiche en haut pendant **une douzaine de secondes** avec deux adresses,
-  puis disparaît tout seul ;
 - en **haut à droite**, un petit repère **`⏸` suivi d'un nombre** (70 au départ) reste affiché en
   permanence : il indique l'état (`⏸` à l'arrêt, `▶︎` en marche) et votre réglage de vitesse.
   Nous y reviendrons — il n'y a rien à faire pour l'instant ;
-- pendant les **premières secondes**, un petit **bandeau gris** apparaît en bas à gauche avec des
-  mots techniques (Espace, M, F…). Il disparaît tout seul au bout de quelques secondes :
-  **ne vous en occupez pas, il ne vous concerne pas.** Il réapparaît brièvement chaque fois que
-  l'on clique sur l'écran, c'est normal ;
+- pendant les **premières secondes**, un **bandeau gris** apparaît **en haut de l'écran** avec des
+  mots techniques (Espace, M, F, Échap…), et un **panneau sombre** affiche **deux adresses**
+  pendant une douzaine de secondes. **Les deux disparaissent tout seuls : ne vous en occupez
+  pas.** Le bandeau gris réapparaît brièvement chaque fois que l'on clique sur l'écran ;
 - **aucune barre de navigateur, aucun bureau, aucune icône** — si vous voyez cela, allez au
-  chapitre 13, « Si quelque chose cloche ».
+  chapitre 14, « Si quelque chose cloche ».
 
 > 🆘 **Si au bout de 2 minutes l'écran est toujours noir** : vérifiez d'abord **le courant**
 > (multiprise allumée ? blocs bien enfoncés aux deux bouts ?), puis que l'écran est **allumé,
 > alimenté et réglé sur l'entrée HDMI**, puis que le câble d'écran est branché côté boîtier sur
 > **la prise plate collée à la prise du courant**. Débranchez ensuite l'alimentation du boîtier,
 > attendez 10 secondes et rebranchez-la, **écran allumé en premier**.
-> Voir aussi le chapitre 13, « Si quelque chose cloche ».
+> Voir aussi le chapitre 14, « Si quelque chose cloche ».
 
 ---
 
@@ -285,6 +289,11 @@ Cochez au fur et à mesure : sur un tournage, on est toujours interrompu au mili
       blanc — c'est **le dernier texte que vous aviez envoyé**, il est conservé même après
       extinction. En haut à droite, le repère `⏸` suivi d'un nombre.*
 
+> 🆘 **Si l'écran du boîtier montre le bureau du Raspberry** (un fond d'écran, des icônes) **au
+> lieu de votre texte** : le prompteur a simplement été fermé, et il se rouvre **sans rien
+> débrancher** — avec la **souris USB**, double-cliquez sur l'icône **« Le Prompteur »** posée
+> sur ce bureau. *(Autre façon, depuis le téléphone : voir le chapitre 13.)*
+
 - [ ] **3. Vérifiez que les pédales répondent.** Appuyez sur la **pédale de droite et gardez le
       pied appuyé** deux secondes.
       *Ce que vous devez voir : le texte monte, et le repère en haut à droite passe de `⏸` à `▶︎`.
@@ -293,15 +302,13 @@ Cochez au fur et à mesure : sur un tournage, on est toujours interrompu au mili
 > 🆘 **Si rien ne bouge**, dans cet ordre :
 > 1. **Vérifiez le câble USB du pédalier** : débranchez-le, rebranchez-le sur **une autre prise
 >    USB** du boîtier, attendez 5 secondes, réessayez.
-> 2. **Regardez le repère en haut à droite** de l'écran pendant que vous appuyez : s'il ne change
->    pas, c'est bien la pédale qui n'arrive pas jusqu'au boîtier.
-> 3. **Si une souris USB est branchée** (ou si votre écran est tactile) : cliquez ou appuyez
->    **une seule fois n'importe où sur l'écran noir**, puis réessayez la pédale. C'est un geste
->    utile, mais ce n'est pas une solution magique.
+> 2. **Regardez le repère en haut à droite** pendant que vous appuyez : s'il ne change pas, c'est
+>    bien la pédale qui n'arrive pas jusqu'au boîtier.
+> 3. **Si une souris USB est branchée** (ou si votre écran est tactile) : cliquez **une seule
+>    fois n'importe où sur l'écran noir**, puis réessayez la pédale.
 > 4. **Toujours rien** : débranchez l'alimentation du boîtier, attendez 10 secondes, rebranchez
->    (écran allumé en premier) et attendez à nouveau une minute complète.
-> 5. **Si les pédales restent muettes** : chapitre 11, « Si le pédalier ou le téléphone lâche ».
->    Un simple clavier USB les remplace entièrement.
+>    (écran allumé en premier), attendez une minute complète. Puis chapitre 12 : un simple
+>    clavier USB remplace entièrement les pédales.
 
 - [ ] **4. Connectez votre téléphone au réseau « Prompteur ».** Sur votre téléphone, ouvrez la
       liste des réseaux sans fil (Wi-Fi) et choisissez le réseau nommé exactement **Prompteur**
@@ -335,9 +342,15 @@ Cochez au fur et à mesure : sur un tournage, on est toujours interrompu au mili
 http://10.42.0.1:5000
 ```
 
-*Ce que vous devez voir : une page avec le mot « Prompteur » en haut, et **trois onglets**
-côte à côte — **Texte**, **Contrôle**, **Réglages**. L'onglet « Texte » est déjà ouvert et
-contient déjà le texte en cours sur l'écran.*
+*Ce que vous devez voir : une page avec le mot « Prompteur » en haut, puis **deux gros boutons**
+côte à côte — **« Écran principal »** et **« Écran secondaire »** — et, en dessous, **trois
+onglets** : **Texte**, **Contrôle**, **Réglages**. L'onglet « Texte » est déjà ouvert et contient
+déjà le texte affiché à l'écran.*
+
+> 📌 **Sur le téléphone, on ne touche à aucun des deux gros boutons** : ils ouvrent l'écran de
+> lecture **sur l'appareil où l'on appuie**, et le vôtre, vous l'avez déjà — c'est celui du
+> boîtier. « Écran principal » doit d'ailleurs indiquer **« déjà utilisé par un autre
+> appareil »** : c'est le signe que l'écran du boîtier tient bien les commandes.
 
 > ⚠️ **PIÈGE — le téléphone lance une recherche au lieu d'ouvrir la page.** Si vous tapez
 > seulement `10.42.0.1:5000`, le téléphone croit que vous faites une recherche sur internet…
@@ -356,10 +369,8 @@ contient déjà le texte en cours sur l'écran.*
       d'une seconde, **à l'arrêt, la première ligne placée assez bas sur l'écran, sous la ligne
       rouge** (c'est voulu, voir l'étape 7).*
 
-> ⚠️ **PIÈGE — le silence, c'est l'échec.** Si le petit message « Texte envoyé à l'écran ✓ »
-> **n'apparaît pas**, c'est que le téléphone a perdu le réseau du boîtier. Il n'y aura aucun
-> autre avertissement. **Parade** : revérifiez que le téléphone est bien sur le réseau
-> « Prompteur », rechargez la page, recommencez.
+> ⚠️ **PIÈGE — le silence, c'est l'échec.** Pas de message « Texte envoyé à l'écran ✓ » = le
+> téléphone a perdu le réseau du boîtier. Reconnectez-le à « Prompteur », rechargez la page.
 
 > 💡 **BONNE NOUVELLE — une fois le texte affiché, votre téléphone ne sert plus à rien pendant
 > la prise.** Vous pouvez le ranger, le verrouiller, le laisser repartir sur la 4G, ou le confier
@@ -371,6 +382,11 @@ contient déjà le texte en cours sur l'écran.*
       *Ce que vous devez voir : la première ligne démarre volontairement **bas** sur l'écran, sous
       la ligne rouge. C'est voulu : le texte monte vers la ligne rouge dès la première pression.*
 
+> 💡 **Pour sortir de l'écran de lecture** (par exemple pour revenir à la page d'accueil sur le
+> boîtier) : appuyez sur la touche **Échap** du clavier USB. Une fenêtre demande confirmation —
+> **appuyez une deuxième fois sur Échap** pour confirmer, **n'importe quelle autre touche** pour
+> rester. Le texte et la position sont conservés.
+
 ---
 
 ## 6. Mettre son texte
@@ -379,21 +395,27 @@ Il y a **trois façons** d'apporter un texte. **Les trois se pilotent depuis l'o
 de la télécommande.** La clé USB demande simplement, en plus, d'être branchée physiquement
 **sur le boîtier** — jamais sur le téléphone.
 
-> 📌 **La règle des deux boutons, à retenir par cœur :**
+> 📌 **LA RÈGLE DES DEUX BOUTONS, à retenir par cœur :**
 >
 > - **« Envoyer à l'écran »** (bouton vert) = **ça passe à l'antenne**, le texte s'affiche sur
 >   le grand écran. Mais il n'est **pas** rangé pour plus tard.
 > - **« Enregistrer »** (bouton gris) = **ça range** le texte dans la bibliothèque du boîtier
 >   (« Mes textes enregistrés »). Mais ça **n'affiche rien** à l'écran.
 >
-> Les deux boutons sont totalement indépendants. Si vous voulez afficher le texte **et** le
-> retrouver plus tard, appuyez sur les deux.
->
-> ⚠️ **Et la conséquence, la plus dangereuse de tout le document :** envoyer un texte, importer
-> un document ou charger un texte **remplace définitivement celui qui était à l'écran**.
-> S'il n'avait pas été « Enregistré », **il est perdu** : il n'y a ni historique, ni corbeille,
-> ni annulation. **Règle de tournage : enregistrez TOUJOURS le texte du jour avant d'en envoyer
-> un autre.**
+> Les deux boutons sont indépendants. Pour afficher le texte **et** le retrouver plus tard,
+> appuyez sur les deux.
+
+> 📌 **TOUT CE QUE VOUS FAITES DANS LA ZONE DE SAISIE RESTE DANS LE TÉLÉPHONE** — taper, coller,
+> importer un document, ouvrir un fichier de la clé USB. Tant que vous n'avez pas appuyé sur
+> **« Envoyer à l'écran »**, un **repère jaune** vous le rappelle juste au-dessus des boutons :
+> **« Ce texte n'est pas encore à l'écran — appuyez sur « Envoyer à l'écran ». »**
+
+> ⚠️ **DEUX GESTES SEULEMENT CHANGENT CE QUI EST À L'ANTENNE, et ils le font instantanément,
+> sans aperçu** : le bouton vert **« Envoyer à l'écran »**, et le bouton bleu **« Charger »** de
+> la carte **« Mes textes enregistrés »** (tout en bas de l'onglet Texte).
+> Le texte remplacé **est perdu s'il n'avait pas été « Enregistré »** : ni historique, ni
+> corbeille, ni annulation. **Règle de tournage : enregistrez TOUJOURS le texte du jour avant
+> d'en charger un autre, et ne chargez jamais un texte pendant qu'une prise est en cours.**
 
 ### Voie n° 1 — Copier-coller depuis le téléphone (la plus simple, la plus sûre)
 
@@ -407,100 +429,78 @@ de la télécommande.** La clé USB demande simplement, en plus, d'être branch�
 le message **« Enregistré ✓ »** — ou **« Enregistré sous « … » »** si votre titre a dû être
 simplifié — et le titre qui apparaît dans la liste « Mes textes enregistrés » en bas de la page.*
 
-> 💡 **Si une petite fenêtre apparaît en disant : « Un texte « … » existe déjà. L'écraser ? »**
-> C'est que vous enregistrez sous un titre déjà utilisé — le cas le plus courant : vous corrigez
-> une virgule et vous réenregistrez.
-> - **OK** remplace l'ancienne version par la nouvelle. C'est ce que vous voulez quand vous venez
->   de corriger votre texte. L'ancienne version est alors perdue définitivement.
-> - **Annuler** ne fait **rien du tout**, et **aucun message ne s'affiche** : c'est normal.
->   Changez le titre et recommencez si vous voulez garder les deux versions.
->
-> **Aucun autre texte n'est touché dans les deux cas.**
-> **Bonne habitude :** numérotez vos titres (`Interview 1`, `Interview 2`) plutôt que de
-> réutiliser toujours le même.
+> 💡 **Si une petite fenêtre apparaît : « Un texte « … » existe déjà. L'écraser ? »**
+> C'est que ce titre est déjà pris. **OK** remplace l'ancienne version, qui est alors perdue
+> définitivement ; **Annuler** ne fait **rien du tout**, et **sans aucun message** : c'est normal.
+> **Bonne habitude :** numérotez vos titres (`Interview 1`, `Interview 2`).
 
-> 💡 **Astuce des titres dans le texte.** Une ligne que vous commencez par un **dièse suivi d'un
-> espace** (`# Introduction`) s'affiche **en gros et en gras** sur le grand écran : pratique pour
-> repérer vos parties. C'est aussi pour cela qu'une ligne commençant par un dièse change d'aspect
-> sans prévenir — si vous ne voulez pas de titre, ne commencez pas la ligne par un dièse.
+> ⚠️ **PIÈGE — un texte tapé mais non envoyé est perdu.** Ce que vous écrivez n'existe nulle part
+> tant que vous n'avez pas appuyé sur « Envoyer à l'écran » ou sur « Enregistrer » : recharger la
+> page efface tout, et **« Charger », « Fichier » et « Clé USB » remplacent eux aussi votre
+> saisie**. **Parade** : finissez et envoyez votre texte **avant** d'aller en chercher un autre.
+> *(En revanche, un texte envoyé depuis un autre appareil n'écrase jamais votre saisie : le
+> message « Le texte a changé sur le boîtier » s'affiche à la place.)*
 
-> ⚠️ **PIÈGE — un texte tapé mais non envoyé est perdu.** Ce que vous écrivez dans la zone de
-> texte du téléphone n'existe nulle part tant que vous n'avez pas appuyé sur « Envoyer à l'écran »
-> ou sur « Enregistrer ». Recharger la page, fermer l'onglet ou verrouiller longuement le
-> téléphone efface tout.
-> **Attention également : appuyer sur « Charger », sur « Fichier » ou sur « Clé USB » remplace
-> aussi, sans prévenir, ce que vous étiez en train d'écrire dans le téléphone.**
-> **Parade** : terminez et envoyez (ou enregistrez) votre texte **avant** d'aller en chercher
-> un autre.
-
-> ⚠️ **PIÈGE — les titres compliqués sont simplifiés.** Les apostrophes, deux-points, barres
-> obliques et points d'interrogation sont retirés du titre au moment de l'enregistrement.
-> `Interview d'Élise : partie 1/2` devient `Interview dÉlise partie 12`. Le téléphone vous dit
-> alors sous quel nom il a rangé le texte : **« Enregistré sous « … » »**. **Ce n'est pas une
-> erreur.** **Parade** : des titres simples — lettres, chiffres, espaces, tirets. Et
-> **remplissez toujours le titre** : un titre vide donne « Sans titre », et tous vos textes
-> finissent par porter le même nom.
+> ⚠️ **PIÈGE — les titres compliqués sont simplifiés.** Apostrophes, deux-points, barres obliques
+> et points d'interrogation sont retirés à l'enregistrement : `Interview d'Élise : partie 1/2`
+> devient `Interview dÉlise partie 12`, et le téléphone vous le dit — **« Enregistré sous
+> « … » »**. **Ce n'est pas une erreur.** **Parade** : des titres simples (lettres, chiffres,
+> espaces, tirets), et **toujours remplis** — un titre vide donne « Sans titre » à tous vos
+> textes.
 
 ### Voie n° 2 — Importer un document depuis le téléphone
 
 > ⚠️ **PIÈGE — À PRÉPARER AVANT DE VOUS CONNECTER AU BOÎTIER.** Le bouton « Fichier » ouvre le
-> sélecteur de documents **de votre téléphone** : le document doit donc **déjà se trouver dans
-> le téléphone**. Or, dès que votre téléphone rejoint le réseau « Prompteur », **il n'a plus
-> Internet** : vous ne pouvez plus ouvrir votre boîte mail, ni votre espace de stockage
-> (Drive, iCloud, WeTransfer…) pour aller chercher votre script.
+> sélecteur de documents **de votre téléphone** : le document doit donc **déjà s'y trouver**. Or,
+> dès que le téléphone rejoint le réseau « Prompteur », **il n'a plus Internet** : plus de boîte
+> mail, plus de Drive ni d'iCloud. **Un script qui dort dans vos mails n'est PAS dans votre
+> téléphone.**
 >
-> **Un script qui dort dans vos mails n'est PAS dans votre téléphone.**
+> **Parade, à faire chez vous, avant le tournage :** ouvrez la pièce jointe et **enregistrez-la
+> dans le téléphone** (Android : « Télécharger » ; iPhone : partager → **« Enregistrer dans
+> Fichiers »**), vérifiez que vous la retrouvez dans les documents, **et connectez-vous ensuite**.
 >
-> **Parade, à faire chez vous ou dans la voiture, avant le tournage :** ouvrez la pièce jointe
-> et **enregistrez-la dans le téléphone** (sur Android : « Télécharger » ; sur iPhone :
-> partager → **« Enregistrer dans Fichiers »**). Vérifiez ensuite que vous la retrouvez bien
-> dans les documents du téléphone. **Ensuite seulement**, connectez-vous au boîtier.
->
-> *Si vous vous en apercevez sur place : quittez le réseau « Prompteur », repassez sur la 4G,
-> téléchargez le document, puis revenez sur « Prompteur ». Ou, plus rapide, ouvrez le mail sur
-> la 4G et **copiez-collez** le texte (voie n° 1), qui ne demande aucun fichier.*
+> *Si vous vous en apercevez sur place : ouvrez le mail sur la 4G et **copiez-collez** le texte
+> (voie n° 1), qui ne demande aucun fichier.*
 
 1. Onglet **Texte**, deuxième carte **« Importer »**.
 2. Appuyez sur le bouton **« Fichier »**.
 3. Le sélecteur de fichiers de votre téléphone s'ouvre : choisissez votre document.
+4. **Relisez le texte**, corrigez-le si besoin, puis appuyez sur **« Envoyer à l'écran »**.
 
-L'import part tout seul : **il n'y a aucun bouton de validation ensuite**, et il ne faut **pas**
-appuyer sur « Envoyer à l'écran » après.
+*Ce que vous devez voir : le message **« Importé : »** suivi du nom du document et de la mention
+**« appuyez sur « Envoyer à l'écran » »**, le texte qui remplit la zone de saisie du téléphone,
+le **repère jaune** « Ce texte n'est pas encore à l'écran », et le grand écran qui, lui, **ne
+change pas encore**. Le titre devient automatiquement le nom du fichier, **sans le `.docx`
+(ou le `.pdf`) qui termine ce nom**.*
 
-*Ce que vous devez voir : le message **« Importé : »** suivi du nom du document, le texte qui se
-remplit dans la zone du téléphone, et le grand écran qui change immédiatement. Le titre devient
-automatiquement le nom du fichier, **sans le `.docx` (ou le `.pdf`) qui termine ce nom**.*
+> 📌 **L'import ne diffuse rien tout seul** — c'est voulu : vous pouvez relire et corriger avant
+> de passer à l'antenne. Le texte importé n'est pas non plus rangé dans « Mes textes
+> enregistrés » : pour le retrouver plus tard sans le fichier, appuyez **aussi** sur
+> **« Enregistrer »**.
 
-> 📌 **Le texte importé est affiché à l'écran, mais il n'est PAS rangé dans « Mes textes
-> enregistrés ».** Si vous voulez le retrouver plus tard sans le fichier, remplissez le champ
-> **Titre** puis appuyez sur **« Enregistrer »**.
-
-**Formats acceptés** : Word (`.docx`, et les anciens `.doc`), LibreOffice (`.odt`), PDF, RTF,
-texte simple (`.txt`, `.md`). **5 Mo maximum par fichier.**
+**Formats acceptés** (c'est écrit sous les deux boutons) : Word (`.docx`, `.doc`), PDF,
+LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 
 > 💡 **Le meilleur format, de loin : le `.docx` (Word ou LibreOffice).** Il est léger, il garde
 > vos paragraphes propres, et vos titres restent des titres (affichés plus gros et en gras sur
 > l'écran). Les couleurs, images et mises en page, elles, sont retirées : c'est normal.
 
-> ⚠️ **PIÈGES DES DOCUMENTS — à vérifier la veille, jamais le jour J :**
+> ⚠️ **PIÈGES DES DOCUMENTS — à vérifier la veille, jamais le jour J.**
+> Dans tous les cas ci-dessous, la parade est la même : **repartir du `.docx` d'origine, ou
+> copier-coller le texte à la main** (voie n° 1, qui marche toujours).
 >
-> - **PDF scanné** (une photo de page, faite au scanner ou à la photocopieuse) : l'import semble
->   réussir, le message « Importé : » s'affiche… mais **l'écran devient vide** et affiche
->   « Aucun texte. ». **Parade** : repartez du document Word d'origine, ou copiez-collez le texte
->   à la main.
+> - **PDF scanné** (une photo de page) : le message « Importé : » s'affiche… mais **la zone de
+>   texte reste vide**.
 > - **Document protégé par mot de passe** : l'import échoue avec un message technique en anglais.
->   **Parade** : ouvrez le document sur un ordinateur et enregistrez-le sans mot de passe.
-> - **Fichier trop lourd (au-delà de 5 Mo)** : soit rien ne se passe et un message d'échec
->   s'affiche, soit — c'est le plus traître — **le texte est importé amputé de sa fin, sans aucun
->   avertissement**. Un PDF contenant des photos dépasse très vite cette limite.
->   **Parade** : vérifiez toujours **la dernière ligne de votre texte sur le grand écran** après
->   un import, et préférez un `.docx` léger ou le copier-coller.
+> - **Fichier trop lourd (plus de 5 Mo)** : soit un message d'échec, soit — le plus traître —
+>   **un texte amputé de sa fin, sans aucun avertissement**. Un PDF plein de photos dépasse très
+>   vite cette limite : **descendez toujours jusqu'à la dernière ligne dans la zone de saisie**
+>   avant d'envoyer.
 > - **Format non reconnu** (`.pages` d'Apple, `.key`, `.jpg`, `.zip`…) : **aucun message
->   d'erreur**, mais l'écran se remplit de charabia. **Parade** : depuis un iPhone ou un Mac,
->   exportez toujours en Word (`.docx`) ou en PDF avant d'importer.
-> - **Lignes hachées** : un PDF ou un `.txt` dont les lignes sont déjà coupées à la largeur d'une
->   page s'affiche en lignes courtes et irrégulières, désagréables à lire.
->   **Parade** : le `.docx`, ou le copier-coller.
+>   d'erreur**, mais la zone se remplit de charabia.
+> - **Lignes hachées** : un PDF ou un `.txt` déjà coupé à la largeur d'une page s'affiche en
+>   lignes courtes et irrégulières, désagréables à lire.
 
 ### Voie n° 3 — La clé USB
 
@@ -514,15 +514,20 @@ texte simple (`.txt`, `.md`). **5 Mo maximum par fichier.**
 4. La liste des documents trouvés s'affiche **juste sous les deux boutons**, chaque ligne avec
    un bouton bleu **« Charger »**.
 5. Appuyez sur **« Charger »** à droite du bon document.
+6. **Relisez le texte**, puis appuyez sur **« Envoyer à l'écran »**.
 
-*Ce que vous devez voir : le message **« Chargé : »** suivi du nom du fichier, et le texte qui
-apparaît immédiatement sur le grand écran.*
+*Ce que vous devez voir : le message **« Importé : »** suivi du nom du fichier, le texte qui
+remplit la zone de saisie, et le **repère jaune** « Ce texte n'est pas encore à l'écran ».
+Comme pour un fichier du téléphone, **le grand écran ne change qu'après « Envoyer à l'écran »**.*
 
-Une fois le document chargé, **le texte est recopié dans le boîtier** : vous pouvez retirer la
-clé, le texte reste, même après extinction.
+> ⚠️ **DEUX BOUTONS « CHARGER », ET ILS NE FONT PAS LA MÊME CHOSE.**
+> - Celui de la **liste de la clé USB** (carte « Importer ») **remplit seulement la zone de
+>   saisie** : message « Importé : … ».
+> - Celui de la carte **« Mes textes enregistrés »**, tout en bas de la page, **envoie
+>   directement à l'écran** : message « « … » chargé ».
 
-> 📌 **Là non plus, le texte n'est PAS rangé dans « Mes textes enregistrés ».** Pour le retrouver
-> plus tard sans la clé, remplissez le champ **Titre** puis appuyez sur **« Enregistrer »**.
+Une fois le document chargé et envoyé, **le texte est recopié dans le boîtier** : vous pouvez
+retirer la clé, le texte reste, même après extinction.
 
 > 💡 **Pour que ça marche à tous les coups** : une **petite clé dédiée**, formatée normalement,
 > avec les documents posés **directement à la racine** (pas au fond d'une pile de dossiers).
@@ -535,12 +540,10 @@ clé, le texte reste, même après extinction.
 > un point.
 
 > 🆘 **Si le message « Aucun fichier détecté sur une clé USB » s'affiche** : retirez la clé,
-> rebranchez-la **sur le boîtier**, attendez 5 secondes et réappuyez sur « Clé USB ». Si ça ne
-> marche toujours pas, la clé est sans doute dans un format inhabituel : utilisez une autre clé,
-> plus ordinaire.
-> **Autre cause fréquente : un document trop lourd** (plus de 5 Mo, typiquement un PDF plein de
-> photos) **n'apparaît pas du tout dans la liste, sans le moindre message**. Vérifiez le poids
-> du fichier et préférez un `.docx`.
+> rebranchez-la **sur le boîtier**, attendez 5 secondes et réappuyez sur « Clé USB ». Sinon, la
+> clé est dans un format inhabituel : utilisez-en une autre, plus ordinaire.
+> **Autre cause fréquente : un document de plus de 5 Mo** (un PDF plein de photos)
+> **n'apparaît pas du tout dans la liste, sans le moindre message.** Préférez un `.docx`.
 
 ### Retrouver un texte déjà enregistré
 
@@ -548,7 +551,8 @@ Onglet **Texte**, carte **« Mes textes enregistrés »** tout en bas : chaque l
 du texte, un bouton bleu **« Charger »** et, collé à droite, **un petit bouton sombre marqué
 d'une croix rouge ✕**.
 
-Appuyez sur **« Charger »** : le texte part à l'écran **et** revient dans le téléphone.
+Appuyez sur **« Charger »** : le texte part à l'écran **et** revient dans le téléphone, avec sa
+mise en forme (chapitre 7).
 
 *Ce que vous devez voir : un petit message **« « [le titre de votre texte] » chargé »** en bas de
 l'écran du téléphone, et le texte qui apparaît aussitôt sur le grand écran. Pas de message = le
@@ -560,15 +564,54 @@ téléphone a perdu le réseau : reconnectez-le à « Prompteur » et rechargez 
 > **Parade : ne touchez jamais la croix ✕ un jour de tournage.** Pour rappeler un texte, c'est
 > le bouton **BLEU « Charger »**.
 
-> ⚠️ **PIÈGE — « Charger » passe directement à l'antenne.** Charger un texte (bibliothèque ou
-> clé USB) **remplace instantanément** ce qui est affiché à l'écran, sans aperçu et sans prévenir.
-> **Parade : ne chargez un autre texte que lorsque la caméra ne tourne pas.**
+---
+
+## 7. Mettre un passage en valeur
+
+Dans la zone de saisie de l'onglet **Texte**, une barre de boutons permet de faire ressortir un
+passage : un nom propre, une question, une relance. **Trois gestes, toujours les mêmes.**
+
+- [ ] **1.** **Sélectionnez le passage** dans la grande zone « Texte du prompteur »
+      (appui long sur le téléphone, puis faites glisser les poignées).
+- [ ] **2.** **Appuyez sur un bouton de la barre**, juste en dessous :
+
+| Le bouton | Ce qu'il fait |
+|---|---|
+| **G** | Met le passage **en gras** |
+| **I** | Le met *en italique* |
+| **S** | Le **souligne** |
+| **petit** | Le rend un peu **plus petit** |
+| **Titre** | Le rend **plus gros** |
+| **Grand titre** | Le rend **beaucoup plus gros** |
+| **Les cinq pastilles de couleur** | Colorent le passage : jaune, rouge clair, vert, bleu, gris |
+
+- [ ] **3.** Appuyez sur **« Envoyer à l'écran »** : la mise en forme part avec le texte.
+
+*Ce que vous devez voir : le passage change d'aspect **directement dans la zone de saisie**, et
+le repère jaune « Ce texte n'est pas encore à l'écran » apparaît tant que vous n'avez pas envoyé.*
+
+**Pour enlever un effet : resélectionnez le passage et rappuyez sur le même bouton.**
+Le bouton **« Tout effacer »** retire la mise en forme de **tout** le texte (message
+« Mise en forme effacée ») — le texte, lui, n'est pas touché.
+
+> 💡 **Si le message « Sélectionnez d'abord un passage » s'affiche**, c'est que rien n'était
+> sélectionné : les boutons agissent uniquement sur le passage surligné, jamais sur tout le texte.
+
+> 💡 **Restez sobre** : sur un écran de 7 pouces, deux ou trois passages en couleur suffisent.
+
+> 💡 **Astuce des titres.** Une ligne que vous commencez par un **dièse suivi d'un espace**
+> (`# Introduction`) s'affiche **en gros et en gras** sur le grand écran, sans rien sélectionner.
+> C'est aussi pourquoi une ligne commençant par un dièse change d'aspect sans prévenir : si vous
+> ne voulez pas de titre, ne commencez pas la ligne par un dièse.
+
+La mise en forme est **conservée par « Enregistrer »** et revient telle quelle quand vous
+rappelez le texte avec « Charger ».
 
 ---
 
-## 7. Lire au pied
+## 8. Lire au pied
 
-Le boîtier est réglé d'usine en **mode « Maintien »**, et c'est le seul mode à utiliser.
+Le boîtier est réglé d'usine en **mode « Maintien »**. C'est le mode du tournage.
 
 | Ce que vous faites | Ce qui se passe |
 |---|---|
@@ -581,16 +624,44 @@ immédiat, et c'est la grande sécurité du système. Mais c'est aussi fatigant.
 **Essayez une lecture complète, assis ou debout comme le jour du tournage, avant le vrai
 tournage** : au-delà de quelques minutes, on relâche sans s'en rendre compte et le texte s'arrête
 au mauvais moment. Pour un texte long, prévoyez des respirations, ou découpez-le en plusieurs
-textes courts (chapitre 8).
+textes courts (chapitre 9).
 
 > 💡 **La marche arrière est un peu plus de deux fois plus rapide que la marche avant**, exprès,
 > pour retrouver vite sa place. Conséquence : un appui un peu long sur la pédale gauche vous
 > renvoie très loin en arrière. **Donnez de petits coups brefs pour reculer.**
 
+### Les trois modes de pédalier
+
+Onglet **Réglages**, carte **« Pédales »**, ligne **« Mode »** : trois boutons.
+**Le mode actif est celui dont le bouton est bleu**, et une phrase d'explication s'affiche
+juste en dessous — **celle du mode choisi, et elle seule**.
+
+| Le mode | Pédale de DROITE | Pédale de GAUCHE | Pédale CENTRALE |
+|---|---|---|---|
+| **Maintien** *(réglage d'usine)* | Maintenue : le texte **avance**. Relâchée : il **s'arrête** | Maintenue : le texte **recule** | *Sans fonction* |
+| **Impulsion** | Une pression **lance** le défilement vers l'avant ; **une seconde pression sur la même pédale met en pause** | Une pression lance le défilement **en arrière** ; une seconde pression met en pause | *Sans fonction* |
+| **Dynamique** | Tant qu'on appuie, le texte **accélère** vers l'avant | Tant qu'on appuie, le texte **ralentit**, puis **repart en arrière**, de plus en plus vite | **Lecture / pause** |
+
+**En mode Dynamique, la vitesse atteinte est conservée quand vous relâchez** : vous la posez une
+fois au pied, puis vous lisez sans rien tenir, la pédale centrale servant à partir et à s'arrêter.
+Un réglage apparaît alors sous les trois boutons, **« Montée en vitesse (mode dynamique) »** :
+c'est le nombre de **secondes d'appui continu pour atteindre la vitesse maximale**, **10 s** au
+départ. Plus le nombre est petit, plus la pédale est nerveuse.
+**La pédale centrale ne sert que dans ce mode** ; ailleurs, elle ne fait rien. Un pédalier à deux
+pédales fonctionne aussi en Dynamique, mais sans bouton lecture/pause.
+
+> ⚠️ **En « Impulsion » et en « Dynamique », lever le pied n'arrête plus le texte.** Le défilement
+> continue jusqu'à la pression suivante. C'est confortable pour une longue lecture, mais cela
+> vous prive de l'arrêt d'urgence au pied.
+> **Parade : restez en « Maintien » le jour du tournage, sauf si vous avez répété avec un autre
+> mode.** Et dans tous les cas, le bouton **« Début »** de l'onglet **Contrôle** remet tout au
+> repos, dans les trois modes.
+
 ### Si le texte monte trop vite (ou trop lentement)
 
-Le pied commande le **départ** et l'**arrêt** ; un réglage séparé commande la **vitesse** à
-laquelle le texte monte pendant que vous appuyez.
+En mode **Maintien** et en mode **Impulsion**, le pied commande le **départ** et l'**arrêt** ;
+un réglage séparé commande la **vitesse**. *(Le mode Dynamique, lui, ignore ce réglage : sa
+vitesse se construit au pied.)*
 
 1. **Sur le moment, le plus simple : relâchez la pédale.** Le texte s'arrête tout de suite.
 2. Sur le téléphone, onglet **Contrôle**, appuyez sur **« Moins vite »** (ou **« Plus vite »**).
@@ -612,36 +683,35 @@ en plus précis. Faites-la glisser, puis lâchez, puis regardez le grand écran.
 > ⚠️ **PIÈGE — le bouton « Lecture ».** L'onglet **Contrôle** contient un bouton **« Lecture »**
 > qui fait défiler le texte **tout seul**, en continu. Dans ce cas, **relâcher la pédale n'arrête
 > plus rien.** **Parade** : appuyez sur **« Pause »** sur le téléphone. En tournage, on n'utilise
-> **pas** « Lecture » : on pilote au pied.
+> **pas** « Lecture » : on pilote au pied. *(Ce bouton n'agit qu'en mode « Maintien ».)*
 
-> ⚠️ **PIÈGE — le mode « Impulsion ».** Dans l'onglet **Réglages**, la carte « Pédales » propose
-> un mode **« Impulsion »**. Dans ce mode, **tout change** :
-> - la **pédale de droite** ne fait plus avancer tant qu'on appuie : elle **déclenche un
->   défilement continu**, qu'un second appui arrête ;
-> - la **pédale de gauche** ne recule plus : elle **renvoie brutalement au tout début du texte**.
->
-> En direct, c'est la pire fausse manœuvre possible.
-> **Parade : laissez le mode sur « Maintien » et n'y touchez pas.** Le mode actif est celui dont
-> le bouton est coloré en bleu.
+### Réapprendre les touches des pédales
 
-> 📌 **LES DEUX PÉDALES, TOUT EN BAS DE L'ONGLET RÉGLAGES.** Sous « Mode », deux blocs indiquent
-> quelle touche correspond à chaque pédale (`ArrowDown` pour la droite, `ArrowUp` pour la gauche),
-> avec un bouton **« Réapprendre »** et une ligne d'état verte quand tout va bien.
->
-> **Vous ne pouvez rien casser en regardant.** Rien n'est envoyé au boîtier tant que vous n'avez
-> pas appuyé sur **« Enregistrer »**, et un bouton **« Annuler »** remet tout comme avant.
->
-> **Si les pédales ne répondent plus, la réparation se fait sur place, sans installateur :**
-> 1. Prenez un **ordinateur portable** (ou une tablette avec un vrai clavier) et connectez-le au
->    réseau **Prompteur**.
-> 2. Ouvrez sur cet appareil la même page `http://10.42.0.1:5000`, onglet **Réglages**,
->    carte **Pédales**.
-> 3. Pédale droite : **« Réapprendre »** → appuyez sur la touche **Flèche bas** du clavier de cet
->    appareil → **« Enregistrer »**.
-> 4. Pédale gauche : **« Réapprendre »** → touche **Flèche haut** → **« Enregistrer »**.
->
-> *Ce que vous devez voir : la ligne d'état passe au vert, « ✓ Enregistré sur le boîtier », et le
-> nom de la touche s'affiche.* Les pédales refonctionnent immédiatement.
+**TOUT EN BAS DE L'ONGLET RÉGLAGES**, sous « Mode », trois blocs indiquent quelle touche
+correspond à chaque pédale : **droite (avancer)**, **gauche (reculer)** et **centrale**.
+Le nom de la touche y est écrit en anglais — au départ `ArrowDown` (flèche bas) pour la droite,
+`ArrowUp` (flèche haut) pour la gauche, `ArrowRight` (flèche droite) pour la centrale.
+Chaque bloc a un bouton **« Réapprendre »** et une ligne d'état, verte quand tout va bien.
+
+**Vous ne pouvez rien casser en regardant.** Rien n'est envoyé au boîtier tant que vous n'avez
+pas appuyé sur **« Enregistrer »**, et un bouton **« Annuler »** remet tout comme avant.
+
+**Si une pédale ne répond plus, la réparation se fait sur place, sans installateur :**
+
+1. Connectez un **ordinateur portable** (ou une tablette avec un vrai clavier) au réseau
+   **Prompteur**, et ouvrez la même page `http://10.42.0.1:5000`, onglet **Réglages**,
+   carte **Pédales**.
+2. Pédale droite : **« Réapprendre »** → touche **Flèche bas** → **« Enregistrer »**.
+3. Pédale gauche : **« Réapprendre »** → touche **Flèche haut** → **« Enregistrer »**.
+
+*Ce que vous devez voir : la ligne d'état passe au vert, « ✓ Enregistré sur le boîtier », et le
+nom de la touche s'affiche.* Les pédales refonctionnent immédiatement.
+
+> 📌 **Trois touches sont refusées, et le message vous dit pourquoi :**
+> **Échap** (elle sert à revenir à la page d'accueil), **F** (elle sert au plein écran), et
+> **toute touche déjà attribuée à une autre pédale** (sinon l'une des deux devient muette).
+> Appuyez simplement sur une autre pédale.
+
 > **Important** : ces blocs écoutent le clavier de **l'appareil qui affiche cette page**. Depuis
 > un téléphone sans clavier physique, la réparation est impossible : il faut un vrai clavier.
 > En dernier recours seulement, appelez la personne qui a installé le boîtier.
@@ -655,7 +725,7 @@ du téléphone — attention, ce bouton remet aussi en pause.
 
 ---
 
-## 8. Travailler par séquences
+## 9. Travailler par séquences
 
 Le prompteur **ne sait pas sauter à un endroit précis** du texte, et il **n'affiche ni minuteur
 ni indication d'avancement**. Les seuls retours en arrière possibles sont le bouton « Début »
@@ -676,13 +746,14 @@ Sur un texte de dix minutes, chercher sa place à l'aveugle entre deux prises es
 
 ---
 
-## 9. Régler le confort de lecture
+## 10. Régler le confort de lecture
 
 Tout se passe dans l'onglet **Réglages** de la télécommande. Ces réglages sont **mémorisés** et
-survivent à l'extinction du boîtier.
+survivent à l'extinction du boîtier. **Ils s'appliquent tout de suite à toutes les pages
+ouvertes**, sans rien recharger.
 
 > 💡 **Comment savoir qu'un réglage est pris en compte.** Les réglages en boutons (Alignement,
-> Police, Mode) et les pastilles de couleur se contentent de **devenir bleus**. Les barres à faire
+> Mode) et les pastilles de couleur se contentent de **devenir bleus**. Les barres à faire
 > glisser, elles, n'affichent **rien du tout** : la seule preuve, c'est **le grand écran qui
 > change** — et seulement **au moment où vous retirez le doigt**.
 > Glissez, lâchez, PUIS regardez l'écran.
@@ -690,8 +761,8 @@ survivent à l'extinction du boîtier.
 ### La taille du texte, l'interligne et les marges
 
 Carte **« Texte »** : trois barres à faire glisser — **Taille du texte**, **Interligne**,
-**Marges latérales** — plus le choix de l'**Alignement** (Gauche / Centré) et de la **Police**
-(Sans / Serif / Mono). Le choix actif est celui dont le bouton est bleu.
+**Marges latérales** — plus le choix de l'**Alignement** (Gauche / Centré). Le choix actif est
+celui dont le bouton est bleu.
 
 > 💡 **Réglez la taille en vous plaçant à la distance exacte où vous serez pendant le tournage**,
 > jamais le nez sur l'écran. **Attendez-vous à ne voir que deux ou trois lignes à la fois** :
@@ -730,8 +801,13 @@ l'avance, pour qu'il redevienne parfaitement lisible **dans la vitre**.
   interrupteurs éteints.**
 - **Vous lisez le reflet dans une vitre** : **activez le miroir horizontal**, et lui seul.
 
-*Ce que vous devez voir quand le miroir est actif : le texte apparaît à l'envers, illisible de
-face — mais le **repère en haut à droite**, lui, reste lisible à l'endroit. C'est normal.*
+> 📌 **Le miroir ne s'applique qu'à l'écran principal**, celui que vous lisez. **Les écrans
+> secondaires (régie) restent toujours à l'endroit**, donc lisibles par tout le monde : c'est
+> écrit sur la carte « Affichage », et il n'y a rien à régler pour cela.
+
+*Ce que vous devez voir quand le miroir est actif : sur l'écran principal, le texte apparaît à
+l'envers, illisible de face — mais le **repère en haut à droite**, lui, reste lisible à l'endroit.
+C'est normal.*
 
 > ⚠️ **Le doigt glisse vite d'un interrupteur à l'autre.** Si votre texte se retrouve **la tête
 > en bas**, c'est le « Miroir vertical » qui a été activé : éteignez-le.
@@ -745,45 +821,39 @@ Elle est activée d'usine : laissez-la, ou éteignez-la si elle vous gêne.
 
 ---
 
-## 10. L'écran de la régie (facultatif)
+## 11. L'écran secondaire (régie) — facultatif
 
 Vous pouvez afficher **le même texte, en direct, sur un deuxième écran** (l'ordinateur ou la
 tablette de la régie), pour que quelqu'un suive la lecture.
 
 1. Connectez cet appareil au réseau sans fil **Prompteur**, exactement comme le téléphone.
-
-> 💡 **Vous n'avez pas besoin de retenir l'adresse ci-dessous** : elle est écrite en toutes lettres
-> sur votre téléphone, onglet **Contrôle**, carte **« Écran régie / spectateur »**.
-> Recopiez-la de là, c'est plus sûr que de la taper de tête.
-
-2. Dans le navigateur de cet appareil, tapez cette adresse **en entier** :
-
-```
-http://10.42.0.1:5000/view
-```
+2. Dans son navigateur, ouvrez la page d'accueil `http://10.42.0.1:5000`.
+3. Appuyez sur le gros bouton **« Écran secondaire »** *(régie, retour plateau — lecture seule)*.
 
 *Ce que vous devez voir : une étiquette **jaune** en haut à gauche indiquant
 **« SPECTATEUR — suit l'écran principal »**, et le texte qui défile en même temps que le vôtre.*
 
-> ⚠️ **PIÈGE — la fin de l'adresse compte.** Elle doit se terminer par **`/view`**.
-> Si vous oubliez le `/view`, vous obtiendrez la page de la télécommande ; et si vous tapez
-> `/display`, vous ouvrirez un **second écran meneur** — l'écran de régie recevra alors des
-> positions contradictoires et le défilement deviendra incohérent.
-> Si l'étiquette jaune « SPECTATEUR » ne s'affiche pas, fermez la page et retapez l'adresse.
+**Plusieurs écrans secondaires peuvent être ouverts en même temps, sans aucun risque** : ils ne
+font que regarder, ils ne pilotent rien et ils restent toujours à l'endroit, même si vous lisez
+en miroir.
 
-Cette adresse n'est pas cliquable : elle se recopie à la main. **Plusieurs écrans de régie
-peuvent être ouverts en même temps sans aucun risque** : ils ne font que regarder.
+> 📌 **Si vous préférez taper l'adresse** (elle est aussi rappelée sur le téléphone, onglet
+> **Contrôle**, carte « Écran régie / spectateur ») : `http://10.42.0.1:5000/view`, en entier et
+> terminée par **`/view`**. Si l'étiquette jaune « SPECTATEUR » n'apparaît pas, fermez la page et
+> recommencez par le bouton **« Écran secondaire »**, c'est plus sûr.
 
-> ⚠️ **PIÈGE — le deuxième téléphone.** La page **télécommande** (l'adresse sans rien après
-> `5000`), elle, ne doit être ouverte que sur **UN seul téléphone** pendant le tournage.
-> Rien ne l'interdit techniquement, et c'est justement le danger : cette page **ne se met pas à
-> jour toute seule**, donc un deuxième téléphone affiche un **texte périmé** et peut, d'un seul
-> appui sur « Envoyer à l'écran », remettre l'ancienne version à l'écran — ou déplacer la vitesse
-> en plein direct. **Si quelqu'un doit reprendre la main, il doit d'abord recharger la page.**
+> ⚠️ **UN SEUL ÉCRAN PRINCIPAL À LA FOIS.** Deux écrans principaux se disputeraient le pilotage,
+> et le texte sauterait d'un endroit à l'autre en pleine lecture. Le logiciel s'en charge seul :
+> sur les autres appareils, le bouton « Écran principal » se grise et indique **« déjà utilisé
+> par un autre appareil »**. **Laissez-le grisé et prenez « Écran secondaire ».**
+
+> 💡 **Toutes les pages ouvertes se mettent à jour toutes seules**, sans rechargement : réglages,
+> texte à l'antenne et liste des textes enregistrés. Un deuxième téléphone ne risque donc plus de
+> remettre un vieux texte à l'écran.
 
 ---
 
-## 11. Si le pédalier ou le téléphone lâche
+## 12. Si le pédalier ou le téléphone lâche
 
 Deux pannes qui font peur, et qui ne sont pourtant pas graves : dans les deux cas, le tournage
 continue.
@@ -804,11 +874,13 @@ boîtier fait exactement le même travail** — et même davantage.
 |---|---|
 | **Flèche bas** (maintenue) | Le texte **avance** — remplace la pédale droite |
 | **Flèche haut** (maintenue) | Le texte **recule** — remplace la pédale gauche |
-| **Espace** | Lecture / pause du défilement automatique |
+| **Flèche droite** | Lecture / pause en mode **Dynamique** — remplace la pédale centrale |
+| **Espace** | Lecture / pause du défilement automatique *(mode « Maintien »)* |
 | **R** | Revient au tout début du texte (et met en pause) |
 | **+** / **−** | Plus vite / moins vite, d'un cran |
 | **I** | Réaffiche les adresses du boîtier |
-| **H** | Affiche ou masque le petit bandeau d'aide en bas |
+| **H** | Affiche ou masque le bandeau d'aide en haut de l'écran |
+| **Échap** | Revient à la page d'accueil — **deux fois** : une pour demander, une pour confirmer |
 
 > ⚠️ **N'appuyez pas sur la touche M** (elle retourne le texte en miroir) **ni sur la touche F**
 > (plein écran) : elles ne servent à rien ici et peuvent vous faire perdre du temps.
@@ -821,17 +893,33 @@ Les pédales fonctionnent seules, même téléphone éteint. Le téléphone n'es
 
 - Si vous devez tout de même reprendre la main : **n'importe quel autre téléphone, tablette ou
   ordinateur** connecté au réseau **Prompteur** ouvre la même page `http://10.42.0.1:5000`.
-- Pour piloter la lecture sans aucun téléphone : le **clavier USB** ci-dessus (Espace, R,
-  Flèche bas, Flèche haut) suffit.
+- Pour piloter la lecture sans aucun téléphone : le **clavier USB** ci-dessus suffit.
 - **Ayez toujours votre téléphone chargé, ou une batterie de secours dans le sac.**
 
 ---
 
-## 12. Éteindre et ranger
+## 13. Fermer, éteindre et ranger
 
 > 💡 **Le boîtier peut rester allumé toute la journée de tournage sans problème.**
 > Entre deux séquences, **laissez-le branché** : c'est le **débranchement répété** qui abîme sa
 > mémoire, pas le fait de rester allumé. On ne l'éteint qu'**à la fin du tournage**.
+
+### Fermer le prompteur sans éteindre le boîtier
+
+Le prompteur est une application : **on peut la fermer et la rouvrir sans rien débrancher.**
+C'est utile si quelqu'un a besoin du bureau du Raspberry, ou si l'affichage s'est mis de travers.
+
+Sur la page d'accueil du téléphone, dépliez la barre **« Écran du boîtier »** (tout en haut,
+sous les deux gros boutons). Elle indique si le prompteur est **affiché** ou **fermé**, et
+propose **« Afficher sur le boîtier »** (le remet en plein écran) et **« Fermer sur le boîtier »**
+(le referme et rend la main au bureau du Raspberry, après une question de confirmation).
+
+**Le texte et vos réglages ne sont pas perdus.** On peut aussi rouvrir le prompteur sur le
+boîtier en double-cliquant, avec la souris USB, sur l'icône **« Le Prompteur »** posée sur son
+bureau (elle figure aussi dans le menu des applications).
+
+> 📌 **Ces deux boutons agissent sur l'écran du boîtier, pas sur l'appareil que vous tenez**, et
+> ils **n'éteignent pas** la machine : pour cela, c'est le **bouton physique** ci-dessous.
 
 ### Éteindre
 
@@ -865,10 +953,10 @@ Faites-le vérifier une fois par l'installateur et notez la réponse (chapitre 2
 > d'abîmer la mémoire du boîtier. Attendez que tout soit calme.
 
 **Ce que vous ne perdez pas** (tout est conservé dans la mémoire du boîtier) : votre texte
-affiché, son titre, tous vos réglages (taille, interligne, marges, couleurs, police, alignement,
-miroir, ligne de repère, mode des pédales), la **vitesse** — à condition de l'avoir posée avec la
-barre « Vitesse de lecture » et non seulement avec les boutons « Plus vite » / « Moins vite »
-(chapitre 7) — et toute votre bibliothèque « Mes textes enregistrés ».
+affiché, son titre, **sa mise en forme**, tous vos réglages (taille, interligne, marges, couleurs,
+alignement, miroir, ligne de repère, mode et touches des pédales), la **vitesse** — à condition de
+l'avoir posée avec la barre « Vitesse de lecture » et non seulement avec les boutons « Plus
+vite » / « Moins vite » (chapitre 8) — et toute votre bibliothèque « Mes textes enregistrés ».
 
 **Ce que vous perdez, et c'est normal** : la position dans le texte. Au rallumage, **on repart
 toujours du tout début**.
@@ -885,7 +973,7 @@ toujours du tout début**.
 
 ---
 
-## 13. Si quelque chose cloche
+## 14. Si quelque chose cloche
 
 À lire de haut en bas : les causes les plus fréquentes — et les plus bêtes — sont en premier.
 
@@ -894,32 +982,35 @@ toujours du tout début**.
 | **Rien ne s'allume du tout (ni l'écran, ni le boîtier)** | C'est un problème **de courant**, pas de prompteur. Vérifiez que la **multiprise est allumée** (son interrupteur lumineux), essayez **une autre prise murale**, et vérifiez que **chaque bloc d'alimentation est bien enfoncé aux deux bouts**. |
 | **L'écran reste noir alors que le boîtier est alimenté** | Vérifiez que l'écran est **allumé** et que **sa propre** alimentation est branchée. Puis que le câble d'image est branché, côté boîtier, sur **la prise plate collée à la prise du courant**. Puis débranchez le boîtier, attendez 10 secondes, rebranchez **écran allumé en premier**, et attendez **une minute complète**. |
 | **L'écran affiche « pas de signal », ou reste bleu** | C'est l'écran, pas le boîtier. Cherchez les **petits boutons de menu sur sa tranche** et vérifiez qu'il est réglé sur l'entrée **HDMI** (et non AV, ni HDMI 2). Vérifiez aussi que la **luminosité n'est pas au minimum**. |
-| **L'écran affiche un bureau, des icônes, un fond d'écran ou une barre de navigateur au lieu du texte** | L'affichage plein écran s'est refermé. **Ne cliquez sur rien.** Débranchez l'alimentation du boîtier, attendez **10 secondes**, rebranchez (**écran allumé en premier**) et attendez **une minute complète** : le texte revient tout seul. *(Si un clavier est branché, la touche **F** remet le plein écran.)* |
-| **Les pédales ne répondent plus** | Dans cet ordre : **1)** débranchez le câble USB du pédalier et rebranchez-le **sur une autre prise USB** du boîtier, attendez 5 secondes ; **2)** appuyez sur la pédale en regardant le repère en haut à droite de l'écran — s'il ne bouge pas, l'appui n'arrive pas au boîtier ; **3)** si une **souris USB** est branchée (ou si votre écran est tactile), cliquez **une fois** sur l'écran noir et réessayez ; **4)** débranchez l'alimentation du boîtier, attendez 10 secondes, rebranchez, attendez une minute ; **5)** branchez un **clavier USB** : Flèche bas = avancer, Flèche haut = reculer (chapitre 11). |
+| **L'écran du boîtier affiche un bureau, des icônes ou une barre de navigateur au lieu du texte** | Le prompteur a été fermé : **plus besoin de redémarrer**. Avec la **souris USB**, double-cliquez sur l'icône **« Le Prompteur »** sur ce bureau. Ou, depuis le téléphone : page d'accueil → barre **« Écran du boîtier »** → **« Afficher sur le boîtier »**. *(Si seule une barre de navigateur dépasse et qu'un clavier est branché, la touche **F** remet le plein écran.)* |
+| **Le bouton « Écran principal » est grisé : « déjà utilisé par un autre appareil »** | **C'est normal et c'est bon signe** : l'écran du boîtier est l'écran principal, et il tient les commandes. Sur les autres appareils, prenez **« Écran secondaire »**. Si l'appareil qui lisait a réellement disparu (éteint, parti), **la place se libère toute seule en une quinzaine de secondes**. |
+| **Un écran de lecture annonce « Un autre appareil a pris la main. »** ou **« Un autre écran principal est déjà en cours. »** | Deux écrans principaux se sont disputé le pilotage. Celui qui affiche ce message **continue de montrer le texte, mais ses pédales ne pilotent plus rien**. **Refermez l'écran principal de trop** (touche **Échap**, deux fois) et n'en gardez **qu'un seul** : sur les autres appareils, le bouton **« Ouvrir en écran secondaire »**. Si c'est au contraire cet écran-ci qui doit mener (l'autre est parti, ou dans une autre pièce), appuyez sur **« Prendre la main quand même »**. |
+| **Un bandeau rouge annonce « Liaison avec le boîtier perdue »** | Le téléphone ne peut plus parler au boîtier. **Le texte affiché reste lisible et les pédales continuent de fonctionner** : vous pouvez terminer la prise. Vérifiez ensuite le courant, puis débranchez le boîtier, attendez 10 secondes et rebranchez (écran allumé en premier). |
+| **Échap affiche « Impossible de revenir à l'accueil »** | C'est une **protection**, pas une panne : la liaison avec le boîtier est perdue, et la page d'accueil ne répondrait pas — vous resteriez devant une page vide, sans flèche retour. **Restez sur le texte**, il est lisible et les pédales marchent. Réessayez quand le bandeau rouge aura disparu. |
+| **Les pédales ne répondent plus** | Dans cet ordre : **1)** débranchez le câble USB du pédalier et rebranchez-le **sur une autre prise USB** du boîtier, attendez 5 secondes ; **2)** appuyez sur la pédale en regardant le repère en haut à droite de l'écran — s'il ne bouge pas, l'appui n'arrive pas au boîtier ; **3)** si une **souris USB** est branchée (ou si votre écran est tactile), cliquez **une fois** sur l'écran noir et réessayez ; **4)** débranchez l'alimentation du boîtier, attendez 10 secondes, rebranchez, attendez une minute ; **5)** branchez un **clavier USB** : Flèche bas = avancer, Flèche haut = reculer (chapitre 12). |
 | **La pédale de droite fait reculer le texte au lieu d'avancer** | Le **pédalier est posé à l'envers**. Tournez-le d'un demi-tour (le câble doit partir vers le boîtier) et refaites l'essai. **Aucun réglage n'est à modifier.** Si l'inversion persiste, notez-le, faites l'inverse pour la journée, et signalez-le à l'installateur après le tournage. |
-| **Le pédalier ne fonctionne plus du tout (câble arraché, pédale cassée)** | Branchez un **clavier USB ordinaire** sur le boîtier : **Flèche bas** remplace la pédale droite, **Flèche haut** la pédale gauche. Voir chapitre 11. |
-| **Le texte défile tout seul et la pédale ne l'arrête pas** | Deux causes. Soit quelqu'un a appuyé sur **« Lecture »** : onglet **Contrôle**, appuyez sur **« Pause »**. Soit le mode est passé sur **« Impulsion »** : onglet **Réglages**, carte **Pédales**, appuyez sur **« Maintien »** (il doit devenir bleu). |
-| **La pédale gauche renvoie brutalement au début au lieu de reculer** | Le mode est passé sur « Impulsion ». Onglet **Réglages**, carte **Pédales** : appuyez sur **« Maintien »** (il doit devenir bleu). |
+| **Le pédalier ne fonctionne plus du tout (câble arraché, pédale cassée)** | Branchez un **clavier USB ordinaire** sur le boîtier : **Flèche bas** remplace la pédale droite, **Flèche haut** la pédale gauche. Voir chapitre 12. |
+| **Le texte défile tout seul, et lever le pied ne l'arrête plus** | Deux causes. Soit quelqu'un a appuyé sur **« Lecture »** : onglet **Contrôle**, appuyez sur **« Pause »**. Soit le mode est passé sur **« Impulsion »** ou **« Dynamique »**, où le défilement continue pied levé : onglet **Réglages**, carte **Pédales**, appuyez sur **« Maintien »** (il doit devenir bleu). Dans tous les cas, **« Début »** (onglet Contrôle) remet tout au repos. |
 | **Le texte s'est figé, ça ne défile plus** | Vous êtes arrivé à la fin du texte : c'est normal, on ne peut pas aller plus loin. Appuyez sur **« Début »** dans l'onglet **Contrôle** (attention, ça remet aussi en pause). |
+| **J'ai importé un document et le grand écran ne change pas** | **C'est normal** : l'import remplit seulement la zone de saisie du téléphone. Le **repère jaune** « Ce texte n'est pas encore à l'écran » vous le rappelle. Appuyez sur **« Envoyer à l'écran »**. |
+| **Le repère jaune « Ce texte n'est pas encore à l'écran » ne disparaît pas** | Appuyez sur **« Envoyer à l'écran »** et attendez le message **« Texte envoyé à l'écran ✓ »**. Pas de message = le téléphone a perdu le réseau du boîtier : reconnectez-le à **Prompteur**, rechargez la page, recommencez. |
 | **Le mot de passe du réseau est refusé, ou la fiche du boîtier est vide** | Recopiez-le **exactement, majuscules et minuscules comprises**. Regardez la copie que vous aviez faite dans les notes de votre téléphone (chapitre 2). S'il n'existe nulle part : **il n'y a pas de solution sur place**, appelez la personne qui a installé le boîtier (numéro sur la fiche). |
 | **Le réseau « Prompteur » n'apparaît pas dans la liste** | Laissez au boîtier **une minute complète** après l'allumage, puis rafraîchissez la liste des réseaux du téléphone. Si rien n'apparaît : débranchez le boîtier, attendez 10 secondes, rebranchez, attendez encore une minute. |
 | **Le téléphone n'ouvre pas la page, ou affiche « Erreur de connexion au boîtier »** | Votre téléphone est reparti sur la 4G. Retournez dans ses réglages sans fil, resélectionnez **Prompteur**, acceptez de rester connecté malgré l'absence d'internet, puis **rechargez la page**. |
-| **J'appuie sur « Envoyer à l'écran » et il ne se passe rien** | Pas de message **« Texte envoyé à l'écran ✓ »** = le texte n'est pas parti. Le téléphone a perdu le réseau du boîtier : reconnectez-le à **Prompteur**, rechargez la page, recommencez. |
-| **La page du téléphone affiche un vieux texte** | La page ne se met pas à jour toute seule. **Rechargez-la** dans le navigateur : c'est le geste de secours universel côté téléphone. |
-| **L'écran affiche « Aucun texte. »** | Trois cas. **Au premier allumage : c'est normal**, le boîtier fonctionne et attend votre texte. **Juste après un import** : le document n'était pas lisible (typiquement un **PDF scanné**) — repartez du `.docx` ou copiez-collez. **Alors que vous aviez un texte** : la zone de texte du téléphone était **vide** au moment de l'envoi. Rechargez votre texte depuis « Mes textes enregistrés », ou recollez-le. |
+| **La page du téléphone semble figée (le texte ou les réglages n'y suivent plus)** | Normalement, **toutes les pages se mettent à jour toutes seules**. Si l'une reste en arrière, c'est qu'elle a perdu le réseau du boîtier : reconnectez le téléphone à **Prompteur**, puis **rechargez la page** — c'est le geste de secours universel côté téléphone. |
+| **L'écran affiche « Aucun texte. »** | Trois cas. **Au premier allumage : c'est normal**, le boîtier fonctionne et attend votre texte. **Juste après un envoi** : la zone de saisie du téléphone était **vide** au moment de l'envoi — rechargez votre texte depuis « Mes textes enregistrés », ou recollez-le. **Après un import qui n'a rien rempli** : le document n'était pas lisible (typiquement un **PDF scanné**) — repartez du `.docx` ou copiez-collez. |
 | **L'écran est illisible (texte de la même couleur que le fond)** | Onglet **Réglages**, carte **Couleurs** : appuyez sur la pastille **blanche** pour le texte et la **noire** pour le fond. |
-| **Le texte est à l'envers, ou la tête en bas** | Onglet **Réglages**, carte **Affichage** : vérifiez **les DEUX interrupteurs**, « Miroir horizontal » et « Miroir vertical », et éteignez celui qui est allumé à tort. *(Si vous lisez dans une vitre sans tain, seul l'horizontal doit être allumé.)* |
+| **Le texte est à l'envers, ou la tête en bas** | Onglet **Réglages**, carte **Affichage** : vérifiez **les DEUX interrupteurs**, « Miroir horizontal » et « Miroir vertical », et éteignez celui qui est allumé à tort. *(Si vous lisez dans une vitre sans tain, seul l'horizontal doit être allumé. Le miroir ne touche que l'écran principal : les écrans secondaires sont toujours à l'endroit.)* |
 | **Le texte démarre trop bas sur l'écran** | C'est voulu : la première ligne est placée sous la ligne rouge, et le texte monte vers elle dès la première pression sur la pédale. |
 | **La clé USB n'est pas détectée, ou mon document n'apparaît pas dans la liste** | Retirez la clé, rebranchez-la **sur le boîtier**, attendez 5 secondes, réappuyez sur **« Clé USB »**. Si votre document n'est toujours pas listé, il est probablement **trop lourd** (plus de 5 Mo) : il est alors ignoré **sans aucun message**. Utilisez un `.docx` léger, posé **à la racine** d'une petite clé ordinaire. |
-| **Un import échoue, ou affiche du charabia** | Le format n'est pas lisible (PDF scanné, document protégé, format Apple, fichier trop lourd). Repartez du document Word d'origine, ou **copiez-collez le texte** dans la télécommande : cette voie marche toujours. |
-| **Le texte importé s'arrête au milieu** | Le fichier dépassait 5 Mo : il a été **coupé sans avertissement**. Vérifiez toujours la dernière ligne sur le grand écran après un import, et repartez d'un `.docx` léger. |
-| **Le deuxième écran pilote le défilement, tout saute** | Il a été ouvert sur la mauvaise adresse. Fermez-la et retapez celle qui se termine par **`/view`** : l'étiquette jaune « SPECTATEUR » doit apparaître. |
-| **Quelqu'un a remis un vieux texte à l'écran** | Un deuxième téléphone avait la page télécommande ouverte, avec un texte périmé. Fermez-la, ne gardez **qu'un seul téléphone** aux commandes, et rechargez le bon texte depuis « Mes textes enregistrés ». |
+| **Un import échoue, ou remplit la zone de saisie de charabia** | Le format n'est pas lisible (PDF scanné, document protégé, format Apple, fichier trop lourd). N'envoyez pas à l'écran : repartez du document Word d'origine, ou **copiez-collez le texte** dans la télécommande — cette voie marche toujours. |
+| **Le texte importé s'arrête au milieu** | Le fichier dépassait 5 Mo : il a été **coupé sans avertissement**. Après un import, descendez jusqu'à **la dernière ligne dans la zone de saisie** avant d'appuyer sur « Envoyer à l'écran », et repartez d'un `.docx` léger. |
+| **L'écran de la régie n'affiche pas l'étiquette jaune « SPECTATEUR »** | Il a été ouvert en écran principal. Refermez cette page et rouvrez-la par le bouton **« Écran secondaire »** de la page d'accueil (chapitre 11). |
 | **Rien de tout cela ne marche** | **Éteignez** : débranchez l'alimentation du boîtier. Attendez **10 secondes**. **Rallumez** : écran d'abord, boîtier ensuite. Attendez **une minute complète** sans rien toucher. Si l'écran reste définitivement noir ou si le réseau « Prompteur » n'apparaît jamais : **passez à votre plan B** (votre texte imprimé en gros caractères, ou ouvert en très grand sur une tablette) pour que le tournage ait lieu quand même, **remplacez la carte mémoire par celle de secours** si l'installateur vous en a préparé une, et **appelez la personne qui a installé le boîtier** (coordonnées sur la fiche au dos). Ne démontez rien. |
 
 ---
 
-## 14. Les bons réflexes avant un tournage
+## 15. Les bons réflexes avant un tournage
 
 Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises surprises.
 
@@ -933,12 +1024,14 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
       téléphone. *Une fois connecté au boîtier, je n'aurai plus Internet pour aller les
       chercher (chapitre 6, voie n° 2).*
 - [ ] Mon texte est **découpé en séquences courtes**, enregistrées avec des titres numérotés
-      (chapitre 8).
+      (chapitre 9).
 - [ ] J'ai gardé **une copie de mes textes ailleurs** (mail, ordinateur, clé USB) : le boîtier
       n'a aucune sauvegarde, et la suppression d'un texte y est immédiate et définitive.
 - [ ] J'ai vérifié que **la fiche au dos du boîtier porte bien un mot de passe lisible**, et je me
       suis **connecté une fois** pour l'essayer.
 - [ ] J'ai **réglé la taille du texte à la distance réelle** où je serai pendant le tournage.
+- [ ] J'ai **répété avec le mode de pédalier que j'utiliserai** (chapitre 8). Si je n'ai pas
+      répété : je reste en **« Maintien »**.
 - [ ] Sur mon iPhone, **« Assistance Wi-Fi » est désactivée** (Réglages → Données cellulaires).
       Sur Android, je sais que je devrai répondre « rester connecté ».
 - [ ] **Mon téléphone sera chargé**, ou j'emporte une batterie de secours.
@@ -968,24 +1061,26 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
       J'ai attendu **une minute complète**, et le texte est apparu tout seul.
 - [ ] Le boîtier est posé **à l'écart du micro** (son ventilateur souffle légèrement).
 - [ ] Le **pédalier est bien orienté** (câble vers le boîtier) et **calé** pour ne pas glisser.
-- [ ] Mon téléphone est connecté au réseau **Prompteur** et la page s'ouvre
-      (trois onglets : Texte, Contrôle, Réglages).
-- [ ] J'ai **envoyé mon texte** et j'ai bien vu le message **« Texte envoyé à l'écran ✓ »**.
+- [ ] Mon téléphone est connecté au réseau **Prompteur** et la page d'accueil s'ouvre
+      (deux gros boutons, puis trois onglets : Texte, Contrôle, Réglages).
+- [ ] Le bouton **« Écran principal »** porte bien la mention **« déjà utilisé par un autre
+      appareil »** : c'est l'écran du boîtier qui mène, et **il n'y en a qu'un**.
+- [ ] J'ai **envoyé mon texte**, j'ai vu le message **« Texte envoyé à l'écran ✓ »**, et le
+      **repère jaune a disparu**.
 - [ ] J'ai **testé les deux pédales** : la droite fait monter le texte (`▶︎`), la gauche le fait
       redescendre (`◀︎`), et tout s'arrête dès que je relâche.
 - [ ] J'ai vérifié que le mode est bien **« Maintien »** (bouton bleu) et que **les deux
       interrupteurs Miroir** sont dans la bonne position pour mon montage.
 - [ ] J'ai réglé **taille, marges et vitesse** maintenant, et je n'y toucherai plus pendant
       les prises. *(La vitesse, je l'ai posée avec la barre « Vitesse de lecture ».)*
-- [ ] Un **seul téléphone** a la page télécommande ouverte.
 - [ ] Je suis **remonté au tout début** (bouton « Début », ou pédale gauche) avant de lancer
       la première prise.
 
 > ⚠️ **Les trois réflexes les plus importants pendant le tournage :**
 > **1.** ne jamais toucher le petit bouton sombre marqué d'une **croix rouge ✕** (il efface un
 > texte définitivement) ;
-> **2.** ne jamais charger ni importer un texte pendant qu'une prise est en cours — ça passe à
-> l'antenne **instantanément** ;
+> **2.** ne jamais appuyer sur **« Charger »** (carte « Mes textes enregistrés ») pendant qu'une
+> prise est en cours — ça passe à l'antenne **instantanément** ;
 > **3.** ne corriger un texte qu'**entre** deux prises : même d'une seule virgule, un texte
 > renvoyé **remet le défilement tout en haut** et met en pause.
 
@@ -1013,13 +1108,12 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
 > **Adresse à taper sur le téléphone :**
 > ### `http://10.42.0.1:5000`
 >
-> *(Écran de régie, facultatif : `http://10.42.0.1:5000/view`)*
->
 > ---
 >
 > **LES 3 GESTES ESSENTIELS**
 >
 > **1.** Allumer **l'écran d'abord**, puis brancher le boîtier. **Attendre 1 minute complète.**
+> Le texte apparaît tout seul sur l'écran du boîtier.
 >
 > **2.** Téléphone → réseau **Prompteur** → rester connecté malgré « pas d'internet »
 > → ouvrir `http://10.42.0.1:5000` → onglet **Texte** → **« Envoyer à l'écran »**
@@ -1030,6 +1124,15 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
 >
 > ---
 >
+> 🖥️ **LA PAGE D'ACCUEIL, DEUX GROS BOUTONS :** **« Écran principal »** = l'écran qu'on lit et
+> qu'on pilote aux pédales ; sur le boîtier il s'ouvre tout seul, et le téléphone indique alors
+> **« déjà utilisé par un autre appareil »** — **c'est normal**.
+> **« Écran secondaire »** = écran de suivi pour la régie, lecture seule, autant qu'on veut.
+>
+> 📤 **RIEN NE PART À L'ÉCRAN TOUT SEUL.** Un import (Fichier, Clé USB) remplit seulement la
+> zone de texte du téléphone. Tant que le **repère jaune** « Ce texte n'est pas encore à
+> l'écran » est affiché, appuyer sur **« Envoyer à l'écran »**.
+>
 > 📥 **AVANT de se connecter au réseau Prompteur : enregistrer son script DANS le téléphone.**
 > Une fois connecté, plus d'Internet — donc plus d'accès aux mails ni au stockage en ligne.
 >
@@ -1037,7 +1140,11 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
 >
 > ⌨️ **Pédales muettes ?** Rebrancher le câble USB du pédalier sur une autre prise. Si une souris
 > est branchée, cliquer une fois sur l'écran noir. Toujours rien : brancher **un clavier USB** —
-> **Flèche bas = avancer, Flèche haut = reculer**, Espace = lecture/pause, R = retour au début.
+> **Flèche bas = avancer, Flèche haut = reculer**, R = retour au début.
+>
+> 🚪 **Sortir de l'écran de lecture :** touche **Échap**, **deux fois** (une pour demander, une
+> pour confirmer). **L'écran du boîtier montre le bureau au lieu du texte ?** Double-cliquer, à
+> la souris, sur l'icône **« Le Prompteur »** de ce bureau.
 >
 > ⛔ **Ne jamais toucher le petit bouton sombre marqué d'une croix rouge ✕**
 > (il efface un texte définitivement).

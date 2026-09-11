@@ -10,9 +10,6 @@
 > - **Durée : comptez 1 heure à 1 h 30**, dont **une longue attente où il n'y a
 >   rien à faire** (la mise à jour de l'appareil peut occuper à elle seule une
 >   demi-heure). Ce n'est pas une heure de travail : c'est une heure de présence.
->   *(Le document technique `PROCEDURE-INSTALLATION.md` annonce 30 à 45 minutes :
->   c'est la durée pour une personne habituée, sans les vérifications détaillées
->   ni la répétition générale décrites ici.)*
 > - **C'est une seule fois.** Une fois terminé, le boîtier se met en route tout
 >   seul : on branche le courant, on attend une minute, c'est prêt.
 > - **Le journaliste n'aura JAMAIS à refaire ce qui suit.** Lui, il branchera
@@ -47,7 +44,7 @@
 | **E** | Les trois réglages dans le menu bleu | ....... |
 | **F** | Les lignes à recopier, une par une | ....... |
 | **G** | Le redémarrage qui révèle tout | ....... |
-| **G bis** | Sortir de l'écran prompteur, et y revenir | ....... |
+| **G bis** | Sortir du prompteur, et y revenir (touche Échap) | ....... |
 | **G ter** | Éteindre le boîtier proprement | ....... |
 | **H** | Connecter le téléphone | ....... |
 | **I** | Le pédalier | ....... |
@@ -125,8 +122,8 @@ dans la précipitation, devant un écran qui attend, est la principale cause
 d'ennuis.
 
 > **✍️ À NOTER SUR PAPIER — recopiez ce tableau et remplissez-le au stylo.**
-> Cette feuille devra ensuite être remise au journaliste et rangée dans la
-> sacoche du matériel.
+> C'est le début de la **feuille de l'installateur**, qui sera complétée à
+> l'étape O et rangée dans la sacoche du matériel.
 
 | # | Ce que c'est | Qui vous la demande ? | Règles à respecter | Votre choix (à écrire) |
 |---|---|---|---|---|
@@ -134,32 +131,30 @@ d'ennuis.
 | 2 | **Mot de passe du boîtier**<br>(redemandé chaque fois que l'on tape une ligne importante) | L'appareil, à l'étape A ou C | 8 caractères minimum, lettres sans accent et chiffres.<br>**Aucun symbole, aucun espace, aucun accent.**<br>Exemple : `boitier2026` | ..................... |
 | 3 | **Mot de passe du WiFi du boîtier**<br>(celui que le téléphone tapera pour se connecter) | **Personne : c'est VOUS qui l'imposez**, dans la ligne F7 | **8 caractères minimum** (une douzaine, c'est parfait), lettres sans accent et chiffres **uniquement**.<br>Aucun espace, aucun symbole.<br>Exemple : `prompteur2026` | ..................... |
 
-> **⚠️ PIÈGE — le mot de passe WiFi que l'on ne voit qu'une seule fois.**
-> Si vous ne choisissez pas vous-même le mot de passe WiFi (information n° 3), le
-> boîtier en invente un au hasard, de 16 caractères incompréhensibles, et il ne
-> l'affiche **qu'une seule fois**, à la toute fin. Une fenêtre fermée trop vite,
-> et le boîtier devient inutilisable depuis le téléphone.
-> **La parade est simple : vous imposerez le vôtre**, comme expliqué à l'étape F.
-> C'est la méthode recommandée dans tout ce document.
-
-> **⚠️ PIÈGE — les symboles interdits dans le mot de passe WiFi.**
-> Un mot de passe WiFi **de moins de 8 caractères** fait échouer l'installation
-> **en plein milieu**. Et comme ce mot de passe sera écrit **entre guillemets, à
-> l'intérieur d'une ligne à taper**, les symboles et les espaces y sèment la
-> pagaille. Restez sur des lettres et des chiffres, comme dans l'exemple. Ce
-> n'est pas moins sûr : douze lettres et chiffres, c'est largement suffisant pour
-> un réseau qui ne va jamais sur Internet.
+> **⚠️ PIÈGE — le mot de passe WiFi.**
+> **Imposez le vôtre** (information n° 3), comme expliqué à l'étape F : c'est la
+> méthode recommandée dans tout ce document. Sinon, le boîtier en invente un au
+> hasard, de 16 caractères incompréhensibles, affiché **une seule fois**, à la
+> toute fin — une fenêtre fermée trop vite, et le boîtier devient inutilisable
+> depuis le téléphone.
+> Il doit faire **au moins 8 caractères**, **lettres sans accent et chiffres
+> uniquement** : trop court, ou contenant un symbole ou un espace, il fait
+> échouer l'installation **en plein milieu**.
 
 Deux informations complémentaires à noter aussi, sur la même feuille :
 
 - Le **nom du réseau WiFi du boîtier** est toujours le même : **`Prompteur`**, avec un P majuscule. Vous n'avez pas à le choisir.
-- Les **trois adresses** à recopier dans le navigateur d'un téléphone ou d'un ordinateur :
+- Les **adresses** du boîtier, à recopier dans le navigateur d'un téléphone ou d'un ordinateur (**seule la première est à taper**) :
 
 | À quoi ça sert | Adresse exacte à taper |
 |---|---|
-| **La télécommande** (sur le téléphone du journaliste) | `http://10.42.0.1:5000` |
+| **La page d'accueil et la télécommande** (sur le téléphone du journaliste) | `http://10.42.0.1:5000` |
 | L'écran principal, celui qui obéit aux pédales | `http://10.42.0.1:5000/display` |
-| Un écran de régie, qui suit sans piloter | `http://10.42.0.1:5000/view` |
+| Un écran secondaire (régie), qui suit sans piloter | `http://10.42.0.1:5000/view` |
+
+> **ℹ️ Une seule de ces adresses est à taper : la première.** Elle ouvre une page
+> d'accueil où **deux gros boutons**, « Écran principal » et « Écran secondaire »,
+> ouvrent les deux autres. Elles ne sont notées ici que pour un dépanneur.
 
 ---
 
@@ -256,12 +251,11 @@ quelques dizaines de secondes, une image apparaît sur l'écran (framboise, text
 qui défile, puis un bureau avec un fond d'écran).
 
 > **⚠️ Écran resté noir ?** Ne débranchez pas en boucle. Dans l'ordre :
-> (1) vérifiez que vous êtes bien sur **le port HDMI le plus proche de
-> l'alimentation** ; (2) éteignez tout, rallumez **l'écran d'abord**, le boîtier
-> ensuite (le boîtier lit les caractéristiques de l'écran au démarrage : un écran
-> allumé après lui peut rester noir) ; (3) si vous en avez la possibilité, testez
-> une fois sur une **télévision ordinaire** — cela vous dira tout de suite si le
-> problème vient du petit écran ou du boîtier.
+> (1) **le port HDMI : voir le point B3 ci-dessus** ; (2) éteignez tout, rallumez
+> **l'écran d'abord**, le boîtier ensuite (le boîtier lit les caractéristiques de
+> l'écran au démarrage : un écran allumé après lui peut rester noir) ; (3) si vous
+> en avez la possibilité, testez une fois sur une **télévision ordinaire** — cela
+> vous dira tout de suite si le problème vient du petit écran ou du boîtier.
 
 ---
 
@@ -337,14 +331,16 @@ C'est là que vous allez taper.
 >
 > **Pour corriger sans tout retaper :** les flèches **gauche** et **droite**
 > déplacent le curseur dans la ligne, la touche **Retour arrière** efface le
-> caractère qui précède. Et si la ligne est vraiment ratée, **Ctrl + C** l'annule
-> proprement : le signe `$` revient, et vous recommencez la ligne.
+> caractère qui précède. Et si la ligne est vraiment ratée, **Ctrl + C dans la
+> fenêtre noire** l'annule proprement : le signe `$` revient, et vous recommencez
+> la ligne.
 
 > **💡 Facultatif — l'astuce de la clé USB, pour ne rien recopier à la main.**
 > Avant de venir, vous pouvez taper les lignes de l'étape F dans un simple
 > fichier texte sur votre ordinateur, et copier ce fichier sur une clé USB.
 > Branchez ensuite la clé sur le boîtier, ouvrez le fichier, **copiez** une ligne
-> (Ctrl + C) et **collez-la dans la fenêtre noire avec `Ctrl + Maj + V`**
+> (**Ctrl + C dans le fichier texte** : là, il copie) et **collez-la dans la
+> fenêtre noire avec `Ctrl + Maj + V`**
 > (attention : `Ctrl + V` tout seul ne fait rien dans cette fenêtre).
 > **Dans tous les cas, la dernière ligne (F7) devra être retapée avec VOTRE mot
 > de passe WiFi** : ne collez jamais l'exemple tel quel.
@@ -357,8 +353,8 @@ Trois réglages doivent être changés pour que le prompteur s'affiche tout seul
 démarrage, et pour que l'écran ne s'endorme jamais. Ils se font dans un menu bleu
 et gris, un peu vieillot.
 
-Cette ligne ouvre le menu de réglages du Raspberry Pi. Tapez-la dans la fenêtre
-noire, puis appuyez sur **Entrée** :
+- [ ] **E0.** Tapez cette ligne, qui ouvre le menu de réglages du Raspberry Pi,
+      puis appuyez sur **Entrée** :
 
 ```
 sudo raspi-config
@@ -369,6 +365,11 @@ sudo raspi-config
 > que vous le tapez, **rien ne bouge à l'écran** : ni étoiles, ni points, ni
 > curseur qui avance. **C'est normal, c'est fait exprès.** Tapez à l'aveugle,
 > puis appuyez sur Entrée.
+
+**✅ Ce que vous devez voir :** un grand écran bleu et gris intitulé
+**« Raspberry Pi Software Configuration Tool »**, avec une liste où figure
+**System Options**. Si cet écran ne vient pas, vérifiez la ligne tapée : rien de
+ce qui suit ne fonctionnera sans lui.
 
 > **🧭 Se déplacer dans ce menu — la souris ne sert à rien ici.**
 > - **Flèches haut/bas** : se déplacer dans la liste.
@@ -435,11 +436,14 @@ retour au menu principal **est** la confirmation.
 **✅ Ce que vous devez voir après E6 :** de nouveau le **grand menu bleu**.
 
 > **❌ Vous ne trouvez ni « Wayland » ni « X11 » dans Advanced Options ?**
-> **Ce n'est pas grave, et ce n'est pas une erreur de votre part** : certaines
-> versions du système ne proposent plus ce choix. **Sautez ce réglage n° 2** et
-> passez au réglage n° 3. Le réglage vraiment indispensable est le n° 1
-> (Desktop Autologin) ; le prompteur sait aussi démarrer sans celui-ci, et vous
-> le vérifierez de toute façon à l'étape G.
+> **Ce n'est pas une erreur de votre part** : certaines versions du système ne
+> proposent plus ce choix. **Sautez ce réglage n° 2** et passez au réglage n° 3.
+> Le prompteur sait démarrer sans lui, et vous le vérifierez de toute façon à
+> l'étape G. **Mais ce n'est pas sans conséquence :** la précaution que le
+> programme d'installation prend contre la mise en veille de l'écran, elle, ne
+> fonctionne qu'en X11. Le réglage n° 3 ci-dessous devient donc votre seule
+> protection, et le **test des 15 minutes** de la checklist finale votre seule
+> preuve.
 > *(Si vous voulez tenter votre chance : sortez du menu par `<Finish>`, faites la
 > ligne F1 puis la ligne F2 de l'étape F — la mise à jour —, redémarrez, puis
 > rouvrez `sudo raspi-config` et regardez à nouveau. Si l'entrée reste absente,
@@ -453,9 +457,11 @@ retour au menu principal **est** la confirmation.
 
 **✅ Ce que vous devez voir :** un petit message confirme que l'extinction
 automatique est désactivée, puis vous revenez au grand menu bleu.
-*(Si vous ne trouvez pas cette ligne, passez : le programme d'installation prend
-aussi cette précaution de son côté. Vous vérifierez le résultat par le test des
-15 minutes, dans la checklist finale.)*
+*(Si vous ne trouvez pas cette ligne, passez — mais alors le **test des 15
+minutes** de la checklist finale n'est plus facultatif : c'est lui seul qui
+prouvera que l'écran ne s'endort pas. Le programme d'installation prend bien la
+même précaution à chaque ouverture de l'écran, mais elle ne fonctionne que si le
+réglage n° 2 — X11 — a été fait.)*
 
 **Sortir du menu**
 
@@ -619,15 +625,24 @@ WIFI_PASS="prompteur2026" ./install/setup.sh
 >   exemple `[sudo] Mot de passe de prompteur :`) → **ça attend** : tapez votre
 >   mot de passe puis Entrée.
 
-Pendant l'installation, des lignes commençant par **`==>`** défilent, dans cet
-ordre : installation des programmes, création du service (le petit programme qui
-démarre tout seul à chaque allumage), configuration du WiFi, pare-feu (le filtre
-qui empêche toute connexion venue d'ailleurs), puis l'affichage plein écran.
-Comptez plusieurs minutes sur la première.
+Pendant l'installation, des lignes commençant par **`==>`** défilent. Les **deux
+premières** rappellent simplement le dossier et le nom d'utilisateur ; puis les
+grandes étapes se suivent dans cet ordre : installation des programmes, création
+du service (le petit programme qui démarre tout seul à chaque allumage),
+configuration du WiFi, pare-feu (le filtre qui empêche toute connexion venue
+d'ailleurs), puis l'affichage plein écran. Comptez plusieurs minutes sur la
+première.
 
 **✅ CE QUE VOUS DEVEZ VOIR — c'est le moment décisif :**
 un **cadre entouré de signes `=`** s'affiche, avec les mots **« Installation
-terminée »**, une adresse, le nom du WiFi **`Prompteur`** et son mot de passe.
+terminée »**, une adresse, le nom du WiFi **`Prompteur`**, son mot de passe, et
+une ligne annonçant l'**icône « Le Prompteur » posée sur le bureau**.
+
+*Si cette ligne annonce au contraire que le **dossier du bureau est introuvable**,
+l'installation n'a pas échoué pour autant : l'entrée **« Le Prompteur »** existe
+aussi dans le **menu des applications** (menu framboise, en haut à gauche du
+bureau). Partout où ce document parle de l'icône du bureau, utilisez cette entrée
+du menu.*
 
 > **✍️ À NOTER SUR PAPIER — MAINTENANT, avant de continuer.**
 > Vérifiez dans ce cadre que le mot de passe WiFi affiché est bien **celui que
@@ -649,21 +664,12 @@ terminée »**, une adresse, le nom du WiFi **`Prompteur`** et son mot de passe.
 > - Dans tous les cas, **relancer la ligne F7 est sans danger** : on peut la
 >   relancer autant de fois qu'on veut, avec le même mot de passe entre guillemets.
 
-> **💡 Le bon moment — et le plus simple — pour apprendre leurs touches aux pédales.**
-> Si vous voulez mettre toutes les chances de votre côté, c'est **maintenant**,
-> avant le redémarrage : le bureau est encore accessible normalement et le
-> logiciel du prompteur tourne déjà.
-> Branchez le pédalier sur le boîtier, ouvrez le navigateur du bureau (icône en
-> forme de globe) à l'adresse `http://localhost:5000`, puis suivez la marche à
-> suivre décrite à l'**étape I, paragraphe I.2**. Une fois fait, revenez ici.
-> *(Ce n'est pas obligatoire : beaucoup de pédaliers fonctionnent sans aucun
-> réglage, et vous le saurez à l'étape I.)*
-
 ---
 
 ## Étape G — Le redémarrage qui révèle tout
 
-Cette dernière ligne redémarre le boîtier.
+- [ ] **G0.** Tapez cette dernière ligne, qui redémarre le boîtier, puis appuyez
+      sur **Entrée** :
 
 ```
 sudo reboot
@@ -681,8 +687,11 @@ prompteur s'affiche **tout seul**. Ne touchez à rien pendant ce temps.
 - Une fine **ligne rouge horizontale** en travers de l'écran, avec un petit
   triangle rouge à chaque bout. **Cette ligne doit traverser l'écran d'un bord à
   l'autre** : c'est un excellent test de cadrage de l'écran.
-- **Pendant 12 secondes**, un cadre gris en haut, avec les adresses.
-- **Pendant 6 secondes**, un bandeau d'aide en bas à gauche.
+- **Pendant 6 secondes**, une **ligne d'aide grise en haut de l'écran**, sur
+  toute la largeur (pédale droite = avancer, gauche = reculer, Espace, +/−, M, F,
+  i, Échap). Elle s'efface toute seule ; la touche **H** la fait réapparaître.
+- **Pendant 12 secondes**, juste en dessous, un **cadre gris centré** avec les
+  adresses.
 - En haut à droite, un petit badge **« ⏸ 70 »** qui, lui, reste affiché en permanence.
 - **Aucune barre de navigateur, aucun onglet, aucune flèche de souris.** C'est
   exactement ce qu'il faut.
@@ -730,26 +739,56 @@ prompteur s'affiche **tout seul**. Ne touchez à rien pendant ce temps.
 
 ---
 
-## Étape G bis — Sortir de l'écran prompteur, et y revenir
+## Étape G bis — Sortir du prompteur, et y revenir
 
 À partir de maintenant, l'écran du boîtier est **occupé en permanence par le
 prompteur** : plus de barre en haut, plus de menu, plus de flèche de souris.
-C'est voulu. Mais plusieurs dépannages demandent de retrouver le bureau. Voici
-les gestes, à faire **avec le clavier branché sur le boîtier** :
+C'est voulu — et on en sort désormais **à la touche Échap**, sans rien redémarrer.
+Faites ces gestes **avec le clavier branché sur le boîtier**.
 
-- [ ] **1.** Essayez d'abord **Ctrl + Alt + T** : la fenêtre noire s'ouvre parfois **par-dessus** le prompteur. C'est le geste le plus doux : le prompteur reste vivant derrière.
-- [ ] **2.** Si cela ne suffit pas, appuyez sur **Alt + F4** : l'affichage plein écran se ferme et **le bureau réapparaît**, avec sa barre en haut et le menu framboise à gauche.
-- [ ] **3.** Pour **faire revenir le prompteur** : ouvrez la fenêtre noire et tapez la ligne ci-dessous, ou coupez et remettez simplement le courant après une extinction propre.
+**Sortir de l'écran de lecture**
 
-```
-sudo reboot
-```
+- [ ] **1.** Appuyez sur **Échap**. **✅ Ce que vous devez voir :** une fenêtre au milieu de l'écran : **« Revenir à la page d'accueil ? »**, et en dessous « Échap pour confirmer · n'importe quelle autre touche pour rester ».
+- [ ] **2.** Appuyez **une seconde fois** sur **Échap**. **✅ Ce que vous devez voir :** la **page d'accueil**, avec ses deux gros boutons **« Écran principal »** et **« Écran secondaire »**. **Le texte reste en place ; en revanche l'écran de lecture repartira du début du texte quand vous le rouvrirez.** *(L'écran annonce « Le texte et la position sont conservés » : la position, elle, ne l'est pas. Ne comptez jamais retrouver votre ligne en pleine prise.)*
 
-> **✅ Rassurez-vous : fermer l'affichage ne casse rien.** Le prompteur revient
-> **à chaque démarrage**, tout seul, avec le dernier texte envoyé. En revanche il
-> ne revient **pas** tout seul dans la minute : tant que vous n'avez pas
-> redémarré, l'écran reste sur le bureau. **Ne faites donc ce geste que si vous
-> êtes prêt à redémarrer** — jamais pendant une prise.
+*(Cette confirmation en deux temps est voulue : une touche unique couperait
+l'écran en pleine prise si quelqu'un effleurait le clavier.)*
+
+**Revenir à l'écran de lecture**
+
+- [ ] Sur la page d'accueil, appuyez sur **« Écran principal »**. **✅ L'écran de lecture revient, plein écran, avec le dernier texte.**
+
+> **⚠️ Échap refuse parfois de partir — et c'est une protection.** Si la liaison
+> avec le boîtier est perdue (bandeau rouge en bas de l'écran), la fenêtre affiche
+> **« Impossible de revenir à l'accueil »** et rappelle que **le texte reste
+> lisible et que les pédales fonctionnent**. Réessayez quand le bandeau rouge a
+> disparu : mieux vaut un texte lisible qu'une page d'erreur sans retour.
+
+**Retrouver le bureau du Raspberry** (pour une mise à jour, un réglage du
+système…)
+
+- [ ] **1.** Depuis l'écran de lecture : **Échap**, puis **Échap**.
+- [ ] **2.** Sur la page d'accueil, cliquez sur la barre **« Écran du boîtier »** pour la déplier. **✅ Une ligne d'état annonce : « Le prompteur est affiché sur l'écran du boîtier ».**
+- [ ] **3.** Appuyez sur **« Fermer sur le boîtier »**, puis validez la question **« Fermer le prompteur sur l'écran du boîtier et revenir à son bureau ? »**. **✅ Le bureau réapparaît, avec sa barre en haut.**
+
+**Faire revenir le prompteur depuis le bureau**
+
+- [ ] **Double-cliquez sur l'icône « Le Prompteur »**, posée sur le bureau par l'installation *(si rien ne se passe, essayez un simple clic)*. **✅ En quelques secondes, l'écran de lecture revient, plein écran, avec le dernier texte.**
+
+*(La même entrée existe dans le **menu des applications**, et le bouton
+« Afficher sur le boîtier » de la barre « Écran du boîtier » fait exactement la
+même chose à distance, depuis le téléphone.)*
+
+> **✅ Le démarrage automatique, lui, n'a pas bougé.** Quoi que vous fassiez ici,
+> **brancher le boîtier suffit toujours** à afficher le prompteur tout seul, en
+> une minute. L'icône ne le remplace pas : elle sert à **relancer** l'affichage
+> après l'avoir fermé, sans redémarrer la machine.
+
+> **📌 Deux gestes dépassés.** **Alt + F4** pour fermer l'affichage et
+> `sudo reboot` pour le faire revenir : ils marchent encore, mais la voie normale
+> est désormais **Échap**, puis l'icône **« Le Prompteur »**.
+> *(**Ctrl + Alt + T**, en revanche, reste le geste normal pour ouvrir la fenêtre
+> noire depuis le bureau : ce document s'en sert encore plusieurs fois.)*
 
 ---
 
@@ -771,24 +810,25 @@ jamais se contenter de débrancher** : une coupure brutale pendant que l'apparei
 
 > **🧪 À vérifier une fois, pendant la répétition générale :** que ce bouton soit
 > bien accessible sur **votre** boîtier plastique, et comment il réagit
-> (extinction directe, ou fenêtre de confirmation). **Notez-le sur la fiche** du
-> journaliste : c'est un geste qu'il fera tous les jours.
+> (extinction directe, ou fenêtre de confirmation). **Notez-le sur la feuille de
+> l'installateur** (étape O) : c'est un geste qu'il fera tous les jours.
 
-**Si le bouton n'est pas accessible sur votre boîtier**, il reste deux solutions,
-avec le clavier branché :
+**Si le bouton n'est pas accessible sur votre boîtier**, la méthode de
+remplacement est celle-ci, avec le clavier et la souris de la sacoche :
 
-- Faites **Alt + F4** pour revenir au bureau (voir l'étape G bis), puis **menu framboise en haut à gauche → Shutdown**.
-- Ou, dans la fenêtre noire (**Ctrl + Alt + T**), tapez cette ligne, qui éteint proprement :
+- [ ] **1.** Revenez au bureau : **Échap**, **Échap**, puis barre **« Écran du boîtier »** → **« Fermer sur le boîtier »** (voir l'étape G bis).
+- [ ] **2.** **Menu framboise, en haut à gauche → Shutdown**, et confirmez.
+- [ ] **3.** Attendez que **l'écran soit éteint**, comptez 20 secondes, puis débranchez.
 
-```
-sudo poweroff
-```
+*(Sans souris, la même chose s'obtient dans la fenêtre noire — **Ctrl + Alt + T**
+— avec la ligne `sudo poweroff`.)*
 
-> **📌 Cohérence avec le mode d'emploi du journaliste.** Le document
-> `MODE-EMPLOI.md`, remis au journaliste, décrit l'extinction. **Vérifiez le
-> comportement réel de votre boîtier, choisissez UNE méthode, et corrigez à la
-> main le mode d'emploi imprimé** pour qu'il dise exactement la même chose que la
-> fiche de la sacoche. Deux consignes différentes valent moins que zéro.
+> **📌 C'est la seule méthode, et elle doit être la même partout.** Le mode
+> d'emploi du journaliste (`MODE-EMPLOI.md`) et la fiche collée sur le boîtier
+> doivent dire exactement cela : **bouton physique d'abord**, retour au bureau
+> puis **Shutdown** si le bouton n'est pas accessible. **Débrancher sans éteindre
+> n'est jamais une méthode**, même « si ça coince ». Deux consignes différentes
+> valent moins que zéro.
 
 ---
 
@@ -839,10 +879,18 @@ http://10.42.0.1:5000
 > d'Internet. **Tapez l'adresse en entier**, `http://` compris.
 
 **✅ Ce que vous devez voir :** une page avec le mot **Prompteur** en haut, la
-phrase « Télécommande — connecté au boîtier, sans internet », et **trois onglets :
-Texte, Contrôle, Réglages**. La grande zone de texte **n'est pas vide** : elle
-contient déjà le texte de bienvenue, ce qui prouve que le téléphone a bien parlé
-au boîtier.
+phrase « Télécommande — connecté au boîtier, sans internet », puis **deux gros
+boutons — « Écran principal » et « Écran secondaire » —** et enfin **trois
+onglets : Texte, Contrôle, Réglages**. La grande zone de texte **n'est pas
+vide** : elle contient déjà le texte de bienvenue, ce qui prouve que le téléphone
+a bien parlé au boîtier.
+
+> **ℹ️ Les deux gros boutons servent à LIRE sur l'appareil qui les affiche**, pas
+> à piloter le boîtier. Sur le téléphone du journaliste, on ne s'en sert donc pas.
+> **« Écran principal » y apparaîtra d'ailleurs grisé, avec la mention « déjà
+> utilisé par un autre appareil » : c'est l'écran du boîtier qui l'occupe, et
+> c'est exactement ce qu'il faut.** Un seul écran principal à la fois : deux
+> écrans se disputeraient le pilotage.
 
 > **ℹ️ La pastille verte à côté du mot « Prompteur » est purement décorative.**
 > Elle est verte en permanence, même si le téléphone a perdu le réseau. **Ne vous
@@ -857,8 +905,15 @@ dépend du téléphone :
 - [ ] **Sur iPhone (navigateur Safari) :** appuyez sur le bouton **Partager** (le carré avec une flèche vers le haut, en bas de l'écran) → faites défiler → **« Sur l'écran d'accueil »** → **Ajouter**.
 - [ ] **Sur Android (navigateur Chrome) :** appuyez sur les **trois points** en haut à droite → **« Ajouter à l'écran d'accueil »** (parfois rangé dans « Partager ») → **Ajouter**.
 
-**✅ Ce que vous devez voir :** une **nouvelle icône** apparaît sur l'écran
-d'accueil du téléphone. Un seul appui dessus ouvre la télécommande.
+- [ ] **H5 bis. Appuyez sur la nouvelle icône**, pour vérifier tout de suite ce
+  qu'elle ouvre.
+  **✅ Ce que vous devez voir :** la page avec le mot **Prompteur**, les deux gros
+  boutons et les trois onglets **Texte**, **Contrôle**, **Réglages**.
+  **❌ Si vous voyez un écran noir annonçant « Un autre écran principal est déjà
+  en cours »**, ce raccourci est mauvais : supprimez-le et remplacez-le par un
+  marque-page ordinaire vers `http://10.42.0.1:5000` *(Android : menu ⋮ →
+  Favoris, puis ajoutez le favori à l'écran d'accueil)*, ou apprenez au
+  journaliste à taper l'adresse en entier.
 
 - [ ] **H6.** **Réglez le verrouillage automatique du téléphone sur 5 minutes, ou sur « Jamais », les jours de tournage** (iPhone : Réglages → Luminosité et affichage → Verrouillage automatique ; Android : Paramètres → Affichage → Mise en veille de l'écran). Sinon l'écran s'éteint entre deux prises, et il faut déverrouiller — parfois recharger la page — au pire moment.
 
@@ -881,7 +936,7 @@ une bulle du type **« Texte envoyé à l'écran »**, suivie d'un signe de vali
 > la même adresse `http://10.42.0.1:5000` : on y retrouve les trois onglets et
 > toute la bibliothèque de textes du boîtier — rien n'est stocké dans le
 > téléphone. **Faites l'essai avec un deuxième appareil pendant la répétition
-> générale**, et écrivez-le sur la fiche de la sacoche.
+> générale**, et écrivez-le sur la feuille de l'installateur (étape O).
 
 ---
 
@@ -889,15 +944,17 @@ une bulle du type **« Texte envoyé à l'écran »**, suivie d'un signe de vali
 
 C'est la partie qui inquiète le plus, et c'est souvent la plus simple.
 
-> **ℹ️ Si votre pédalier a trois pédales, celle du milieu ne sert à rien :** le
-> prompteur n'en utilise que deux, la droite (avancer) et la gauche (reculer).
-> Ce n'est ni une panne ni un oubli.
+> **ℹ️ Le prompteur sait utiliser TROIS pédales :** droite (avancer), gauche
+> (reculer) et **centrale**. La centrale ne sert que dans le mode « Dynamique »
+> décrit au paragraphe I.3 ; dans les deux autres modes, elle n'a aucune fonction.
+> **Un pédalier à deux pédales suffit** pour l'usage courant.
 
 ### I.1 — D'abord : essayer sans rien régler
 
 Certains pédaliers envoient déjà, d'origine, exactement les touches attendues par
-le prompteur (flèche du bas et flèche du haut). Dans ce cas, il n'y a **rien à
-faire du tout**. C'est donc par là qu'il faut commencer.
+le prompteur : **Flèche bas** pour la droite, **Flèche haut** pour la gauche, et
+**Flèche droite** pour la centrale. Dans ce cas, il n'y a **rien à faire du
+tout**. C'est donc par là qu'il faut commencer.
 
 - [ ] **I1.** Branchez le pédalier sur un port USB du **boîtier**.
 - [ ] **I2.** Assurez-vous qu'un texte est bien affiché à l'écran.
@@ -915,8 +972,10 @@ I.3. N'allez surtout pas régler ce qui marche déjà.
 ### I.2 — Si les pédales ne font rien : leur apprendre leurs touches
 
 Le prompteur sait « apprendre » quelle touche envoie chaque pédale. Cet
-apprentissage se fait dans l'onglet **Réglages** de la télécommande, tout en bas,
-dans la carte **« Pédales »**.
+apprentissage se fait dans l'onglet **Réglages**, tout en bas, dans la carte
+**« Pédales »**. On y trouve **trois blocs** : **« Touche pédale droite
+(avancer) »**, **« Touche pédale gauche (reculer) »** et **« Touche pédale
+centrale (lecture/pause — mode dynamique) »**.
 
 > **📌 Rien n'est enregistré sans votre accord — vous pouvez explorer sans crainte.**
 > L'apprentissage se fait en **trois temps** : **« Réapprendre »**, puis l'appui
@@ -925,15 +984,16 @@ dans la carte **« Pédales »**.
 > remet tout comme avant. Sous chaque pédale, une ligne d'état vous dit en
 > permanence où vous en êtes.
 >
-> Et le logiciel **refuse tout seul** les deux mauvais choix : la touche **F**
-> (une pédale réglée sur F ne fonctionnerait jamais) et une touche **déjà
-> utilisée par l'autre pédale** (l'une des deux deviendrait muette). Il vous
-> prévient aussi si la touche choisie écrase un raccourci existant.
+> Le logiciel **refuse tout seul** les trois mauvais choix : la touche **F**
+> (réservée au plein écran), la touche **Échap** (elle sert à revenir à la page
+> d'accueil : une pédale réglée dessus fermerait l'écran au premier appui) et une
+> touche **déjà attribuée à une autre pédale**. Il vous prévient aussi si la
+> touche choisie écrase un raccourci existant.
 >
 > **⚠️ Depuis un téléphone, cet apprentissage ne peut pas fonctionner** : la page
 > écoute le clavier de **l'appareil qui l'affiche**, or les pédales sont
 > branchées sur le boîtier. Leurs appuis n'arrivent jamais jusqu'au téléphone.
-> *(La page vous le rappelle elle-même, juste sous les deux pédales.)*
+> *(La page vous le rappelle elle-même, sous les pédales.)*
 
 **La bonne méthode — aucun logiciel à installer, aucun PC Windows requis.**
 
@@ -941,56 +1001,65 @@ dans la carte **« Pédales »**.
 
 - [ ] Branchez le pédalier **sur cet ordinateur portable** (pas sur le boîtier).
 - [ ] Connectez cet ordinateur au WiFi `Prompteur`, exactement comme le téléphone.
-- [ ] Ouvrez `http://10.42.0.1:5000` dans son navigateur. **✅ Vous devez voir la même page à trois onglets que sur le téléphone.**
+- [ ] Ouvrez `http://10.42.0.1:5000` dans son navigateur. **✅ Vous devez voir la même page que sur le téléphone.**
 - [ ] Onglet **Réglages** → carte **Pédales** → sous **« Touche pédale droite (avancer) »**, appuyez sur **« Réapprendre »**. **✅ Le champ affiche « Appuie sur la pédale… » et la ligne d'état dit qu'elle attend.**
 - [ ] **Appuyez une fois sur la pédale de droite.** **✅ Le nom de la touche s'affiche (par exemple `ArrowDown`) et la ligne d'état précise : « Rien n'est encore envoyé au boîtier — appuie sur Enregistrer ».**
 - [ ] Appuyez sur **« Enregistrer »**. **✅ La ligne d'état passe au vert : « ✓ Enregistré sur le boîtier ». C'est la preuve que le boîtier l'a réellement accepté — pas seulement que l'envoi est parti.**
 - [ ] Recommencez les trois gestes pour **« Touche pédale gauche (reculer) »** avec la pédale de gauche.
+- [ ] **Seulement si le mode « Dynamique » doit être utilisé** (voir I.3) : recommencez pour **« Touche pédale centrale »**.
 - [ ] **Rebranchez le pédalier sur le boîtier** : le réglage est mémorisé **par le boîtier**, pas par l'ordinateur. Retestez comme au paragraphe I.1.
 
 **Méthode 2 — sur le boîtier lui-même**
 
-Elle demande de quitter momentanément l'écran du prompteur, ce qui n'est pas
-gênant mais impose un redémarrage ensuite.
+Elle demande de quitter momentanément l'écran de lecture : cela ne coûte plus
+qu'une touche, et aucun redémarrage.
 
-- [ ] Le clavier et la souris étant branchés sur le boîtier, appuyez sur **Alt + F4** pour retrouver le bureau (voir l'étape G bis). **✅ Le bureau réapparaît, avec sa barre en haut.**
-- [ ] Ouvrez le navigateur du bureau (icône en forme de globe) et tapez l'adresse `http://localhost:5000`. **✅ La page à trois onglets s'affiche.**
-- [ ] Faites l'apprentissage comme dans la méthode 1, avec le pédalier branché sur le boîtier.
-- [ ] **Pour faire revenir le prompteur :** ouvrez la fenêtre noire (**Ctrl + Alt + T**) et tapez `sudo reboot`. **✅ Au bout d'une minute, l'écran prompteur revient tout seul avec le dernier texte.**
+- [ ] Le clavier **et la souris** étant branchés sur le boîtier, appuyez **deux fois sur Échap** (voir l'étape G bis). **✅ La page d'accueil s'affiche.** *(Tout le reste se fait à la souris : sans elle, vous ne pourrez pas appuyer sur « Réapprendre » ni sur « Enregistrer ».)*
+- [ ] Sur cette même page, plus bas : onglet **Réglages** → carte **Pédales**.
+- [ ] Faites l'apprentissage comme dans la méthode 1, le pédalier branché sur le boîtier.
+- [ ] **Pour faire revenir le prompteur :** remontez en haut de la page et appuyez sur **« Écran principal »**. **✅ L'écran de lecture revient aussitôt, avec le dernier texte.**
 
-> **✍️ À NOTER SUR PAPIER :** les noms exacts des deux touches apprises. Les
-> valeurs d'origine sont **`ArrowDown`** pour la pédale droite (avancer) et
-> **`ArrowUp`** pour la pédale gauche (reculer).
+> **✍️ À NOTER SUR PAPIER :** les noms exacts des touches apprises. Les valeurs
+> d'origine sont **`ArrowDown`** pour la pédale droite (avancer), **`ArrowUp`**
+> pour la pédale gauche (reculer) et **`ArrowRight`** pour la pédale centrale.
 >
-> **Pour revenir un jour aux réglages d'origine** (ces deux mots ne se tapent pas
-> au clavier : les champs n'acceptent que la touche réellement appuyée) :
-> branchez **un clavier** sur le boîtier, ouvrez la télécommande, onglet
-> **Réglages** → carte **Pédales**. Pour la pédale droite : **« Réapprendre »**,
-> appuyez sur la touche **Flèche bas** du clavier, puis **« Enregistrer »**.
-> Pour la pédale gauche : **« Réapprendre »**, touche **Flèche haut**,
-> **« Enregistrer »**. Les mots `ArrowDown` et `ArrowUp` doivent alors s'afficher
-> en vert : c'est la preuve que tout est remis d'origine.
+> **Pour revenir un jour aux réglages d'origine** (ces mots ne se tapent pas au
+> clavier : les champs n'acceptent que la touche réellement appuyée) : branchez
+> **un clavier** sur le boîtier, ouvrez la page, onglet **Réglages** → carte
+> **Pédales**, et pour chaque pédale : **« Réapprendre »**, appuyez sur la touche
+> **Flèche bas** (droite), **Flèche haut** (gauche) ou **Flèche droite**
+> (centrale), puis **« Enregistrer »**. Sous chaque pédale, la **ligne d'état**
+> doit alors passer au vert : **« ✓ Enregistré sur le boîtier : « ArrowDown » »**
+> (puis `ArrowUp`, puis `ArrowRight`).
 
-> **💡 Les mauvais choix sont maintenant refusés par le logiciel lui-même.**
-> La touche **F** est rejetée d'office (une pédale réglée sur F ne fonctionnerait
-> jamais, car F est réservée au plein écran), et une touche **déjà affectée à
-> l'autre pédale** l'est aussi. Si vous choisissez une touche qui sert déjà à un
-> raccourci (Espace, R, M, H, I, + ou -), l'enregistrement reste possible mais un
-> avertissement vous dit **quel raccourci vous perdez**.
-> En cas de doute, revenez aux flèches du haut et du bas.
+### I.3 — Le mode des pédales : trois choix, et celui qu'il faut garder
 
-### I.3 — Le mode des pédales : laissez « Maintien »
+Dans la même carte **Pédales**, la ligne **« Mode »** propose trois boutons :
+**« Maintien »**, **« Impulsion »** et **« Dynamique »**. Le mode actif est celui
+qui est coloré en bleu, et une phrase juste en dessous rappelle en permanence ce
+qu'il fait.
 
-Dans la même carte **Pédales**, un choix propose **« Maintien »** ou
-**« Impulsion »**. **Laissez « Maintien »**, qui est le réglage d'usine (le bouton
-actif est celui qui est coloré en bleu).
+**Laissez « Maintien »**, qui est le réglage d'usine, sauf demande expresse du
+journaliste.
 
-> **⚠️ PIÈGE — le mode « Impulsion » est dangereux en direct.**
-> En mode Maintien : on garde la pédale enfoncée, le texte avance ; on relâche,
-> il s'arrête. C'est ce que l'on veut.
-> En mode Impulsion, la pédale de gauche **ne fait pas reculer** : elle renvoie
-> d'un coup **au tout début du texte**. En plein tournage, c'est la pire fausse
-> manœuvre possible. N'essayez ce mode qu'à froid, jamais un jour de tournage.
+| Mode | Pédale droite | Pédale gauche | Pédale centrale |
+|---|---|---|---|
+| **Maintien** *(d'usine)* | enfoncée, le texte avance ; relâchée, il s'arrête | enfoncée, le texte recule, plus vite | sans fonction |
+| **Impulsion** | une pression lance le défilement ; **une seconde pression sur la même pédale met en pause** | pareil, dans l'autre sens (elle change aussi le sens en cours de route) | sans fonction |
+| **Dynamique** | tant qu'on appuie, le défilement **accélère** vers l'avant | tant qu'on appuie, il **ralentit**, puis repart en arrière de plus en plus vite | **lecture / pause** |
+
+> **ℹ️ Le mode « Dynamique » conserve la vitesse atteinte** quand on relâche la
+> pédale : on la pose une fois au pied, puis on lit sans rien tenir. C'est le seul
+> mode qui réclame **trois pédales** — sans la centrale, plus moyen de mettre en
+> pause au pied. Il a son propre réglage, qui **n'apparaît qu'une fois le mode
+> « Dynamique » choisi**, juste au-dessus des trois blocs de pédales :
+> **« Montée en vitesse (mode dynamique) »**, **10 s** d'usine, c'est-à-dire le
+> nombre de secondes d'appui continu pour atteindre la vitesse maximale. Plus
+> court = plus nerveux.
+
+> **⚠️ Ne changez de mode qu'à froid, jamais un jour de tournage**, et faites
+> essayer le nouveau mode au journaliste avant de le lui laisser : le geste du
+> pied n'est pas du tout le même.
 
 ### I.4 — Si une pédale lâche en plein tournage
 
@@ -1001,8 +1070,12 @@ pédales.** C'est à dire au journaliste, et à faire essayer une fois.
   défilement **automatique**, le curseur **« Vitesse de lecture »** l'ajuste, et
   **« Pause »** l'arrête. Le bouton **« Début »** revient au tout début (et met en
   pause).
-- ⚠️ Dans ce mode automatique, **la pédale ne coupe plus le défilement** : c'est
-  « Pause » qu'il faut appuyer.
+- ⚠️ **Ce repli ne fonctionne qu'en mode « Maintien »** : en « Impulsion » et en
+  « Dynamique », l'écran n'obéit qu'aux pédales, et « Lecture » n'a aucun effet.
+  Seul **« Début »** marche dans tous les modes. **Une raison de plus de rester
+  sur « Maintien ».**
+- ⚠️ Dans ce défilement automatique, **la pédale ne coupe plus le défilement** :
+  c'est « Pause » qu'il faut appuyer.
 - Avec le clavier branché sur le boîtier : **barre d'espace** = lecture/pause,
   **+** et **-** = vitesse, **R** = retour au début.
 
@@ -1036,54 +1109,57 @@ catastrophe en direct.
 **Le boîtier**
 
 - [ ] J'éteins proprement le boîtier, comme décrit dans la partie **« Éteindre le boîtier proprement »** (appui court sur le petit bouton rond à côté de la prise USB-C), j'attends que l'écran soit éteint, je compte 20 secondes, puis je débranche.
-- [ ] **Je note sur la fiche** ce que fait exactement ce bouton sur ce boîtier-là (extinction directe, ou fenêtre de confirmation à valider par un deuxième appui).
+- [ ] **Je note sur la feuille de l'installateur** ce que fait exactement ce bouton sur ce boîtier-là (extinction directe, ou fenêtre de confirmation à valider par un deuxième appui).
 - [ ] Je rebranche. **Sans toucher à rien**, au bout d'une minute, le prompteur revient tout seul avec **le dernier texte envoyé**.
 - [ ] **Je refais ce test d'extinction/rallumage une deuxième fois.** (Oui, vraiment.)
 - [ ] **Le test des 15 minutes :** je laisse le boîtier allumé **un quart d'heure sans y toucher**, avec un texte affiché. **L'écran doit rester allumé et le texte visible.** S'il devient noir tout seul, voir la partie « Si ça ne marche pas ».
-
-> **⚠️ PIÈGE — ne débranchez jamais brutalement.** Une coupure de courant pendant
-> que l'appareil écrit peut abîmer la carte mémoire et obliger à tout
-> recommencer. Éteignez toujours par la méthode ci-dessus.
+- [ ] **Échap**, puis **Échap** sur le clavier du boîtier → la **page d'accueil** s'affiche. J'appuie sur **« Écran principal »** → l'écran de lecture revient, avec son texte.
+- [ ] Sur cette page d'accueil, je déplie **« Écran du boîtier »** → **« Fermer sur le boîtier »** (je confirme) → le bureau apparaît. Je **double-clique sur l'icône « Le Prompteur »** → le prompteur revient, **sans redémarrer**.
 
 **Le téléphone**
 
-- [ ] Le téléphone retrouve le WiFi `Prompteur` tout seul et **y reste** : je le laisse **dix minutes** sans y toucher, puis je vérifie que la page répond encore (appui sur « Pause » : le badge de l'écran change).
-- [ ] Le raccourci de la télécommande est bien sur l'écran d'accueil du téléphone, et il ouvre la page d'un seul appui.
+- [ ] Le téléphone retrouve le WiFi `Prompteur` tout seul et **y reste** : je le laisse **dix minutes** sans y toucher, puis je vérifie que la page répond encore — onglet **Contrôle**, appui sur **« Plus vite »** : le nombre affiché dans le badge en haut à droite de l'écran augmente de 10. *(Ne testez pas avec « Pause » : après dix minutes d'immobilité l'écran est déjà en pause, et rien ne changerait.)*
+- [ ] Le raccourci de la télécommande est bien sur l'écran d'accueil du téléphone, et il ouvre d'un seul appui **la page aux trois onglets** (Texte, Contrôle, Réglages) — **et non** le texte en grand ni l'écran noir « Un autre écran principal est déjà en cours » (voir le point H5 bis de l'étape H).
 - [ ] J'envoie un vrai texte de tournage → bulle du type **« Texte envoyé à l'écran »** et le texte apparaît en moins d'une seconde.
 - [ ] Le texte apparaît **calé tout en haut** et **à l'arrêt** (badge ⏸).
 - [ ] **Le deuxième appareil** (tablette, autre téléphone, ordinateur) se connecte au réseau `Prompteur` et ouvre la même télécommande : c'est la roue de secours si le téléphone du journaliste lâche.
 
 **Les fichiers — à faire AUJOURD'HUI, tant que le câble Ethernet est encore branché**
 
-- [ ] Onglet Texte → bouton **« Fichier »** → j'importe **le document .docx que j'ai mis sur le téléphone à l'étape J** → bulle du type **« Importé : … »** et le texte apparaît, avec ses titres en plus gros.
-- [ ] Même test avec **le PDF** préparé à l'étape J → le texte apparaît réellement à l'écran.
-  *(Si le PDF ne passe pas alors que le .docx passe, **n'insistez pas** et ne relancez pas l'installation : cela ne changerait rien. Préparez les textes en .docx — c'est de toute façon le format recommandé — et notez-le sur la fiche du journaliste. Si le PDF est vraiment indispensable, un dépanneur pourra taper sur le boîtier, Internet branché : `sudo pip3 install --break-system-packages pypdf` puis `sudo systemctl restart prompteur`.)*
-- [ ] Je branche la clé USB préparée à l'étape J **sur le boîtier** → bouton **« Clé USB »** → le fichier apparaît dans la liste → **« Charger »** → le texte s'affiche.
+- [ ] Onglet Texte → bouton **« Fichier »** → j'importe **le document .docx que j'ai mis sur le téléphone à l'étape J** → bulle du type **« Importé : … — appuyez sur "Envoyer à l'écran" »**. Le texte **remplit la zone de saisie** (les titres du document y apparaissent précédés d'un ou plusieurs signes `#` : c'est normal, ils s'afficheront en plus gros sur le grand écran), et le repère **« Ce texte n'est pas encore à l'écran »** apparaît. **L'écran du boîtier, lui, n'a pas bougé : c'est voulu.**
+- [ ] J'appuie alors sur **« Envoyer à l'écran »** → le texte s'affiche sur le boîtier et le repère disparaît.
+- [ ] Même test avec **le PDF** préparé à l'étape J → son texte arrive bien dans la zone de saisie.
+  *(Si le PDF ne passe pas alors que le .docx passe, **n'insistez pas** et ne relancez pas l'installation : cela ne changerait rien. Préparez les textes en .docx — c'est de toute façon le format recommandé — et notez-le sur la feuille de l'installateur. Si le PDF est vraiment indispensable, un dépanneur trouvera la marche à suivre dans `PROCEDURE-INSTALLATION.md`.)*
+- [ ] Je branche la clé USB préparée à l'étape J **sur le boîtier** → bouton **« Clé USB »** → le fichier apparaît dans la liste → **« Charger »** → le texte remplit la zone de saisie → **« Envoyer à l'écran »** l'affiche.
   *(Ce test-là ne dépend d'aucun réseau : c'est la solution de secours quand le téléphone ne répond plus.)*
+- [ ] J'enregistre ce texte (**« Enregistrer »**), puis je le rappelle avec le bouton **« Charger »** de la liste **« Mes textes enregistrés »** → **celui-là part directement à l'écran**, sans qu'il y ait besoin d'appuyer ensuite sur « Envoyer à l'écran » ; la zone de saisie se met à jour en même temps, et le repère jaune n'apparaît pas.
 
 **Les pédales**
 
+- [ ] Le mode est bien sur **« Maintien »** (bouton bleu).
 - [ ] Pédale droite maintenue → le texte monte, badge **▶︎**. Relâchée → il s'arrête, badge **⏸**.
 - [ ] Pédale gauche maintenue → le texte redescend, plus vite, badge **◀︎**.
-- [ ] Le mode est bien sur **« Maintien »** (bouton bleu).
-- [ ] J'ai essayé une fois la solution de repli sans pédales : bouton **« Lecture »** puis **« Pause »** depuis l'onglet Contrôle.
+- [ ] J'ai essayé une fois la solution de repli sans pédales : bouton **« Lecture »** puis **« Pause »** depuis l'onglet Contrôle *(ces deux boutons n'agissent qu'en mode « Maintien » — voir l'étape I, paragraphe I.4)*.
 
 **Le confort de lecture — à régler MAINTENANT, jamais pendant une prise**
 
+- [ ] **La barre de mise en forme** (sous la zone de saisie de l'onglet Texte) : je sélectionne un mot, j'appuie sur **G** → il s'affiche en gras **dans la zone elle-même** ; j'appuie une seconde fois sur **G** → le gras est retiré. Puis **« Envoyer à l'écran »** → le mot est en gras sur le grand écran. **« Tout effacer »** retire toute la mise en forme.
 - [ ] Dans l'onglet **Réglages**, j'ajuste **taille du texte**, **interligne** et **marges** à la bonne distance de lecture, avec le journaliste si possible.
   *(Ces barres n'agissent qu'au moment où l'on **relâche** le doigt : glissez, lâchez, puis regardez le grand écran.)*
 - [ ] Couleurs : **texte blanc sur fond noir** (la combinaison sûre).
 - [ ] **Miroir horizontal : laissé éteint**, sauf s'il y a réellement une vitre sans tain.
 - [ ] Je note ces réglages sur la feuille, pour pouvoir les remettre si quelqu'un y touche.
 
-**L'écran de régie (seulement si un deuxième écran est prévu)**
+**L'écran secondaire / régie (seulement si un deuxième écran est prévu)**
 
-- [ ] Sur le deuxième appareil, connecté au WiFi `Prompteur`, je tape `http://10.42.0.1:5000/view`
+- [ ] Sur le deuxième appareil, connecté au WiFi `Prompteur`, j'ouvre `http://10.42.0.1:5000` et j'appuie sur le bouton **« Écran secondaire »**.
 - [ ] Un badge **JAUNE « SPECTATEUR — suit l'écran principal »** apparaît en haut à gauche, et cet écran suit le boîtier en direct.
 
-> **⚠️ PIÈGE — l'adresse à ne pas confondre.** Un deuxième écran doit **toujours**
-> utiliser l'adresse qui se termine par **`/view`**. Avec `/display`, les deux
-> écrans se disputeraient le pilotage et le défilement deviendrait incohérent.
+> **ℹ️ Plus de confusion possible entre les deux écrans.** Si l'écran principal est
+> déjà tenu par un autre appareil — le boîtier, en tournage —, son bouton se grise
+> et affiche **« déjà utilisé par un autre appareil »**. On peut quand même
+> **« Prendre la main quand même »**, avec un avertissement, et la place se libère
+> toute seule, **au bout d'une douzaine de secondes**, si l'appareil disparaît.
 
 **Le repérage physique, pour tous les montages à venir**
 
@@ -1126,7 +1202,7 @@ clavier, une souris, un écran, un câble Ethernet et Internet.
 
 - [ ] Une fois la répétition générale validée, préparez **une deuxième carte micro-SD**, soit en refaisant toute la procédure sur cette carte, soit en **copiant la première carte** avec Raspberry Pi Imager (fonction de copie/clonage, sur l'ordinateur, avec les deux cartes ou en deux temps).
 - [ ] **Étiquetez-la** : « Prompteur — carte de secours » **et la date**.
-- [ ] Rangez-la dans la sacoche, **avec la fiche papier**.
+- [ ] Rangez-la dans la sacoche, **avec la feuille de l'installateur**.
 - [ ] Testez-la une fois : éteignez le boîtier, échangez la carte, rallumez, vérifiez que le prompteur revient. Puis remettez la carte d'origine.
 
 > **📌 À dire au journaliste :** en cas de panne totale au démarrage, il suffit
@@ -1138,27 +1214,30 @@ clavier, une souris, un écran, un câble Ethernet et Internet.
 
 ## Étape M — Si ça ne marche pas
 
-> **🔑 Deux gestes reviennent souvent dans ce tableau :** retrouver le bureau du
-> boîtier (**Alt + F4**) et rouvrir la fenêtre noire (**Ctrl + Alt + T**). Les
-> deux sont expliqués en détail dans la partie **« Sortir de l'écran prompteur,
-> et y revenir »**. Ils demandent un **clavier branché sur le boîtier** : c'est la
-> raison pour laquelle le clavier reste dans la sacoche.
+> **🔑 Deux gestes reviennent souvent dans ce tableau :** revenir à la page
+> d'accueil (**Échap**, puis **Échap**) et retrouver le bureau du boîtier
+> (depuis cette page d'accueil : barre **« Écran du boîtier »** →
+> **« Fermer sur le boîtier »**). Les deux sont détaillés dans la partie
+> **« Sortir du prompteur, et y revenir »**. Ils demandent un **clavier branché
+> sur le boîtier** : c'est la raison pour laquelle le clavier reste dans la
+> sacoche.
 
 | Ce que vous constatez | Ce qu'il faut faire |
 |---|---|
-| **L'écran reste noir au démarrage** | Le câble micro-HDMI est sur le mauvais port. Rebranchez-le sur celui **le plus proche de la prise d'alimentation USB-C**. Sinon : éteignez tout, allumez **l'écran d'abord**, le boîtier ensuite. En dernier recours, testez sur une télévision ordinaire. |
+| **L'écran reste noir au démarrage** | Le câble micro-HDMI est sur le mauvais port : **voir le point B3 de l'étape B**. Sinon : éteignez tout, allumez **l'écran d'abord**, le boîtier ensuite. En dernier recours, testez sur une télévision ordinaire. |
 | **L'image est décalée, coupée sur les bords, ou minuscule** | C'est fréquent avec les petits écrans HDMI. Dans l'ordre : (1) si l'écran possède ses propres boutons de réglage, cherchez-y un mode « plein écran » / « auto » / « 16:9 » ; (2) éteignez le boîtier, allumez **l'écran d'abord**, puis le boîtier ; (3) contrôle simple : **la ligne rouge doit traverser l'écran d'un bord à l'autre** — sinon l'image est mal cadrée. Si rien n'y fait, signalez le problème à un dépanneur **avec la marque et le modèle exacts de l'écran**. |
-| **Le boîtier démarre sur le bureau, pas sur le prompteur** | Trois causes possibles : (1) la ligne **F7** a été lancée avec `sudo` — ouvrez la fenêtre noire, tapez `cd prompteur`, relancez la ligne F7 **sans** `sudo` (même mot de passe entre guillemets), puis `sudo reboot` ; (2) dans le menu bleu, « Console » a été choisi au lieu de **Desktop** — refaites le réglage n° 1 de l'étape E ; (3) si votre menu avait **deux lignes séparées**, la ligne **Auto Login** a été oubliée — refaites le réglage n° 1 de l'étape E, cas 2. |
+| **Le boîtier démarre sur le bureau, pas sur le prompteur** | **Dans l'immédiat : double-cliquez sur l'icône « Le Prompteur » du bureau**, l'écran revient. Puis cherchez la cause, sinon cela recommencera au prochain allumage : (1) la ligne **F7** a été lancée avec `sudo` — ouvrez la fenêtre noire, tapez `cd prompteur`, relancez la ligne F7 **sans** `sudo` (même mot de passe entre guillemets), puis `sudo reboot` ; (2) dans le menu bleu, « Console » a été choisi au lieu de **Desktop** — refaites le réglage n° 1 de l'étape E ; (3) si votre menu avait **deux lignes séparées**, la ligne **Auto Login** a été oubliée — refaites le réglage n° 1 de l'étape E, cas 2. |
 | **L'écran affiche une page blanche, ou un message d'erreur en anglais du navigateur** (« This site can't be reached ») | Le boîtier a démarré plus vite que son propre programme : l'affichage s'est ouvert trop tôt et **ne se répare pas tout seul**. Branchez le clavier de la sacoche et appuyez sur **F5** (ou **Ctrl + R**) pour recharger la page. Si le prompteur ne revient pas : éteignez proprement, attendez 10 secondes, rallumez, et laissez **une minute complète** sans rien toucher. |
+| **Échap affiche « Impossible de revenir à l'accueil »** | La liaison avec le boîtier est perdue (bandeau rouge en bas de l'écran). C'est une protection : partir mènerait à une page d'erreur sans flèche retour. **Le texte reste lisible et les pédales fonctionnent.** Attendez que le bandeau rouge disparaisse et réessayez ; s'il reste, éteignez proprement et rallumez. |
 | **L'écran devient noir tout seul au bout de quelques minutes** | C'est la mise en veille. Refaites le **réglage n° 3 de l'étape E** (Display Options → Screen Blanking → NON), puis redémarrez. Vérifiez aussi la mise en veille **propre à l'écran 7 pouces**, s'il en a une dans ses propres boutons. |
 | **Le réseau WiFi `Prompteur` n'apparaît pas sur le téléphone** | Attendez d'abord **une minute complète** après l'allumage. Toujours rien : sur le boîtier, ouvrez la fenêtre noire (**Ctrl + Alt + T**) et tapez la ligne ci-dessous, qui rallume le réseau du boîtier. Attendez 30 secondes et regardez à nouveau la liste des WiFi du téléphone.<br>`sudo nmcli connection up Prompteur`<br>Si le réseau n'apparaît toujours pas, **alors seulement** : rebranchez le câble Ethernet et relancez la **ligne F7** de l'étape F. *(Attention : voir l'adresse s'afficher sur l'écran du boîtier ne prouve PAS que le WiFi fonctionne — la seule preuve valable est de voir le réseau dans la liste du téléphone.)* |
 | **Le téléphone refuse le mot de passe WiFi** | La cause la plus courante est la **majuscule automatique** ajoutée par le clavier du téléphone à la première lettre, ou un **espace** en fin de saisie. Appuyez sur le petit **œil** pour afficher le mot de passe en clair et relisez-le caractère par caractère. En dernier recours : demandez au téléphone d'**« oublier ce réseau »**, puis reconnectez-vous. |
-| **Le mot de passe WiFi est perdu** | Sur le boîtier, revenez au bureau (**Alt + F4**), ouvrez la fenêtre noire (**Ctrl + Alt + T**) et tapez la ligne ci-dessous : le mot de passe s'affiche en clair. Notez-le, puis `sudo reboot` pour retrouver le prompteur.<br>`sudo nmcli -s -g 802-11-wireless-security.psk connection show Prompteur` |
+| **Le mot de passe WiFi est perdu** | Regardez d'abord la **feuille de l'installateur**, dans la sacoche, et la **fiche collée sur le boîtier**, puis la **photo du cadre final** prise à l'étape F7 : il y figure. Si tout cela manque, il se relit sur le boîtier : **Échap**, **Échap**, puis barre **« Écran du boîtier »** → **« Fermer sur le boîtier »** pour retrouver le bureau ; fenêtre noire (**Ctrl + Alt + T**), puis la ligne ci-dessous — **une seule ligne, sans accent, tout en minuscules ; les tirets sont ceux de la touche à droite du 0**. Le mot de passe s'affiche en clair : notez-le, puis double-cliquez sur l'icône **« Le Prompteur »** pour revenir à l'écran.<br>`sudo nmcli -s -g 802-11-wireless-security.psk connection show Prompteur` |
 | **La page de la télécommande ne s'ouvre pas** | Vérifiez que le téléphone est bien sur le WiFi `Prompteur` (et pas en 4G), puis tapez l'adresse **en entier** : `http://10.42.0.1:5000` |
 | **« Erreur de connexion au boîtier » sur le téléphone** | Le téléphone a quitté le réseau du boîtier. Reconnectez-le, refaites les réglages du point **H3** de l'étape H, puis rechargez la page. |
 | **J'appuie sur « Envoyer à l'écran » et il ne se passe rien du tout** | Pas de bulle de confirmation = rien n'est parti. Le téléphone a perdu le WiFi. Reconnectez-le, **rechargez la page**, recommencez. |
 | **Les pédales ne répondent plus** | L'écran du boîtier n'écoute plus le clavier (quelque chose est passé devant). **Si une souris est branchée :** cliquez une fois n'importe où sur l'écran du boîtier, puis réessayez la pédale — le badge en haut à droite doit repasser sur ▶︎. **Sinon — et c'est le cas normal en tournage :** éteignez le boîtier avec son bouton d'alimentation et rallumez-le ; une minute plus tard tout est revenu, avec le dernier texte envoyé. **Prévoyez toujours ces deux minutes de marge avant une prise.** *(Ce geste de la souris explique pourquoi une petite souris filaire doit toujours rester dans la sacoche.)* |
-| **Le texte s'est figé, ça ne défile plus** | Vous êtes probablement arrivé à la fin du texte : l'appareil refuse d'aller plus loin, c'est normal. Appuyez sur le bouton **« Début »** du téléphone (ou la touche **R** du clavier du boîtier) pour revenir en haut. Attention, cela met aussi en pause. |
+| **Le texte s'est figé, ça ne défile plus** | Vous êtes probablement arrivé à la fin du texte : l'appareil refuse d'aller plus loin, c'est normal. Appuyez sur le bouton **« Début »** du téléphone pour revenir en haut — il met aussi le défilement en pause, dans tous les modes. *(La touche **R** du clavier du boîtier fait de même, mais elle ne met en pause qu'en mode « Maintien ».)* |
 | **Le texte démarre trop bas sur l'écran** | C'est voulu : la première ligne est placée sous la ligne rouge de repère, et le texte monte vers elle dès le premier appui sur la pédale. Il n'y a rien à corriger. |
 | **L'écran est illisible (texte noir sur fond noir)** | Quelqu'un a choisi deux couleurs identiques. Onglet **Réglages** → carte **Couleurs** → appuyez sur la pastille **blanche** pour le texte et **noire** pour le fond. C'est réparé immédiatement. |
 | **Le texte est à l'envers** | **Le plus simple :** rappuyez une fois sur la touche **M** du clavier branché au boîtier, le texte se remet à l'endroit. **Si vous n'avez pas de clavier :** sur le téléphone, onglet **Réglages** → **Affichage**, **ALLUMEZ** l'interrupteur « Miroir horizontal » puis **ÉTEIGNEZ-le** (deux appuis) — c'est le deuxième appui qui remet l'écran d'aplomb. *(Un appui sur M à l'insu du téléphone laisse l'interrupteur affiché « éteint » alors que l'écran est en miroir : il n'y a donc rien à éteindre, il faut faire les deux appuis.)* |
@@ -1169,8 +1248,8 @@ clavier, une souris, un écran, un câble Ethernet et Internet.
 | **La clé USB n'est pas détectée** | Branchez la clé **sur le boîtier** (jamais sur le téléphone), **avant** d'appuyer sur le bouton « Clé USB », attendez 5 secondes, réessayez. Utilisez **une clé USB ordinaire, du type de celles que l'on achète en supermarché** — évitez les disques durs externes et les clés chiffrées. Le plus sûr est de placer le document **à la racine de la clé, c'est-à-dire visible dès l'ouverture de la clé**. Sur une clé contenant des milliers de photos, la recherche s'arrête avant d'avoir tout parcouru et le document peut ne jamais apparaître. |
 | **Dans la liste de la clé USB, un fichier commence par `._`** | Ce sont des doublons invisibles créés par les Mac. Choisissez la ligne dont le nom **ne commence pas** par un point. |
 | **Un texte enregistré a disparu** | La petite croix rouge de la liste « Mes textes enregistrés » supprime **immédiatement, sans confirmation et sans corbeille**. Aucune récupération n'est possible : c'est pourquoi il faut toujours garder une copie des textes ailleurs. |
-| **Le défilement part tout seul et ne s'arrête pas quand je relâche la pédale** | Quelqu'un a appuyé sur le bouton **« Lecture »** du téléphone, qui lance un défilement automatique que la pédale n'arrête pas. Appuyez sur **« Pause »** ou **« Début »** sur le téléphone, ou sur la **barre d'espace** du clavier branché au boîtier. |
-| **La télécommande affiche un texte qui n'est plus celui de l'écran** | La page du téléphone ne se met pas à jour toute seule. **Rechargez-la** dans le navigateur : c'est le geste de secours universel côté téléphone. |
+| **Le défilement part tout seul et ne s'arrête pas quand je relâche la pédale** | Deux causes. (1) Le **mode** des pédales n'est plus « Maintien » : en « Impulsion » et en « Dynamique », le défilement continue après le relâchement — c'est normal. Onglet **Réglages** → carte **Pédales** → bouton **« Maintien »**. (2) Quelqu'un a appuyé sur **« Lecture »** du téléphone, qui lance un défilement automatique que la pédale n'arrête pas : appuyez sur **« Pause »** ou **« Début »**, ou sur la **barre d'espace** du clavier branché au boîtier. |
+| **La télécommande affiche un texte qui n'est plus celui de l'écran** | **Normalement, toutes les pages se mettent à jour seules.** Le cas le plus fréquent : la zone de saisie contient un texte tapé ou importé **qui n'a pas encore été diffusé** — le repère jaune **« Ce texte n'est pas encore à l'écran »** le dit. Appuyez sur **« Envoyer à l'écran »**, ou effacez votre saisie. Si le repère n'apparaît pas et que la page reste vraiment en arrière, c'est qu'elle a perdu le réseau du boîtier : reconnectez le téléphone au WiFi `Prompteur`, puis rechargez la page — **mais envoyez ou enregistrez d'abord ce que vous êtes en train d'écrire**, un rechargement perd la saisie en cours. |
 | **Le boîtier redémarre tout seul, ou un petit éclair apparaît en haut de l'écran** | C'est un problème d'**alimentation**. Utilisez **l'alimentation d'origine** du kit (pas un chargeur de téléphone), et **n'alimentez rien d'autre sur les ports USB du boîtier** — surtout pas l'écran, qui doit avoir sa propre alimentation secteur. |
 | **Le boîtier ne démarre plus du tout : la framboise tourne en boucle, ou des messages d'erreur défilent au démarrage** | La carte mémoire est probablement abîmée. **Éteignez, échangez la carte mémoire contre la carte de secours** (voir l'étape L), rallumez, et prévenez la personne qui a installé le boîtier. Sans carte de secours, il n'y a pas de réparation possible sur un plateau. |
 | **Je dois réinstaller ou mettre à jour plus tard** | Voir la partie suivante, **« Mettre à jour ou réinstaller plus tard »** : il y a un piège à connaître avant de commencer. |
@@ -1180,17 +1259,24 @@ clavier, une souris, un écran, un câble Ethernet et Internet.
 ## Étape N — Mettre à jour ou réinstaller plus tard
 
 > **⚠️ LE PIÈGE DE LA MISE À JOUR — à lire avant tout.**
-> Si vous relancez l'installation **sans remettre votre mot de passe WiFi entre
-> guillemets**, le programme en **fabrique un nouveau au hasard** : l'ancien cesse
-> de fonctionner, et le téléphone du journaliste ne se connectera plus — panne
-> incompréhensible, découverte le jour du tournage suivant.
+> Si vous relancez le programme d'installation (`./install/setup.sh`) **sans
+> remettre votre mot de passe WiFi entre guillemets**, il en **fabrique un
+> nouveau au hasard** : l'ancien cesse de fonctionner, et le téléphone du
+> journaliste ne se connectera plus — panne incompréhensible, découverte le jour
+> du tournage suivant.
 > **Reprenez toujours EXACTEMENT le même mot de passe qu'à l'origine** (celui de
-> votre fiche).
+> votre fiche). Cet avertissement vaut partout où cette ligne est relancée.
+
+**Deux cas, et un seul est fréquent.** Une simple mise à jour du logiciel
+(N1 à N5) suffit dans la quasi-totalité des cas ; le programme d'installation ne
+se relance (N6) que si l'installation elle-même a changé — nouveau matériel,
+nouveau réglage système — et la personne qui vous annonce la mise à jour doit
+vous le dire.
 
 La marche à suivre, dans l'ordre :
 
 - [ ] **N1.** Rebranchez le **câble Ethernet** (sans Internet, la mise à jour échoue dès la première ligne) et le **clavier**.
-- [ ] **N2.** Revenez au bureau (**Alt + F4**), puis ouvrez la fenêtre noire (**Ctrl + Alt + T**).
+- [ ] **N2.** Retrouvez le bureau : **Échap**, **Échap**, puis barre **« Écran du boîtier »** → **« Fermer sur le boîtier »** (voir l'étape G bis). Ouvrez ensuite la fenêtre noire (**Ctrl + Alt + T**).
 - [ ] **N3.** Entrez dans le dossier du logiciel :
 
 ```
@@ -1203,13 +1289,23 @@ cd prompteur
 git pull
 ```
 
-- [ ] **N5.** Relancez l'installation **avec le même mot de passe WiFi qu'à l'origine**, sans `sudo` :
+- [ ] **N5.** Relancez le logiciel avec sa nouvelle version :
+
+```
+sudo systemctl restart prompteur
+```
+
+*✅ Rien ne s'affiche : le `$` revient. **Dans la quasi-totalité des cas, la mise
+à jour s'arrête ici** : faites revenir l'écran en double-cliquant sur l'icône
+**« Le Prompteur »** du bureau, puis passez directement à N7.*
+
+- [ ] **N6.** **Seulement si on vous a demandé de relancer l'installation** (nouvelle dépendance, changement dans le démarrage automatique ou dans le WiFi) : tapez cette ligne, **avec le même mot de passe WiFi qu'à l'origine**, sans `sudo` :
 
 ```
 WIFI_PASS="votremotdepasse" ./install/setup.sh
 ```
 
-- [ ] **N6.** Redémarrez :
+Puis, une fois le cadre **« Installation terminée »** affiché, redémarrez :
 
 ```
 sudo reboot
@@ -1220,8 +1316,8 @@ sudo reboot
 > **💡 Vous voulez seulement changer le mot de passe WiFi ?** Inutile de tout
 > réinstaller. Deux lignes suffisent, dans la fenêtre noire :
 > `sudo nmcli connection modify Prompteur wifi-sec.psk "NOUVEAUMOTDEPASSE"` puis
-> `sudo nmcli connection up Prompteur`. Pensez à corriger la fiche papier **et** à
-> reconnecter le téléphone.
+> `sudo nmcli connection up Prompteur`. Pensez à corriger la **fiche collée sur le
+> boîtier** et la **feuille de l'installateur**, **et** à reconnecter le téléphone.
 
 ---
 
@@ -1230,23 +1326,25 @@ sudo reboot
 L'installation est finie. Il reste le plus important : que la personne qui va
 s'en servir soit tranquille.
 
-- [ ] **J'imprime le fichier `MODE-EMPLOI.md`** (le mode d'emploi quotidien du journaliste, dans le même dossier que ce document). Il contient les branchements, l'envoi d'un texte, les réglages, l'extinction, le dépannage, et **une fiche à découper prête à coller sur le boîtier**. Je découpe cette fiche, je la colle sur le boîtier, et je range le reste dans la sacoche.
-- [ ] **Je complète à la main** les cases de cette fiche imprimée avec les informations ci-dessous.
+- [ ] **J'imprime le fichier `MODE-EMPLOI.md`** (le mode d'emploi quotidien du journaliste, dans le même dossier que ce document). Il contient les branchements, l'envoi d'un texte, les réglages, l'extinction, le dépannage, et **une fiche à découper prête à coller sur le boîtier**. Je remplis **ses deux cases** — le **mot de passe du WiFi** et le **numéro de téléphone à appeler** —, je découpe la fiche, je la colle sur le boîtier, et je range le reste dans la sacoche.
+- [ ] **J'écris à la main, sur une feuille à part**, les informations ci-dessous. Cette feuille-là ne se colle pas : elle reste dans la sacoche.
 
-### O.1 — La fiche qui reste dans la sacoche
+### O.1 — La feuille de l'installateur, à ranger dans la sacoche
 
-Elle doit porter, écrit gros :
+Manuscrite, et **distincte de la fiche collée sur le boîtier**, elle doit porter,
+écrit gros :
 
-- **Le nom, le prénom et le numéro de téléphone de la personne qui a installé le boîtier** (vous), et **la date d'installation**. *(Le mode d'emploi du journaliste renvoie à « la personne qui a installé le boîtier, coordonnées sur la fiche » : sans ce numéro, la phrase ne sert à rien.)* **Collez aussi ce numéro directement sur le boîtier.**
+- **Le nom, le prénom et le numéro de téléphone de la personne qui a installé le boîtier** (vous), et **la date d'installation**. *(Ce numéro se recopie aussi dans la case « En cas de problème, appeler » de la fiche collée sur le boîtier : c'est là que le journaliste le cherchera.)*
 - Une case **« dernière mise à jour, le : …… »**, à remplir à chaque intervention.
 - Le **nom du WiFi** : `Prompteur` — et son **mot de passe**.
-- Les **trois adresses** : `http://10.42.0.1:5000` (téléphone), `/display` (écran principal), `/view` (régie).
+- L'**adresse à taper** : `http://10.42.0.1:5000` — c'est la page d'accueil **et** la télécommande. *(Pour un dépanneur : les deux écrans y sont ouverts par un bouton, et répondent aussi aux adresses `…:5000/display` et `…:5000/view`.)*
 - Le **nom d'utilisateur et le mot de passe du boîtier** (informations n° 1 et n° 2) — utiles uniquement à un dépanneur, mais indispensables le jour où.
-- **Comment éteindre** : le geste exact constaté sur ce boîtier (appui court sur le petit bouton rond près de la prise d'alimentation, écran éteint, 20 secondes, puis débrancher).
-- Les **touches des pédales** : `ArrowDown` à droite, `ArrowUp` à gauche (ou celles que vous avez apprises).
+- **Comment éteindre** : le geste exact constaté sur ce boîtier (appui court sur le petit bouton rond près de la prise d'alimentation, écran éteint, 20 secondes, puis débrancher) — et, si ce bouton n'est pas accessible : **Échap**, **Échap** → **« Écran du boîtier »** → **« Fermer sur le boîtier »**, puis **menu framboise → Shutdown**.
+- Les **touches des pédales** : `ArrowDown` à droite, `ArrowUp` à gauche, `ArrowRight` au centre (ou celles que vous avez apprises), et le **mode** en service : « Maintien ».
+- **Sortir du prompteur et y revenir** : **Échap**, **Échap** → page d'accueil ; bouton **« Écran principal »** pour revenir. Et sur le bureau du boîtier, l'icône **« Le Prompteur »** relance l'écran sans redémarrer.
 - Les **réglages de confort** notés pendant la répétition (taille, interligne, marges, vitesse).
 - La **combinaison de couleurs de secours** : texte blanc, fond noir.
-- Le **geste de secours universel côté téléphone** : *« si la page semble figée, notamment après un déverrouillage de l'écran, rechargez-la dans le navigateur »*.
+- **Si une page du téléphone reste en arrière** : *« les pages se mettent à jour toutes seules ; si l'une reste en arrière, c'est qu'elle a perdu le réseau du boîtier — se reconnecter au WiFi Prompteur, puis recharger la page, mais après avoir envoyé ou enregistré le texte en cours d'écriture »*.
 - La **solution de repli** : *« n'importe quel autre téléphone, tablette ou ordinateur connecté au WiFi Prompteur ouvre la même télécommande à la même adresse »*.
 - Les **formats acceptés**, tels que la télécommande les affiche elle-même :
   **« Formats acceptés : Word (.doc, .docx), PDF, LibreOffice (.odt), RTF, texte (.txt) »** — avec cette précision : **le .docx est celui qui passe le mieux ; éviter les PDF, et surtout les PDF scannés.**
@@ -1262,7 +1360,7 @@ Elle doit porter, écrit gros :
 - [ ] La **carte mémoire de secours**, étiquetée et datée.
 - [ ] Le **câble Ethernet** (inutile en tournage, indispensable le jour d'une mise à jour).
 - [ ] Une **rallonge et une multiprise**.
-- [ ] La **fiche papier** et le **mode d'emploi imprimé**.
+- [ ] La **feuille de l'installateur** et le **mode d'emploi imprimé**.
 - [ ] Une **clé USB** contenant les textes du jour.
 
 ### O.3 — Les raccourcis clavier, à imprimer et coller au dos du boîtier
@@ -1271,25 +1369,27 @@ Elle doit porter, écrit gros :
 |---|---|
 | **Flèche bas** (maintenue) | Le texte avance — exactement comme la pédale droite |
 | **Flèche haut** (maintenue) | Le texte recule, plus vite — comme la pédale gauche |
-| **Espace** | Lecture / pause du défilement automatique |
+| **Échap**, puis **Échap** | Revenir à la page d'accueil (la première pression pose la question, la seconde confirme ; toute autre touche annule) |
+| **Espace** | Lecture / pause du défilement automatique — **en mode « Maintien » seulement** |
 | **+** (ou `=`) | Plus vite (par pas de 10) — **réglage provisoire** |
 | **-** (ou `_`) | Moins vite — **réglage provisoire** |
-| **R** | Revenir au début (et met en pause) |
+| **R** | Revenir au début et mettre en pause — **en mode « Maintien »** ; dans les deux autres modes, utiliser le bouton **« Début »** du téléphone, qui marche toujours |
 | **F5** (ou `Ctrl + R`) | Recharger l'écran, s'il affiche une page blanche ou une erreur |
 | **i** | Affiche ou masque les adresses |
 | **H** | Affiche ou masque le bandeau d'aide |
 | **M** | Miroir — **à ne pas toucher par erreur** (rappuyer dessus le remet à l'endroit) |
-| **F** | Plein écran — **inutile sur le boîtier, à éviter** |
+| **F** | Plein écran — inutile sur le boîtier, qui y est déjà |
 
 > **ℹ️ « Réglage provisoire » veut dire :** les touches **+**, **-** et **M** du
 > clavier ne changent l'affichage **que sur le moment**. Le téléphone n'en sait
 > rien, et tout revient en arrière dès le prochain réglage envoyé depuis le
 > téléphone, ou au redémarrage. **Pour une vitesse et un miroir qui restent,
-> réglez-les depuis le téléphone.**
+> réglez-les depuis le téléphone.** Le miroir, lui, ne concerne que **l'écran
+> principal** : les écrans secondaires restent toujours à l'endroit.
 
-> **Les autres touches n'ont pas d'effet sur le prompteur.** Évitez seulement
-> **Alt + F4** et **Ctrl + W**, qui ferment l'affichage : il faudrait alors
-> redémarrer le boîtier pour le faire revenir.
+> **Les autres touches n'ont pas d'effet.** Si l'affichage se ferme par erreur
+> (**Alt + F4**, **Ctrl + W**), l'icône **« Le Prompteur »** du bureau le fait
+> revenir.
 
 ### O.4 — Les six règles à énoncer à voix haute, en montrant
 
@@ -1299,8 +1399,8 @@ six règles, qui résument tout ce qui peut mal tourner :
 1. **« Envoyer à l'écran » = ça passe à l'antenne. « Enregistrer » = ça range dans la bibliothèque.** Ce sont deux gestes différents : envoyer n'enregistre pas, enregistrer n'affiche rien.
 2. **Pas de bulle de confirmation = ce n'est pas parti.** C'est la seule preuve qu'un texte a bien été envoyé.
 3. **Ne jamais toucher la petite croix rouge** de la liste des textes enregistrés : elle efface définitivement, sans rien demander. Pour rappeler un texte, c'est le bouton **bleu « Charger »**.
-4. **Ne rien charger, ni importer, ni corriger pendant une prise** : tout cela remplace instantanément le texte à l'écran et remet le défilement tout en haut.
-5. **Les deux blocs « Pédales » du bas de l'onglet Réglages ne se touchent qu'en cas de besoin.** On ne risque rien à les regarder : rien n'est envoyé au boîtier tant qu'on n'a pas appuyé sur « Enregistrer », et « Annuler » remet tout comme avant. Mais depuis un téléphone, cet apprentissage ne peut de toute façon pas fonctionner : il faut un appareil doté d'un vrai clavier, ou le pédalier branché dessus.
+4. **Pendant une prise, on ne touche à rien qui diffuse.** Écrire, corriger ou importer un document **ne change plus l'écran** : le texte attend dans la zone de saisie, avec le repère « Ce texte n'est pas encore à l'écran ». En revanche, **« Envoyer à l'écran »** et le bouton **« Charger »** de la liste « Mes textes enregistrés » remplacent instantanément le texte diffusé et remettent le défilement tout en haut. Et la barre **« Écran du boîtier »** de la page d'accueil — accessible depuis le téléphone aussi bien que depuis le boîtier — **ferme l'écran de lecture** : elle ne sert qu'au dépannage.
+5. **Les blocs « Pédales » du bas de l'onglet Réglages ne se touchent qu'en cas de besoin** : rien n'est envoyé au boîtier tant qu'on n'a pas appuyé sur « Enregistrer ». **Le mode reste sur « Maintien ».**
 6. **Récupérez toujours vos textes AVANT de rejoindre le réseau `Prompteur`.** Tant que le téléphone est sur ce réseau, **il n'a plus Internet** : ni mail, ni messagerie, ni document en ligne.
    *La manœuvre, quand un texte arrive à la dernière minute :* quitter le réseau `Prompteur` (repasser en 4G) → ouvrir le mail → **copier** le texte → revenir sur le réseau `Prompteur` → ouvrir la télécommande → **coller** dans la zone de texte → **« Envoyer à l'écran »**.
 
@@ -1313,6 +1413,7 @@ exécuter, de ses mains :
 - [ ] Coller un texte et l'envoyer à l'écran.
 - [ ] Faire défiler à la pédale, s'arrêter, revenir au début.
 - [ ] Importer un de ses documents Word depuis le téléphone, **et** charger un document depuis la clé USB branchée sur le boîtier.
+- [ ] **Sortir du prompteur et y revenir** : **Échap**, **Échap** → page d'accueil, puis **« Écran principal »**.
 - [ ] **Éteindre proprement** le boîtier (le geste du petit bouton), et le rallumer, en constatant que son texte revient tout seul.
 
 ### O.6 — Où poser le matériel sur un plateau
@@ -1337,12 +1438,12 @@ exécuter, de ses mains :
 - Vérifier **avant** le tournage qu'aucun document n'est protégé par mot de passe.
 - Préparer une **petite clé USB dédiée**, avec les textes du jour **à la racine, c'est-à-dire visibles dès l'ouverture de la clé**, comme roue de secours : la clé, elle, ne demande **aucun réseau**.
 - **Garder une copie des textes ailleurs** (mail, ordinateur) : **la bibliothèque du boîtier n'est pas une sauvegarde**, et la suppression d'un texte y est immédiate et définitive.
-- **De temps en temps**, faire recopier par un dépanneur le dossier `scripts` du boîtier (tous les textes enregistrés) et le fichier `state.json` (les réglages) sur une clé USB — ou refaire une carte de secours à jour.
+- **De temps en temps**, faire sauvegarder les textes et les réglages du boîtier par un dépanneur : la marche à suivre est dans `SAUVEGARDE-ET-RESTAURATION.md`. Ou, plus simplement, refaire une carte de secours à jour.
 - **Tester les pédales avant chaque tournage**, et non au moment de tourner.
 
 ---
 
-> **📘 Les trois documents du projet, et à qui chacun s'adresse.**
+> **📘 Les documents du projet, et à qui chacun s'adresse.**
 > - **`MISE-EN-ROUTE.md`** (ce document) : pour **vous**, la personne qui installe
 >   le boîtier. Une seule fois.
 > - **`MODE-EMPLOI.md`** : pour **le journaliste**, tous les jours. À imprimer et
@@ -1351,6 +1452,9 @@ exécuter, de ses mains :
 >   `Procedure-Installation-Prompteur.pdf`) : pour **un dépanneur informatique** —
 >   commandes exactes, détail de ce que fait le programme d'installation,
 >   dépannage avancé.
+> - **`SAUVEGARDE-ET-RESTAURATION.md`** : également pour **un dépanneur** —
+>   comment recopier les textes enregistrés et les réglages du boîtier, et
+>   comment les remettre en place.
 >
 > Le fichier **`README.md`** présente quant à lui le projet dans son ensemble
 > ainsi que la liste du matériel.
