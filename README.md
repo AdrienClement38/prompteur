@@ -112,6 +112,15 @@ vérifier qu'il fonctionne. **Python 3** doit y être installé.
 > intervention sur un boîtier déjà en service :
 > **[SAUVEGARDE-ET-RESTAURATION.md](SAUVEGARDE-ET-RESTAURATION.md)**.
 
+> 🔄 **Boîtier déjà en service ?** **[MISE-A-JOUR.md](MISE-A-JOUR.md)**
+> ([PDF](Mise-A-Jour-Prompteur.pdf)) — la procédure pour y installer tout ce qui a
+> été ajouté depuis : trois lignes à recopier, ce qui change pour le journaliste,
+> et une liste de vérification. Écrite pour quelqu'un qui n'est pas informaticien.
+
+> 🖥️ **Le petit écran tactile du boîtier** : **[ECRAN-TACTILE.md](ECRAN-TACTILE.md)**
+> ([PDF](Ecran-Tactile-Prompteur.pdf)) — les deux montages possibles, et comment
+> savoir lequel s'applique.
+
 1. **Préparez la carte SD** avec *Raspberry Pi Imager* → « Raspberry Pi OS
    (64-bit) », la version **avec bureau**. Notez le nom d'utilisateur et le mot de
    passe choisis.
