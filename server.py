@@ -883,6 +883,37 @@ def security_headers(resp):
     return resp
 
 
+@app.route("/manifest.webmanifest")
+def api_manifest():
+    """Manifeste d'application web.
+
+    C'est le SEUL moyen, sur un appareil quelconque, d'obtenir un écran de lecture
+    sans barre d'adresse ni onglets : une fois la page « installée »
+    (« Installer l'application » sur ordinateur, « Ajouter à l'écran d'accueil »
+    sur téléphone ou tablette), le navigateur l'ouvre en plein écran, sans le
+    moindre mobilier. Sur le boîtier la question ne se pose pas : le kiosque
+    Chromium tourne déjà ainsi.
+
+    display=fullscreen : pas de barre, pas de bouton retour. On en sort par Échap,
+    comme annoncé dans le bandeau d'aide de l'écran.
+    """
+    return jsonify(
+        {
+            "name": "Le Prompteur",
+            "short_name": "Prompteur",
+            "description": "Téléprompteur à pédales du boîtier, hors-ligne.",
+            "start_url": "/display",
+            "scope": "/",
+            "display": "fullscreen",
+            "display_override": ["fullscreen", "standalone"],
+            "orientation": "landscape",
+            "background_color": "#000000",
+            "theme_color": "#000000",
+            "lang": "fr",
+        }
+    )
+
+
 @app.route("/favicon.ico")
 def favicon():
     return ("", 204)
