@@ -615,6 +615,19 @@ def api_library_delete():
     return jsonify({"ok": True})
 
 
+def _wants_apply(value):
+    """Faut-il envoyer le texte importé directement à l'écran ?
+
+    Par défaut OUI, et ce défaut est capital : un téléphone resté sur l'ancienne
+    page pendant une mise à jour continuerait de fonctionner comme avant, au lieu
+    de sembler ne plus rien faire. Les clients à jour demandent explicitement
+    apply=false et remplissent leur zone de texte.
+    """
+    if value is None:
+        return True
+    return str(value).strip().lower() not in ("0", "false", "non", "no")
+
+
 # --------------------------------------------------------------------------
 # API — import clé USB
 # --------------------------------------------------------------------------
@@ -635,12 +648,15 @@ def api_usb_load():
     except (OSError, ValueError) as e:
         return jsonify({"ok": False, "error": str(e)}), 400
     title = Path(path).stem
+    if not _wants_apply(data.get("apply")):
+        # Le client remplira lui-même sa zone de texte : rien ne part à l'écran.
+        return jsonify({"ok": True, "title": title, "text": text, "applied": False})
     with _lock:
         STATE["text"] = text
         STATE["title"] = title
         bump(STATE)
         _save_state_unlocked(STATE)
-    return jsonify({"ok": True, "title": title})
+    return jsonify({"ok": True, "title": title, "applied": True})
 
 
 # --------------------------------------------------------------------------
@@ -657,12 +673,15 @@ def api_upload():
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
     title = Path(file.filename).stem or "Import"
+    if not _wants_apply(request.form.get("apply")):
+        # Le client remplira lui-meme sa zone de texte : rien ne part a l'ecran.
+        return jsonify({"ok": True, "title": title, "text": text, "applied": False})
     with _lock:
         STATE["text"] = text
         STATE["title"] = title
         bump(STATE)
         _save_state_unlocked(STATE)
-    return jsonify({"ok": True, "title": title})
+    return jsonify({"ok": True, "title": title, "applied": True})
 
 
 # --------------------------------------------------------------------------

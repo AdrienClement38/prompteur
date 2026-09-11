@@ -118,6 +118,14 @@
       color:var(--muted); opacity:.7;}
     .readbtn.follow{background:var(--card); color:var(--fg);}
     .readbtn:active{transform:translateY(1px);}
+    /* Repere « pas encore a l'ecran ». Indispensable des lors qu'un import ne
+       part plus tout seul : sans lui, on croit que l'appareil ne repond plus. */
+    .unsent{
+      margin-top:10px; padding:9px 12px; border-radius:10px;
+      background:rgba(229,181,58,.12); border:1px solid rgba(229,181,58,.45);
+      color:#e5b53a; font-size:13px; line-height:1.35;
+    }
+    .unsent b{color:#f2cf72;}
     .hide{display:none;}
   </style>
 </head>
@@ -176,6 +184,9 @@
       <input type="text" id="title" placeholder="Ex : Intro épisode 12">
       <label>Texte du prompteur</label>
       <textarea id="text" placeholder="Colle ici ton texte…"></textarea>
+      <div class="unsent hide" id="unsent">
+        Ce texte n'est <b>pas encore à l'écran</b> — appuyez sur « Envoyer à l'écran ».
+      </div>
       <div class="row" style="margin-top:12px;">
         <button class="go" id="send">Envoyer à l'écran</button>
         <button class="ghost" id="saveLib">Enregistrer</button>

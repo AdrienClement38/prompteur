@@ -44,6 +44,8 @@
   let knownVersion = null;
   let knownLibSeq = null;
   let textDirty = false;
+  // Texte reellement a l'ecran, pour savoir si la zone de saisie en differe.
+  let sentText = null;
 
   // --- Onglets --------------------------------------------------------------
   document.querySelectorAll(".tabbtns button").forEach((btn) => {
@@ -67,9 +69,21 @@
     knownVersion = s.version;
     $("title").value = s.title || "";
     $("text").value = s.text || "";
+    sentText = s.text || "";
     textDirty = false;
     reflectSettings();
     refreshLibrary();
+    refreshUnsent();
+  }
+
+  // --- Repère « pas encore à l'écran » --------------------------------------
+  // Depuis que l'import ne part plus seul à l'écran, il FAUT dire quand la zone
+  // de saisie diffère de ce qui est diffusé. Sans ce repère, on importe, on ne
+  // voit rien changer, et on croit que le boîtier ne répond plus — une bizarrerie
+  // signalée serait devenue une panne perçue, en plein tournage.
+  function refreshUnsent() {
+    const differe = sentText !== null && $("text").value !== sentText;
+    $("unsent").classList.toggle("hide", !differe);
   }
 
   // --- Synchronisation entre appareils --------------------------------------
@@ -104,15 +118,19 @@
     }
     settings = st.settings || {};
     reflectSettings();
+    sentText = st.text || "";
     if (textDirty) {
       // Quelqu'un a envoyé un autre texte pendant qu'on écrivait : on prévient,
       // mais on n'écrase pas la saisie en cours.
+      refreshUnsent();
       toast("Le texte a changé sur le boîtier");
       return;
     }
     $("title").value = st.title || "";
     $("text").value = st.text || "";
+    sentText = st.text || "";
     refreshLibrary();
+    refreshUnsent();
   }
 
   function reflectSettings() {
@@ -142,11 +160,15 @@
   }
 
   ["text", "title"].forEach((id) =>
-    $(id).addEventListener("input", () => { textDirty = true; }));
+    $(id).addEventListener("input", () => { textDirty = true; refreshUnsent(); }));
 
   // --- Envoi du texte -------------------------------------------------------
   $("send").addEventListener("click", async () => {
-    await postJSON("/api/text", { text: $("text").value, title: $("title").value });
+    const envoye = $("text").value;
+    await postJSON("/api/text", { text: envoye, title: $("title").value });
+    sentText = envoye;
+    textDirty = false;
+    refreshUnsent();
     toast("Texte envoyé à l'écran ✓");
   });
 
@@ -196,6 +218,15 @@
     });
   }
 
+  // Remplit la zone de saisie avec un texte importé, sans rien diffuser.
+  function fillFromImport(res) {
+    $("text").value = res.text || "";
+    $("title").value = res.title || "";
+    textDirty = true;
+    refreshUnsent();
+    toast("Importé : " + res.title + " — appuyez sur « Envoyer à l'écran »");
+  }
+
   // --- Import fichier -------------------------------------------------------
   $("pickFile").addEventListener("click", () => $("file").click());
   $("file").addEventListener("change", async (e) => {
@@ -203,6 +234,9 @@
     if (!f) return;
     const fd = new FormData();
     fd.append("file", f);
+    // On recupere le texte SANS l'envoyer a l'ecran : c'etait le comportement
+    // surprenant signale par l'utilisateur. L'envoi reste un geste explicite.
+    fd.append("apply", "false");
     try {
       // En-tête maison exigé par le serveur : une page tierce ne peut pas le poser
       // sans pré-vol CORS, ce qui protège cette route (multipart, donc sans la
@@ -214,8 +248,7 @@
       });
       const res = await r.json().catch(() => ({}));
       if (!r.ok || !res.ok) { toast(res.error || "Import impossible"); return; }
-      await loadState();
-      toast("Importé : " + res.title);
+      fillFromImport(res);
     } catch {
       toast("Import impossible");
     } finally {
@@ -237,9 +270,8 @@
       const load = mkBtn("Charger", "primary");
       load.onclick = async () => {
         try {
-          const res = await postJSON("/api/usb/load", { path: f.path });
-          await loadState();
-          toast("Chargé : " + res.title);
+          const res = await postJSON("/api/usb/load", { path: f.path, apply: false });
+          fillFromImport(res);
         } catch (err) {
           toast(errText(err) || "Lecture impossible");
         }

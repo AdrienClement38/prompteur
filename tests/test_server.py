@@ -621,3 +621,76 @@ def test_state_json_avec_une_ancienne_police_se_repare(client, tmp_path):
     (tmp_path / "state.json").write_text(json.dumps({"settings": {"font": "serif"}}), encoding="utf-8")
     server.STATE_FILE = tmp_path / "state.json"
     assert server.load_state()["settings"]["font"] == "sans-serif"
+
+
+# ============================================================================
+# Import : le texte ne part plus tout seul à l'écran
+# ----------------------------------------------------------------------------
+# « Lorsqu'un texte est importé, il est envoyé à l'écran sans avoir cliqué sur
+# Envoyer à l'écran, c'est étrange. » L'import remplit désormais la zone de
+# saisie ; l'envoi reste un geste explicite.
+#
+# Le défaut du serveur reste pourtant l'ANCIEN comportement : un téléphone resté
+# sur une page ouverte avant la mise à jour continue de fonctionner comme avant,
+# au lieu de sembler ne plus rien faire.
+# ============================================================================
+
+
+def test_import_fichier_sans_apply_envoie_a_l_ecran(client):
+    """Compatibilité : un client qui ne dit rien obtient l'ancien comportement."""
+    client.post("/api/text", json={"text": "a l'antenne"})
+    r = _upload(client, "Nouveau script".encode("utf-8"), "sujet.txt")
+    assert r.get_json()["applied"] is True
+    assert client.get("/api/state").get_json()["text"] == "Nouveau script"
+
+
+def test_import_fichier_avec_apply_false_ne_touche_pas_l_ecran(client):
+    client.post("/api/text", json={"text": "a l'antenne"})
+    r = client.post(
+        "/api/upload",
+        data={"file": (io.BytesIO("Nouveau script".encode("utf-8")), "sujet.txt"), "apply": "false"},
+        content_type="multipart/form-data",
+        headers={server.CLIENT_HEADER: "1"},
+    )
+    corps = r.get_json()
+    assert corps["applied"] is False
+    assert corps["text"] == "Nouveau script"  # le client remplira sa zone lui-même
+    assert corps["title"] == "sujet"
+    assert client.get("/api/state").get_json()["text"] == "a l'antenne"
+
+
+def test_import_usb_avec_apply_false_ne_touche_pas_l_ecran(client, tmp_path, monkeypatch):
+    cle = tmp_path / "cle"
+    cle.mkdir()
+    fichier = cle / "sujet.txt"
+    fichier.write_text("Texte de la cle", encoding="utf-8")
+    monkeypatch.setattr(server, "_usb_bases", lambda: [cle])
+    client.post("/api/text", json={"text": "a l'antenne"})
+
+    corps = client.post("/api/usb/load", json={"path": str(fichier), "apply": False}).get_json()
+    assert corps["applied"] is False
+    assert corps["text"] == "Texte de la cle"
+    assert client.get("/api/state").get_json()["text"] == "a l'antenne"
+
+
+def test_import_usb_sans_apply_envoie_a_l_ecran(client, tmp_path, monkeypatch):
+    cle = tmp_path / "cle"
+    cle.mkdir()
+    fichier = cle / "sujet.txt"
+    fichier.write_text("Texte de la cle", encoding="utf-8")
+    monkeypatch.setattr(server, "_usb_bases", lambda: [cle])
+
+    assert client.post("/api/usb/load", json={"path": str(fichier)}).get_json()["applied"] is True
+    assert client.get("/api/state").get_json()["text"] == "Texte de la cle"
+
+
+def test_valeurs_acceptees_pour_apply(client):
+    for valeur, attendu in (("false", False), ("0", False), ("non", False), ("true", True), ("", True)):
+        client.post("/api/text", json={"text": "reference"})
+        r = client.post(
+            "/api/upload",
+            data={"file": (io.BytesIO(b"x"), "s.txt"), "apply": valeur},
+            content_type="multipart/form-data",
+            headers={server.CLIENT_HEADER: "1"},
+        )
+        assert r.get_json()["applied"] is attendu, valeur
