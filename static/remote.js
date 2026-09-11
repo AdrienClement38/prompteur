@@ -516,7 +516,7 @@
     $("kioskClose").addEventListener("click", (e) => {
       // Confirmation sur ce seul bouton : il est atteignable depuis un téléphone,
       // et un appui involontaire couperait l'écran en pleine prise.
-      if (!confirm("Fermer le prompteur et revenir au bureau du boîtier ?")) return;
+      if (!confirm("Fermer le prompteur sur l'écran du boîtier et revenir à son bureau ?")) return;
       act(e.currentTarget, "/api/kiosk/close", "Fermeture du prompteur…");
     });
     $("kioskRefresh").addEventListener("click", refreshKiosk);
