@@ -297,6 +297,18 @@
     });
   }
 
+  // --- Mise en place du haut de l'écran -------------------------------------
+  // Le bandeau d'aide est en haut (en bas, le texte défilant lui passait dessus).
+  // Sur un écran étroit il se replie sur plusieurs lignes : la carte d'adresses
+  // doit donc se caler SOUS lui, hauteur réelle mesurée, et pas à une distance
+  // fixe devinée pour un grand écran.
+  function layoutTop() {
+    const h = hud.getBoundingClientRect().height;
+    netinfo.style.top = Math.round(h + 16) + "px";
+  }
+  layoutTop();
+  window.addEventListener("resize", layoutTop);
+
   // --- Plein écran (écran principal uniquement) ------------------------------
   // On veut un écran de lecture sans barre d'adresse ni onglet. Deux obstacles,
   // tous deux contournés ici :

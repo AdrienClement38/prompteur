@@ -52,8 +52,11 @@
     #guide::after  { right:0; border-right:14px solid rgba(255,60,60,.7); }
 
     /* Bandeau d'aide / d'état, discret */
+    /* Bandeau d'aide EN HAUT : en bas, le texte defilant lui passait dessus et
+       les deux devenaient illisibles. On laisse la place du compteur de vitesse,
+       a droite. */
     #hud {
-      position:fixed; left:12px; bottom:10px;
+      position:fixed; left:12px; right:96px; top:8px;
       font:600 14px/1.4 system-ui, sans-serif;
       color:rgba(255,255,255,.5);
       background:rgba(0,0,0,.35);
@@ -81,7 +84,7 @@
 
     /* Carte d'info : adresse à taper sur un PC/tablette */
     #netinfo {
-      position:fixed; left:50%; top:5%; transform:translateX(-50%);
+      position:fixed; left:50%; top:46px; transform:translateX(-50%);
       max-width:82%; text-align:center; z-index:20;
       background:rgba(18,22,30,.94); border:1px solid rgba(255,255,255,.16);
       color:#dfe4ee; padding:16px 24px; border-radius:16px;
