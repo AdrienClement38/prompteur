@@ -54,6 +54,13 @@ SCRIPTS_DIR.mkdir(exist_ok=True)
 MAX_BODY = 6 * 1024 * 1024  # taille max d'un corps de requête (protège RAM/disque)
 MAX_FILE_SIZE = 5 * 1024 * 1024  # taille max d'un texte importé
 
+# Compteur de modifications de la bibliothèque, DISTINCT de STATE["version"].
+# Enregistrer ou supprimer un texte ne change ni le texte à l'antenne ni les
+# réglages : faire avancer la version générale obligerait tous les écrans de
+# lecture à retélécharger le script pour rien, en pleine prise. Les télécommandes
+# surveillent donc ce compteur-là, et les écrans l'ignorent.
+LIBRARY = {"seq": 0}
+
 # Verrou global pour toute lecture/écriture cohérente de STATE et de state.json
 _lock = threading.Lock()
 
@@ -428,7 +435,13 @@ def api_version():
     """Sonde légère : les écrans la lisent régulièrement et ne retéléchargent le
     texte complet (/api/state) que si version ou cmdSeq a changé."""
     with _lock:
-        return jsonify({"version": STATE["version"], "cmdSeq": STATE["control"]["cmdSeq"]})
+        return jsonify(
+            {
+                "version": STATE["version"],
+                "cmdSeq": STATE["control"]["cmdSeq"],
+                "libSeq": LIBRARY["seq"],
+            }
+        )
 
 
 @app.route("/api/scroll", methods=["GET", "POST"])
@@ -557,6 +570,8 @@ def api_library_save():
         # collision : on demande confirmation au lieu d'écraser en silence
         return jsonify({"ok": False, "error": "exists", "name": name, "sanitized": name != raw.strip()}), 409
     path.write_text(text, encoding="utf-8")
+    with _lock:
+        LIBRARY["seq"] += 1
     return jsonify({"ok": True, "name": name, "sanitized": name != raw.strip()})
 
 
@@ -588,6 +603,8 @@ def api_library_delete():
     path = _library_path(str(data.get("name", "")))
     if path and path.exists():
         path.unlink()
+        with _lock:
+            LIBRARY["seq"] += 1
     return jsonify({"ok": True})
 
 

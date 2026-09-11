@@ -498,3 +498,63 @@ def test_le_jeton_du_meneur_n_est_jamais_divulgue(client):
 
 def test_claim_sans_jeton_refuse(client):
     assert client.post("/api/presenter/claim", json={}).status_code == 400
+
+
+# ============================================================================
+# Synchronisation de la bibliothèque
+# ----------------------------------------------------------------------------
+# Enregistrer ou supprimer un texte doit apparaître sur TOUS les appareils sans
+# recharger la page. Le compteur est volontairement distinct de STATE["version"] :
+# faire avancer la version générale obligerait les écrans de lecture à
+# retélécharger le script pour rien, en pleine prise.
+# ============================================================================
+
+
+def _lib_seq(client):
+    return client.get("/api/version").get_json()["libSeq"]
+
+
+def test_version_expose_le_compteur_de_bibliotheque(client):
+    assert "libSeq" in client.get("/api/version").get_json()
+
+
+def test_enregistrement_fait_avancer_le_compteur(client):
+    avant = _lib_seq(client)
+    client.post("/api/library/save", json={"name": "Sujet", "text": "v1"})
+    assert _lib_seq(client) == avant + 1
+
+
+def test_suppression_fait_avancer_le_compteur(client):
+    client.post("/api/library/save", json={"name": "Sujet", "text": "v1"})
+    avant = _lib_seq(client)
+    client.post("/api/library/delete", json={"name": "Sujet"})
+    assert _lib_seq(client) == avant + 1
+
+
+def test_suppression_d_un_texte_absent_ne_change_rien(client):
+    avant = _lib_seq(client)
+    client.post("/api/library/delete", json={"name": "jamais-existe"})
+    assert _lib_seq(client) == avant
+
+
+def test_collision_refusee_ne_change_rien(client):
+    client.post("/api/library/save", json={"name": "Sujet", "text": "v1"})
+    avant = _lib_seq(client)
+    assert client.post("/api/library/save", json={"name": "Sujet", "text": "v2"}).status_code == 409
+    assert _lib_seq(client) == avant
+
+
+def test_envoyer_du_texte_ne_touche_pas_la_bibliotheque(client):
+    """Les deux compteurs sont indépendants : un écran de lecture ne doit pas
+    retélécharger son script parce qu'on a rangé un texte ailleurs."""
+    avant_lib = _lib_seq(client)
+    avant_ver = client.get("/api/version").get_json()["version"]
+    client.post("/api/text", json={"text": "nouveau script"})
+    assert _lib_seq(client) == avant_lib
+    assert client.get("/api/version").get_json()["version"] > avant_ver
+
+
+def test_ranger_un_texte_ne_touche_pas_l_antenne(client):
+    avant_ver = client.get("/api/version").get_json()["version"]
+    client.post("/api/library/save", json={"name": "Sujet", "text": "v1"})
+    assert client.get("/api/version").get_json()["version"] == avant_ver

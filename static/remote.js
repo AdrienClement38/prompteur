@@ -42,6 +42,7 @@
   // Version connue de l'état du boîtier, et drapeau de saisie en cours : on ne
   // remplace JAMAIS un texte que quelqu'un est en train d'écrire.
   let knownVersion = null;
+  let knownLibSeq = null;
   let textDirty = false;
 
   // --- Onglets --------------------------------------------------------------
@@ -57,6 +58,11 @@
   // --- Chargement de l'état courant ----------------------------------------
   async function loadState() {
     const s = await api("/api/state");
+    try {
+      knownLibSeq = (await api("/api/version")).libSeq;
+    } catch {
+      knownLibSeq = null;
+    }
     settings = s.settings || {};
     knownVersion = s.version;
     $("title").value = s.title || "";
@@ -79,6 +85,14 @@
       v = await api("/api/version");
     } catch {
       return; // liaison perdue : on réessaiera au tour suivant
+    }
+    // La bibliothèque a son propre compteur : un texte enregistré ou supprimé
+    // ailleurs doit apparaître ou disparaître ici sans recharger la page, mais
+    // sans perturber pour autant les écrans de lecture.
+    if (knownLibSeq === null) knownLibSeq = v.libSeq;
+    else if (v.libSeq !== knownLibSeq) {
+      knownLibSeq = v.libSeq;
+      refreshLibrary();
     }
     if (knownVersion === null || v.version === knownVersion) return;
     knownVersion = v.version;
