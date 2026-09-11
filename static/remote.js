@@ -432,6 +432,15 @@
     }
     if (!info.available) return;
     $("boxbar").classList.remove("hide");
+    if (info.running === null) {
+      // État indéterminé : on le dit, plutôt que de faire disparaître la barre.
+      $("kioskState").innerHTML =
+        "État de l'écran <b>indéterminé</b> : le script de lancement n'a pas pu être " +
+        "exécuté ici. Ces boutons ne fonctionnent que sur le boîtier lui-même.";
+      $("kioskLaunch").disabled = true;
+      $("kioskClose").disabled = true;
+      return;
+    }
     const running = !!info.running;
     $("kioskState").innerHTML = running
       ? "Le prompteur est <b>affiché</b> sur l'écran du boîtier."
@@ -454,8 +463,12 @@
     };
     $("kioskLaunch").addEventListener("click", (e) =>
       act(e.currentTarget, "/api/kiosk/launch", "Ouverture du prompteur…"));
-    $("kioskClose").addEventListener("click", (e) =>
-      act(e.currentTarget, "/api/kiosk/close", "Fermeture du prompteur…"));
+    $("kioskClose").addEventListener("click", (e) => {
+      // Confirmation sur ce seul bouton : il est atteignable depuis un téléphone,
+      // et un appui involontaire couperait l'écran en pleine prise.
+      if (!confirm("Fermer le prompteur et revenir au bureau du boîtier ?")) return;
+      act(e.currentTarget, "/api/kiosk/close", "Fermeture du prompteur…");
+    });
     $("kioskRefresh").addEventListener("click", refreshKiosk);
     $("openView").addEventListener("click", () => window.open("/view", "_blank"));
   }

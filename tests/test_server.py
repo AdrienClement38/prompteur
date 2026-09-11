@@ -381,35 +381,34 @@ def test_document_normal_toujours_accepte(client):
 # ============================================================================
 # Ouverture / fermeture de l'écran du prompteur
 # ----------------------------------------------------------------------------
-# Ces commandes agissent sur L'ÉCRAN DU BOÎTIER. Depuis un téléphone elles
-# n'auraient aucun sens — il n'affiche pas le prompteur — et un appui accidentel
-# fermerait l'écran en pleine prise. Elles sont donc réservées au local.
+# Joignables depuis TOUS les appareils du WiFi du boîtier, téléphone compris :
+# on doit pouvoir refermer ou relancer l'écran sans aller toucher le boîtier.
+# Les garde-fous sont le pare-feu et la protection anti-CSRF.
 # ============================================================================
 
 DEPUIS_UN_TELEPHONE = {"REMOTE_ADDR": "10.42.0.57"}
 
 
-def test_kiosque_non_propose_depuis_un_telephone(client):
+def test_kiosque_propose_depuis_un_telephone(client):
     r = client.get("/api/kiosk", environ_base=DEPUIS_UN_TELEPHONE)
     assert r.status_code == 200
-    assert r.get_json()["available"] is False
+    assert r.get_json()["available"] is True
 
 
-def test_kiosque_fermeture_refusee_depuis_un_telephone(client):
-    r = client.post("/api/kiosk/close", json={}, environ_base=DEPUIS_UN_TELEPHONE)
-    assert r.status_code == 403
+def test_kiosque_commandes_acceptees_depuis_un_telephone(client):
+    for route in ("/api/kiosk/close", "/api/kiosk/launch"):
+        r = client.post(route, json={}, environ_base=DEPUIS_UN_TELEPHONE)
+        assert r.status_code != 403, route
 
 
-def test_kiosque_ouverture_refusee_depuis_un_telephone(client):
-    r = client.post("/api/kiosk/launch", json={}, environ_base=DEPUIS_UN_TELEPHONE)
-    assert r.status_code == 403
-
-
-def test_kiosque_interrogeable_en_local(client):
-    """En local la route répond toujours, même là où le script ne peut pas tourner."""
+def test_kiosque_etat_indetermine_plutot_que_barre_cachee(client):
+    """Là où le script ne peut pas tourner, on l'annonce au lieu de tout cacher :
+    sinon la fonction disparaîtrait sans le moindre indice."""
     r = client.get("/api/kiosk")
     assert r.status_code == 200
-    assert "available" in r.get_json()
+    body = r.get_json()
+    assert body["available"] is True
+    assert "running" in body  # bool sur le boîtier, None ailleurs
 
 
 def test_kiosque_protege_aussi_par_l_anti_csrf(client):

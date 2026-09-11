@@ -681,16 +681,13 @@ def current_port():
 # AUCUN privilège n'est nécessaire : le serveur et le navigateur du kiosque
 # tournent sous le même utilisateur. Rien à voir avec l'extinction de la machine,
 # qui reste le bouton physique du boîtier.
-
-
-def _request_is_local():
-    """Vrai si la requête vient du boîtier lui-même, et non d'un téléphone.
-
-    Ces commandes agissent sur L'ÉCRAN DU BOÎTIER. Elles n'ont aucun sens depuis
-    un téléphone — qui n'affiche pas le prompteur — et un appui accidentel y
-    fermerait l'écran en pleine prise. On ne les expose donc qu'en local.
-    """
-    return request.remote_addr in ("127.0.0.1", "::1")
+#
+# Joignables depuis TOUS les appareils du WiFi du boîtier, téléphone compris :
+# c'est le choix assumé, pour pouvoir refermer ou relancer l'écran sans avoir à
+# aller toucher le boîtier. Les garde-fous restent le pare-feu (port limité au
+# wlan0) et la protection anti-CSRF ci-dessus. Côté interface, la barre est
+# repliée par défaut et « Fermer » demande confirmation : depuis un téléphone, un
+# appui involontaire couperait l'écran en pleine prise.
 
 
 def _kiosk_env():
@@ -762,18 +759,17 @@ def _kiosk_launch():
 def api_kiosk():
     """État de l'écran du prompteur. « available » dit à la télécommande s'il
     faut afficher les boutons : inutile de les montrer sur un téléphone."""
-    if not _request_is_local():
+    if not KIOSK_SCRIPT.exists():
         return jsonify({"available": False})
     ok, code = _kiosk("--status")
-    if not ok:
-        return jsonify({"available": False})
-    return jsonify({"available": True, "running": code == 0})
+    # running = None quand l'etat n'a PAS pu etre determine (script non executable
+    # ici, poste de developpement...). On affiche quand meme la barre : cacher la
+    # fonction en silence ferait disparaitre un bouton cense exister, sans indice.
+    return jsonify({"available": True, "running": (code == 0) if ok else None})
 
 
 @app.route("/api/kiosk/close", methods=["POST"])
 def api_kiosk_close():
-    if not _request_is_local():
-        return jsonify({"ok": False, "error": "commande réservée à l'écran du boîtier"}), 403
     ok, _ = _kiosk("--stop")
     if not ok:
         return jsonify({"ok": False, "error": "script du kiosque introuvable"}), 500
@@ -782,8 +778,6 @@ def api_kiosk_close():
 
 @app.route("/api/kiosk/launch", methods=["POST"])
 def api_kiosk_launch():
-    if not _request_is_local():
-        return jsonify({"ok": False, "error": "commande réservée à l'écran du boîtier"}), 403
     if not _kiosk_launch():
         return jsonify({"ok": False, "error": "script du kiosque introuvable"}), 500
     return jsonify({"ok": True})
