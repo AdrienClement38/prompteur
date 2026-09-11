@@ -733,17 +733,18 @@ def api_usb_load():
         return jsonify({"ok": False, "error": "fichier non autorisé"}), 400
     try:
         raw = Path(path).read_bytes()
-        text = textextract.extract_text(path, raw)
+        text, marques = textextract.extract_rich(path, raw)
     except (OSError, ValueError) as e:
         return jsonify({"ok": False, "error": str(e)}), 400
+    marques = sanitize_marks(marques, len(text))
     title = Path(path).stem
     if not _wants_apply(data.get("apply")):
         # Le client remplira lui-même sa zone de texte : rien ne part à l'écran.
-        return jsonify({"ok": True, "title": title, "text": text, "applied": False})
+        return jsonify({"ok": True, "title": title, "text": text, "marks": marques, "applied": False})
     with _lock:
         STATE["text"] = text
         STATE["title"] = title
-        STATE["marks"] = []  # nouveau texte : les anciennes plages n'ont plus de sens
+        STATE["marks"] = marques  # le gras du document importé suit le texte
         bump(STATE)
         _save_state_unlocked(STATE)
     return jsonify({"ok": True, "title": title, "applied": True})
@@ -759,17 +760,18 @@ def api_upload():
         return jsonify({"ok": False, "error": "aucun fichier"}), 400
     raw = file.read(MAX_FILE_SIZE)  # MAX_CONTENT_LENGTH a déjà borné le corps en amont
     try:
-        text = textextract.extract_text(file.filename, raw)
+        text, marques = textextract.extract_rich(file.filename, raw)
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
+    marques = sanitize_marks(marques, len(text))
     title = Path(file.filename).stem or "Import"
     if not _wants_apply(request.form.get("apply")):
         # Le client remplira lui-meme sa zone de texte : rien ne part a l'ecran.
-        return jsonify({"ok": True, "title": title, "text": text, "applied": False})
+        return jsonify({"ok": True, "title": title, "text": text, "marks": marques, "applied": False})
     with _lock:
         STATE["text"] = text
         STATE["title"] = title
-        STATE["marks"] = []  # nouveau texte : les anciennes plages n'ont plus de sens
+        STATE["marks"] = marques  # le gras du document importé suit le texte
         bump(STATE)
         _save_state_unlocked(STATE)
     return jsonify({"ok": True, "title": title, "applied": True})

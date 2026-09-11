@@ -467,10 +467,11 @@
 
   // Remplit la zone de saisie avec un texte importé, sans rien diffuser.
   function fillFromImport(res) {
-    setText(res.text || "");
     $("title").value = res.title || "";
     texteAvant = res.text || "";
-    marks = []; // nouveau texte : les anciennes plages n'ont plus de sens
+    // Le gras, l'italique et le souligne du document importe arrivent avec lui.
+    marks = Array.isArray(res.marks) ? res.marks : [];
+    setText(res.text || ""); // apres les plages : le rendu les utilise
     textDirty = true;
     refreshUnsent();
     toast("Importé : " + res.title + " — appuyez sur « Envoyer à l'écran »");
