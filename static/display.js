@@ -407,13 +407,22 @@
     // tombé, partir vers « / » mènerait à une page d'erreur sans aucun moyen de
     // revenir. On refuse donc de quitter tant que la liaison est perdue, et on le
     // dit — mieux vaut rester sur un texte lisible que s'échouer sur une impasse.
-    if (failures >= FAILURES_BEFORE_WARNING) {
+    // Refermer une fenêtre ne demande rien au serveur : on ne refuse que la
+    // navigation, qui, elle, aboutirait à une page d'erreur sans retour possible.
+    const peutFermer = window.opener && !window.opener.closed;
+    if (!peutFermer && failures >= FAILURES_BEFORE_WARNING) {
       refuseQuit();
       return;
     }
     cancelQuit();
     leavingOnPurpose = true;
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    // Fenêtre ouverte par l'accueil : on la referme, et l'accueil est déjà là
+    // derrière. Aucune navigation, donc aucune impasse même serveur coupé.
+    if (window.opener && !window.opener.closed) {
+      window.close();
+      return;
+    }
     window.location.href = "/";
   }
 

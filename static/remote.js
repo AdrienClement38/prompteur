@@ -467,6 +467,38 @@
   bindKeyLearn("keyForward", "keyBackward");
   bindKeyLearn("keyBackward", "keyForward");
 
+  // --- Ouvrir l'écran principal hors du navigateur --------------------------
+  // Un onglet ordinaire garde sa barre d'adresse et ses onglets : ce n'est pas un
+  // écran de prompteur. On ouvre donc une FENÊTRE dédiée (window.open en mode
+  // « popup »), que le navigateur affiche sans barre d'adresse ni onglets, à la
+  // taille de l'écran.
+  //
+  // Deux bénéfices au passage :
+  //   * le plein écran y est demandé depuis un vrai geste utilisateur, donc
+  //     accepté — au chargement d'un onglet, il est systématiquement refusé ;
+  //   * Échap peut REFERMER cette fenêtre (window.close n'est autorisé que sur
+  //     une fenêtre ouverte par script), et l'on retombe sur cette page, restée
+  //     ouverte derrière. Plus de navigation, donc plus d'impasse possible si le
+  //     serveur ne répond pas.
+  //
+  // Si le navigateur refuse la fenêtre (bloqueur), on retombe sur la navigation
+  // classique : mieux vaut un onglet avec barre d'adresse que rien du tout.
+  function openMainScreen(e) {
+    if (e) e.preventDefault();
+    const w = Math.max(640, window.screen.availWidth || 1280);
+    const h = Math.max(480, window.screen.availHeight || 720);
+    const win = window.open(
+      "/display",
+      "prompteurPrincipal",
+      `popup=yes,width=${w},height=${h},left=0,top=0`
+    );
+    if (!win) {
+      window.location.href = "/display";
+      return;
+    }
+    win.focus();
+  }
+
   // --- Écran principal déjà pris ? -----------------------------------------
   // On grise le bouton plutôt que de laisser quelqu'un entrer et bousculer le
   // défilement de celui qui est en train de lire.
@@ -557,6 +589,8 @@
   loadState().catch(() => toast("Erreur de connexion au boîtier"));
   refreshKiosk();
   setInterval(pollVersion, 1500);
+  const mainBtn = document.querySelector(".readbtn.main");
+  if (mainBtn) mainBtn.addEventListener("click", openMainScreen);
   refreshPresenter();
   setInterval(refreshPresenter, 3000);
   loadViewLink();
