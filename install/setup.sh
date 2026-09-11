@@ -49,7 +49,9 @@ After=network.target
 [Service]
 Type=simple
 User=$RUN_USER
-WorkingDirectory="$PROJECT_DIR"
+# Pas de guillemets ici : systemd ne les retire pas dans WorkingDirectory= et
+# considererait le chemin comme non absolu ("bad unit file setting").
+WorkingDirectory=$PROJECT_DIR
 Environment=PROMPTEUR_PORT=$PORT
 ExecStart=/usr/bin/python3 "$PROJECT_DIR/server.py"
 Restart=always
@@ -61,7 +63,16 @@ EOF
 
 sudo systemctl daemon-reload
 sudo systemctl enable prompteur.service
-sudo systemctl restart prompteur.service
+# En cas d'echec, on affiche la vraie cause avant de sortir : sans cela, set -e
+# coupe le script sur un message sibyllin et la suite de l'installation
+# (WiFi, pare-feu, kiosque) n'est jamais executee.
+if ! sudo systemctl restart prompteur.service; then
+  echo
+  echo "/!\\ Le service n'a pas demarre. Detail de l'erreur :"
+  sudo systemctl status prompteur.service --no-pager --lines=20 || true
+  sudo journalctl -u prompteur.service --no-pager --lines=20 || true
+  exit 1
+fi
 echo "    Serveur actif sur le port $PORT."
 
 # --- 3. Point d'accès WiFi (hors-ligne) --------------------------------------
