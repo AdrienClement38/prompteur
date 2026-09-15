@@ -325,56 +325,76 @@ pas. C'est aussi la forme que prennent les titres d'un document Word importé.
 
 > **Ce qu'un import conserve, selon le format.**
 >
-> | | .docx / .odt | .pdf | .rtf | .txt |
+> | | .docx / .odt | .pdf | .rtf | .txt / .md |
 > |---|---|---|---|---|
-> | Titres | ✅ par les styles | ✅ déduits de la taille | ✅ déduits de la taille | ❌ sauf `#` écrit à la main |
-> | Gras, italique | ✅ | ✅ par le **nom de la police** | ✅ | ❌ |
-> | Souligné | ✅ | ❌ *(voir plus bas)* | ✅ | ❌ |
-> | Couleur du texte | ✅ ramenée à la palette | ✅ ramenée à la palette | ✅ ramenée à la palette | ❌ |
-> | Plus gros / plus petit | ✅ en proportion | ✅ en proportion | ✅ en proportion | ❌ |
-> | Centré, aligné à droite | ✅ | ✅ déduit de la **position sur la page** | ✅ | ❌ |
-> | Listes à puces | ✅ → « • » | ✅ déjà dans le texte | ✅ → « • » | ❌ |
+> | Titres | ✅ par les styles | ✅ par la taille de la ligne | ✅ par la taille | ✅ `# ` `## ` `### ` |
+> | Gras, italique | ✅ | ✅ par le **nom de la police** | ✅ | ✅ `**gras**` `*italique*` |
+> | Souligné | ✅ | ✅ par la **géométrie du trait** | ✅ | ✅ `_souligné_` |
+> | Couleur du texte | ✅ | ✅ | ✅ | — *(la barre, en un clic)* |
+> | Plus gros / plus petit | ✅ | ✅ | ✅ | ✅ *(par les niveaux de titre)* |
+> | Centré, aligné à droite | ✅ | ✅ par la **position sur la page** | ✅ | — *(la barre, en un clic)* |
+> | Listes à puces | ✅ → « • » | ✅ | ✅ → « • » | ✅ `- ` → « • » |
 > | Images, tableaux, polices, retraits | ❌ | ❌ | ❌ | ❌ |
 >
-> **Un `.txt` ne contient aucune mise en forme**, par construction : il n'y a rien à
-> en tirer de plus que son texte. Les `#` et les « • » qu'on y écrit à la main sont
-> pris en compte comme partout ailleurs.
+> **Chaque format demande une méthode différente.**
 >
-> **Un PDF ne déclare aucun style.** Il ne dit pas « ce mot est en gras », il dit
-> « ce mot est peint avec la police Arial-BoldMT ». Le gras et l'italique sont donc
-> lus dans le **nom de la police**, la couleur dans l'**opérateur de remplissage**,
-> le centrage dans la **position de la ligne** sur la page, et un titre est une ligne
-> **entièrement** plus grosse que le corps du texte. Le **souligné, lui, n'est pas
-> récupérable** : dans un PDF, c'est un trait dessiné sous le texte, pas une propriété
-> du texte. C'est la seule chose qu'un `.docx` conserve et qu'un `.pdf` perd.
+> - **`.docx` / `.odt`** *déclarent* leur mise en forme : il suffit de suivre correctement
+>   l'héritage des styles, y compris le cas où un style **annule** celui dont il hérite.
+> - **`.rtf`** la déclare aussi, en clair. Le travail est de suivre l'imbrication des
+>   accolades, et surtout de mettre à l'écart les tables internes — sans quoi le prompteur
+>   afficherait « Times New Roman;Symbol;red255green0blue0 » avant la première phrase.
+> - **`.pdf`** ne déclare **rien**. Il ne dit pas « ce mot est en gras », il dit « ce mot est
+>   peint avec la police Arial-BoldMT ». Tout est donc déduit de ce que le format dit
+>   vraiment : le **nom de la police**, l'**opérateur de remplissage** pour la couleur, la
+>   **position de la ligne** pour le centrage. Le **souligné** est un trait dessiné sous le
+>   texte : on le retrouve en rapprochant les traits horizontaux de la ligne qui passe
+>   juste au-dessus, puis en recalant le résultat sur les **limites de mots** — un mot
+>   n'est jamais souligné à moitié.
+> - **`.txt` / `.md`** ne contiennent aucun style : c'est leur définition. Ils ont en
+>   revanche des **conventions d'écriture**, les mêmes depuis quarante ans. Comme ce sont
+>   des signes qui se tapent au clavier, ils marchent aussi dans la zone de saisie — la
+>   télécommande les rappelle sous la barre de mise en forme.
 >
-> Le texte d'un PDF, lui, n'est **pas** reconstruit : l'extraction existante reste
-> maîtresse du découpage en lignes et de l'espacement, et la mise en forme est
-> **reposée par-dessus**. Un test verrouille cet invariant — aux dièses de titre près,
+> **Deux précautions sur les conventions de texte simple**, parce qu'une syntaxe qui se
+> déclenche toute seule peut abîmer un texte existant : seules les **paires soignées**
+> comptent (le marqueur ouvre et ferme contre un signe visible, sur une même ligne), et la
+> conversion n'a lieu **qu'à l'import d'un fichier**. Un texte déjà rangé dans la
+> bibliothèque est relu tel quel, avec ses marques stockées à côté : il ne peut pas changer
+> d'aspect des mois plus tard. Ainsi `3 * 4 = 12`, `mon_fichier.txt`, une note isolée `*`
+> ou une adresse `http://x/a_b_c` ressortent intacts.
+>
+> **Pourquoi pas de couleur en texte simple.** Il faudrait inventer un langage à apprendre
+> pour faire moins bien que les pastilles de la télécommande, qui la posent en un clic.
+> Même chose pour le centrage.
+>
+> Le texte d'un PDF n'est **pas** reconstruit à partir des morceaux observés : l'extraction
+> existante reste maîtresse du découpage en lignes et de l'espacement, et la mise en forme
+> est **reposée par-dessus**. Un test verrouille cet invariant — aux dièses de titre près,
 > le texte produit est exactement celui d'avant.
 >
 > **Trois choix assumés, et leur raison.**
 >
-> - **La couleur est ramenée à la palette** (cinq couleurs, toutes lisibles sur fond
->   noir) au lieu d'être recopiée. Un bleu marine recopié fidèlement serait invisible
->   à l'écran, au moment précis où l'on compte sur le passage mis en avant. La
->   correspondance se fait sur la **teinte** : un rouge sombre devient le rouge de la
->   palette, pas le gris qui s'en approche numériquement.
-> - **La taille est relative, jamais absolue.** Sur un prompteur, c'est le lecteur qui
->   fixe la taille générale selon sa distance à l'écran. Un « 8 points » recopié serait
->   illisible ; ce qui compte, c'est « plus petit que le reste » ou « bien plus gros ».
->   La référence est la taille **la plus répandue du document**, en comptant aussi les
+> - **La couleur est ramenée à la palette** (cinq couleurs, toutes lisibles sur fond noir)
+>   au lieu d'être recopiée. Un bleu marine recopié fidèlement serait invisible à l'écran,
+>   au moment précis où l'on compte sur le passage mis en avant. La correspondance se fait
+>   sur la **teinte** : un rouge sombre devient le rouge de la palette, pas le gris qui
+>   s'en approche numériquement.
+> - **La taille est relative, jamais absolue.** Sur un prompteur, c'est le lecteur qui fixe
+>   la taille générale selon sa distance à l'écran. Un « 8 points » recopié serait
+>   illisible ; ce qui compte, c'est « plus petit que le reste » ou « bien plus gros ». La
+>   référence est la taille **la plus répandue du document**, en comptant aussi les
 >   passages qui n'en déclarent aucune.
 > - **Titres et puces deviennent du texte** (`# `, `• `) et non un style. C'est ce qui
->   permet de les écrire au clavier, et de les retrouver intacts dans un fichier
->   enregistré puis relu des mois plus tard.
+>   permet de les écrire au clavier, et de les retrouver intacts dans un fichier enregistré
+>   puis relu des mois plus tard.
 >
 > L'alignement, lui, n'a pas d'écriture possible au clavier : il voyage comme une plage
 > posée sur la ligne entière, et ne se voit que sur les écrans de lecture — la zone de
 > saisie de la télécommande est une simple ligne de texte, sans blocs.
 >
-> Un fichier qui n'est pas un document texte (une photo, une archive) est **refusé**
-> avec un message ; il ne remplit plus la zone de saisie de caractères illisibles.
+> Au-delà de **500 passages** mis en forme, l'écrêtage est **annoncé** (`marksTruncated`) :
+> une limite tue passerait pour un import raté. Et un fichier qui n'est pas un document
+> texte est **refusé** avec un message.
 
 ---
 

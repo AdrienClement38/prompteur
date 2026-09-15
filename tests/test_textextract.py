@@ -20,6 +20,8 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from pypdf import PdfReader  # noqa: E402
+
 import textextract as tx  # noqa: E402
 
 
@@ -375,13 +377,94 @@ def test_rtf_illisible_retombe_sur_le_texte_seul():
     assert "Du texte sans fermeture" in texte
 
 
-def test_txt_n_a_par_nature_aucune_mise_en_forme():
-    """Un .txt ne contient aucun style : il n'y a rien à en tirer de plus que le
-    texte, les dieses de titre et les puces qui y sont ecrits a la main."""
-    assert tx.extract_rich("note.txt", "A   B\n\n\n\nC".encode("utf-8")) == ("A B\n\nC", [])
-    texte, plages = tx.extract_rich("n.txt", "# Titre\n• Puce".encode("utf-8"))
-    assert texte == "# Titre\n• Puce"
-    assert plages == []
+def test_pdf_souligne_retrouve_par_la_geometrie():
+    """Dans un PDF, le souligné n'est pas une propriété du texte : c'est un TRAIT
+    dessiné dessous. On le retrouve en rapprochant les traits horizontaux du texte
+    qui passe juste au-dessus, puis en recalant sur les limites de mots."""
+    pytest.importorskip("reportlab")
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate
+
+    buf = io.BytesIO()
+    style = getSampleStyleSheet()["Normal"]
+    SimpleDocTemplate(buf, pagesize=A4).build(
+        [
+            Paragraph("Du texte normal puis <u>un passage souligne</u> et la fin.", style),
+            Paragraph("Une autre ligne avec <b>du gras</b> et <u>encore souligne</u>.", style),
+        ]
+    )
+    texte, plages = tx.extract_rich("u.pdf", buf.getvalue())
+    soulignes = [texte[p["start"] : p["end"]] for p in plages if p.get("u")]
+    assert soulignes == ["un passage souligne", "encore souligne."]
+    # Le gras de la meme ligne n'est pas contamine par le soulignement voisin.
+    gras = [texte[p["start"] : p["end"]] for p in plages if p.get("b") and not p.get("u")]
+    assert "du gras" in gras
+
+
+def test_pdf_deux_lignes_ne_se_confondent_pas():
+    """Word et LibreOffice ne deplacent pas le curseur de texte, ils deplacent le
+    REPERE : deux lignes portent alors la meme position de texte. Sans appliquer la
+    matrice courante, tout le document passerait pour une seule ligne."""
+    pytest.importorskip("reportlab")
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate
+
+    buf = io.BytesIO()
+    style = getSampleStyleSheet()["Normal"]
+    SimpleDocTemplate(buf, pagesize=A4).build([Paragraph("Premiere ligne.", style), Paragraph("Seconde ligne.", style)])
+    _texte, morceaux, _traits = tx._pdf_morceaux(PdfReader(io.BytesIO(buf.getvalue())).pages[0])
+    assert len(tx._pdf_lignes(morceaux)) == 2
+
+
+# ----------------------------------------------------------------------------
+# Texte simple : aucun style, mais des CONVENTIONS d'ecriture
+# ----------------------------------------------------------------------------
+def test_txt_conventions_d_ecriture():
+    source = (
+        "# Le sujet du jour\n"
+        "Un mot **important**, un mot *nuance* et un _souligne_.\n"
+        "- puce une\n"
+        "* puce deux\n"
+        "• puce trois\n"
+    )
+    texte, plages = tx.extract_rich("note.txt", source.encode("utf-8"))
+    trouve = {texte[p["start"] : p["end"]]: p for p in plages}
+    assert trouve["important"].get("b") is True
+    assert trouve["nuance"].get("i") is True
+    assert trouve["souligne"].get("u") is True
+    # Les marqueurs eux-memes ont disparu du texte : ils ne doivent pas se lire a l'ecran.
+    for marqueur in ("**", "_souligne_", "*nuance*"):
+        assert marqueur not in texte
+    lignes = texte.split("\n")
+    assert lignes[0] == "# Le sujet du jour"  # les dieses restent : c'est la convention
+    assert lignes[2:] == [tx.PUCE + "puce une", tx.PUCE + "puce deux", tx.PUCE + "puce trois"]
+
+
+def test_txt_ne_se_declenche_pas_sur_un_texte_ordinaire():
+    """Une syntaxe qui se declenche toute seule peut abimer un texte existant. Un
+    marqueur isole, une multiplication, un nom de fichier ou une adresse n'en sont
+    pas : ils doivent ressortir absolument intacts."""
+    pieges = (
+        "Trois fois quatre : 3 * 4 = 12.",
+        "Le fichier nom_du_fichier.txt est pret.",
+        "Une note de bas de page*.",
+        "Adresse : http://exemple/a_b_c",
+        "Calcul 2*3*4 et _ tout seul.",
+        "Un asterisque * isole au milieu.",
+    )
+    for ligne in pieges:
+        texte, plages = tx.extract_rich("p.txt", ligne.encode("utf-8"))
+        assert texte == ligne, ligne
+        assert plages == [], ligne
+
+
+def test_txt_et_md_suivent_les_memes_conventions():
+    for nom in ("note.txt", "note.md", "note.text"):
+        texte, plages = tx.extract_rich(nom, "Du **gras** ici.".encode("utf-8"))
+        assert texte == "Du gras ici.", nom
+        assert _seule(plages)["b"] is True, nom
 
 
 def test_document_trop_gros_toujours_refuse():

@@ -250,17 +250,48 @@ porte aucune mise en forme.
 gras et l'italique, l'**opérateur de remplissage** pour la couleur, la **position de la
 ligne** pour le centrage, et « ligne entièrement plus grosse que le corps » pour un titre.
 
-### Ce qui est dessiné n'est pas une propriété
-Dans un PDF, le souligné n'est pas un attribut du texte : c'est un **trait tracé en
-dessous**, un objet graphique sans lien déclaré avec les mots qu'il souligne. Aucune
-lecture du texte ne peut donc le retrouver.
-**Parade :** le dire, plutôt que de laisser croire à un oubli. C'est la seule chose qu'un
-`.docx` conserve et qu'un `.pdf` perd — une ligne dans le mode d'emploi vaut mieux qu'un
-utilisateur qui croit à une panne.
+### 🔴 « Impossible » voulait dire « pas avec la méthode que j'employais »
+J'ai écrit noir sur blanc, dans ce document et dans le mode d'emploi, que le souligné
+d'un PDF n'était **pas récupérable** : ce n'est pas un attribut du texte, c'est un trait
+tracé dessous, un objet graphique sans lien déclaré avec les mots. Tout cela est exact.
+La conclusion, elle, était fausse — je cherchais une **propriété**, alors que la réponse
+était **géométrique** : relever les traits horizontaux, et rapprocher chacun de la ligne
+de texte qui passe juste au-dessus.
+**Parade :** ne pas confondre « le format ne le déclare pas » et « on ne peut pas le
+savoir ». Avant d'inscrire une limite dans la documentation, chercher ce que le format
+dit **réellement**, et non ce qu'on espérait y trouver. Une limite écrite trop vite se
+recopie ensuite dans tous les documents, et personne ne la rouvre.
+
+### 🔴 La position du texte n'est pas dans la matrice du texte
+Word et LibreOffice ne déplacent pas le curseur de texte : ils déplacent le **repère**.
+Deux lignes distinctes portent alors exactement la même position de texte, et seule la
+matrice courante les sépare. Le code ne lisait que la position du texte : toutes les
+lignes d'un vrai document se retrouvaient à la même hauteur, donc fondues en **une seule
+ligne**. Rien ne le signalait — le texte restait juste, seuls l'alignement et le
+soulignement tombaient à côté.
+**Parade :** composer la position avec la matrice courante. Et surtout : ne pas valider
+un lecteur de PDF sur un PDF fabriqué pour l'occasion, qui n'utilise pas les mêmes
+mécanismes qu'un document produit par un traitement de texte.
+
+### Une moyenne unique se trompe d'un mot entier
+Pour situer un trait de soulignement dans une ligne, il faut convertir une distance en
+nombre de signes. Une largeur moyenne unique (une demi-chasse par signe) se trompait de
+deux à cinq caractères — c'est-à-dire d'un **mot entier** une fois recalé sur les
+limites de mots, et le soulignement se posait à côté.
+**Parade :** deux gestes qui se complètent. Distinguer les signes étroits (`i`, `l`,
+espace, ponctuation) des larges (`m`, `w`, majuscules) ramène l'erreur à un signe au
+plus ; le recalage sur les limites de mots absorbe ce qui reste. Aucun mot n'est
+souligné à moitié.
+
+### Reconstruire une ligne autrement que la bibliothèque ne l'a rendue
+Les indices du soulignement étaient calculés sur le **recollage des morceaux** observés,
+alors que le texte affiché venait de la bibliothèque, qui insère des espaces entre eux.
+Trois espaces d'écart suffisaient à décaler le résultat d'un mot.
+**Parade :** un seul repère pour tout le monde — situer d'abord chaque morceau dans le
+texte produit, puis raisonner uniquement dans ces coordonnées-là.
 
 ### Ajouter sans reconstruire
-La tentation, en lisant les morceaux d'un PDF un par un, est de recoller le texte
-soi-même à partir d'eux. On perd alors tout le travail d'espacement et de découpage en
+La tentation, en lisant les morceaux d'un PDF un par un, est de recoller le textesoi-même à partir d'eux. On perd alors tout le travail d'espacement et de découpage en
 lignes de la bibliothèque — et le texte, lui, **régresse** pendant qu'on croit l'enrichir.
 **Parade :** laisser l'extraction existante produire le texte, et **reposer** la mise en
 forme dessus en cherchant chaque morceau dans l'ordre. Un test verrouille l'invariant :
@@ -314,6 +345,17 @@ d'octets illisibles, avec un **code 200** pour dire que tout allait bien.
 **Parade :** la vérification descend dans `extract_rich()`, là où passent **tous**
 les chemins d'entrée, plutôt que d'être recopiée dans chaque appelant. Un test
 vérifie aussi l'inverse : qu'aucun format promis au client n'est refusé.
+
+### 🔴 Une syntaxe qui se déclenche toute seule peut abîmer un texte existant
+Reconnaître `**gras**` dans un fichier texte rend service. Mais la même règle, appliquée
+sans précaution, transforme `3 * 4 = 12` en calcul mis en forme, `mon_fichier.txt` en mot
+souligné, et une adresse `http://x/a_b_c` en charabia — dans un script déjà écrit, sans
+que personne ne l'ait demandé.
+**Parade :** deux verrous, pas un. Seules les **paires soignées** comptent (le marqueur
+ouvre et ferme contre un signe visible, sur une même ligne) ; et la conversion n'a lieu
+qu'à l'**import d'un fichier**, jamais à la relecture d'un texte de la bibliothèque. Un
+texte enregistré ne peut donc pas changer d'aspect des mois plus tard. Les tests portent
+sur les pièges autant que sur les cas qui doivent marcher.
 
 ### Une syntaxe de type markdown changerait les textes existants
 Un `*` ou un `#` au milieu d'une phrase déjà enregistrée se mettrait soudain à

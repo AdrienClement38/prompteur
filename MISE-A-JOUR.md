@@ -29,7 +29,7 @@ choses deviennent plus simples.
 | Sortir du prompteur demandait deux raccourcis clavier, et y revenir un redémarrage | **La touche Échap** ramène à la page d'accueil. Une **icône sur le bureau** rouvre le prompteur |
 | Un texte importé partait à l'écran tout seul, sans qu'on l'ait demandé | L'import **remplit la zone de texte**. C'est « Envoyer à l'écran » qui diffuse, et rien d'autre |
 | Le texte s'affichait tout uni | On peut mettre des passages en **gras**, en *italique*, en souligné, en plus gros ou **en couleur** |
-| Un document arrivait en texte plat | **Word, LibreOffice, PDF et RTF** arrivent avec leur mise en forme : titres, gras, italique, couleurs, tailles, centrage et puces |
+| Un document arrivait en texte plat | **Tous les formats** arrivent avec leur mise en forme : titres, gras, italique, souligné, couleurs, tailles, centrage et puces |
 | Deux modes de pédales | **Trois**, dont un où l'on règle la vitesse au pied |
 | Un réglage changé sur le téléphone n'apparaissait pas sur les autres appareils | Tout se met à jour **tout seul**, partout |
 
@@ -197,12 +197,13 @@ Un document importé conserve ses **titres**, son **gras**, son *italique*, ses 
 ses **tailles** (en proportion du reste), le **centrage** de ses paragraphes et ses **listes à
 puces** — et cela vaut pour **Word (`.docx`), LibreOffice (`.odt`), le PDF et le RTF**.
 
-Deux exceptions, et elles sont logiques :
+Le **fichier texte simple**, lui, n'a pas de mise en forme à conserver — c'est sa
+définition. Il comprend en revanche les signes qui se tapent au clavier : `# Un titre`,
+`- une puce`, `**en gras**`, `*en italique*`, `_souligné_`. Les mêmes fonctionnent
+directement dans la zone de saisie.
 
-- **Le `.txt` n'a rien à conserver** : un fichier texte simple ne contient aucune mise en
-  forme, c'est sa définition.
-- **Le PDF perd le souligné** : dans un PDF, ce n'est pas une propriété du texte mais un
-  simple trait dessiné en dessous. Le gras, lui, passe très bien.
+Seules la **couleur** et le **centrage** n'ont pas de signe à taper : les pastilles de la
+télécommande les posent en un clic, sans rien à retenir.
 
 Deux précisions qui évitent une mauvaise surprise :
 
@@ -216,12 +217,12 @@ Un fichier qui n'est pas un document texte (une photo, une archive) est maintena
 avec un message**. Avant, il remplissait la zone de texte de caractères illisibles sans rien
 dire.
 
-### Écrire un titre à la main
+### Écrire la mise en forme au clavier
 
-Sous les boutons de mise en forme, un bloc **« Écrire un titre à la main »** se déplie et
-rappelle la syntaxe : `# ` grand titre, `## ` sous-titre, `### ` petit titre — l'espace après
-les dièses étant obligatoire. C'est exactement la forme sous laquelle arrivent les titres d'un
-document importé.
+Sous les boutons de mise en forme, un bloc **« Écrire la mise en forme au clavier »** se
+déplie et rappelle tous les signes : `# ` `## ` `### ` pour les trois niveaux de titre, `- `
+pour une puce, `**gras**`, `*italique*`, `_souligné_`. L'espace après les dièses et le tiret
+est obligatoire. C'est exactement la forme sous laquelle arrive un fichier texte importé.
 
 ### L'import ne part plus tout seul
 

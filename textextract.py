@@ -834,6 +834,73 @@ def _from_odt(data):
 
 
 # --------------------------------------------------------------------------
+# Texte simple (.txt, .md, .text)
+# --------------------------------------------------------------------------
+# Un fichier texte ne contient AUCUN style : c'est sa définition même. Il a en
+# revanche des CONVENTIONS d'écriture, les mêmes depuis quarante ans, que tout le
+# monde reconnaît à l'œil : des astérisques autour d'un mot important, un tiret en
+# début de ligne pour une puce. Ce sont elles qu'on lit ici — et comme ce sont des
+# signes qui se tapent au clavier, elles marchent aussi dans la zone de saisie.
+#
+# DEUX PRÉCAUTIONS, parce qu'une syntaxe qui se déclenche toute seule peut abîmer
+# un texte existant :
+#
+# 1. Seules les paires SOIGNÉES comptent. Le marqueur doit ouvrir contre un signe
+#    visible et fermer contre un signe visible, au sein d'une même ligne. Un
+#    astérisque isolé (un appel de note), un souligné au milieu d'un identifiant
+#    (« nom_du_fichier ») ou une multiplication ne déclenchent rien.
+# 2. La conversion n'a lieu qu'à l'IMPORT d'un fichier. Un texte déjà enregistré
+#    dans la bibliothèque est relu tel quel, avec ses marques rangées à côté : il
+#    ne peut donc pas changer d'aspect des mois plus tard, sous les yeux de
+#    quelqu'un qui n'a rien demandé.
+#
+# La couleur et le centrage, eux, n'ont pas de convention en texte simple. Leur en
+# inventer une obligerait à apprendre un langage pour faire moins bien que les
+# boutons de la télécommande, qui les posent en un clic.
+_OUVRANTS = "([{«“\"'"
+_FERMANTS = ".,;:!?…)]}»”\"'"
+_RE_TXT_MARQUES = re.compile(
+    r"(?:(?<=^)|(?<=[\s" + re.escape(_OUVRANTS) + r"]))"
+    r"(?:"
+    r"\*\*(?P<b>\S(?:[^*\n]*\S)?)\*\*"
+    r"|\*(?P<i>\S(?:[^*\n]*\S)?)\*"
+    r"|_(?P<u>\S(?:[^_\n]*\S)?)_"
+    r")"
+    r"(?=$|[\s" + re.escape(_FERMANTS) + r"])"
+)
+_RE_TXT_PUCE = re.compile(r"^[ \t]*[-*+•][ \t]+(?=\S)")
+
+
+def _texte_ligne_segments(ligne):
+    """Segments d'une ligne de texte simple, marqueurs d'écriture compris."""
+    puce = bool(_RE_TXT_PUCE.match(ligne))
+    if puce:
+        ligne = _RE_TXT_PUCE.sub("", ligne, count=1)
+    segments = []
+    pos = 0
+    for m in _RE_TXT_MARQUES.finditer(ligne):
+        cle = next(c for c in ("b", "i", "u") if m.group(c) is not None)
+        if m.start() > pos:
+            segments.append((ligne[pos : m.start()], {}))
+        segments.append((m.group(cle), {cle: True}))
+        pos = m.end()
+    if pos < len(ligne):
+        segments.append((ligne[pos:], {}))
+    # Un titre reste écrit tel quel : les dièses SONT la convention, ici comme
+    # dans un document importé, et l'écran les traduit lui-même.
+    return _titrer_segments(0, segments, puce, None)
+
+
+def _texte_segments(data):
+    segments = []
+    for rang, ligne in enumerate(_decode(data).split("\n")):
+        if rang:
+            segments.append(("\n", {}))
+        segments.extend(_texte_ligne_segments(ligne))
+    return segments
+
+
+# --------------------------------------------------------------------------
 # RTF
 # --------------------------------------------------------------------------
 # Le RTF, lui, DIT sa mise en forme : « \b » ouvre le gras, « \fs28 » fixe la
@@ -1081,9 +1148,12 @@ def _from_rtf(data):
 # --------------------------------------------------------------------------
 # PDF
 # --------------------------------------------------------------------------
-# Un PDF ne dit pas « ce mot est en gras » : il dit « ce mot est écrit avec la
-# police Arial-BoldMT ». Le gras, l'italique, la taille, la couleur et le
-# centrage doivent donc être DÉDUITS de la façon dont la page est peinte.
+# Un PDF ne dit pas « ce mot est en gras » : il dit « ce mot est peint avec la
+# police Arial-BoldMT ». Le gras, l'italique, la taille, la couleur, le centrage
+# et le soulignement doivent donc être DÉDUITS de la façon dont la page est
+# peinte. Le soulignement, en particulier, n'est pas une propriété du texte mais
+# un TRAIT dessiné dessous : on le retrouve par la géométrie, en rapprochant les
+# traits horizontaux du texte qui passe juste au-dessus.
 #
 # On ne remplace pas pour autant l'extraction de texte existante : elle reste
 # maîtresse du découpage en lignes et de l'espacement, que pypdf calcule mieux
@@ -1093,6 +1163,39 @@ def _from_rtf(data):
 _MOTS_GRAS = ("bold", "black", "heavy", "semibold", "demibold")
 _MOTS_ITALIQUE = ("italic", "oblique")
 MAX_MORCEAUX_PDF = 20000  # borne de coût sur un PDF pathologique
+# Largeur approximative d'un signe, en fraction de la taille de police. Sert
+# UNIQUEMENT à situer un trait de soulignement dans une ligne, et le résultat est
+# ensuite recalé sur les limites de mots — un mot n'est jamais souligné à moitié.
+#
+# Une moyenne unique ne suffisait pas : elle se trompait de deux à cinq signes,
+# c'est-à-dire d'un mot entier une fois recalée. Distinguer les signes étroits des
+# larges ramène l'erreur à un signe au plus, ce que le recalage absorbe.
+_CHASSE_ETROITE = set(" ijltfI.,:;!'|()[]/-")
+_CHASSE_LARGE = set("mwMW@")
+
+
+def _chasse(c):
+    if c in _CHASSE_ETROITE:
+        return 0.28
+    if c in _CHASSE_LARGE:
+        return 0.85
+    if c.isupper():
+        return 0.70
+    if c.isdigit():
+        return 0.56
+    return 0.53
+
+
+def _indice_a_la_distance(texte, distance, taille):
+    """Indice du signe atteint après une distance donnée depuis le début de la ligne."""
+    if taille <= 0:
+        return 0
+    cumul = 0.0
+    for i, c in enumerate(texte):
+        if cumul * taille >= distance:
+            return i
+        cumul += _chasse(c)
+    return len(texte)
 
 
 def _police_styles(nom):
@@ -1128,29 +1231,75 @@ def _couleur_operateur(op, args):
     return _couleur_palette("%02x%02x%02x" % octets)
 
 
+def _matrice(m):
+    """Une matrice PDF utilisable, ou l'identité si elle est absente ou illisible."""
+    try:
+        vals = [float(x) for x in m]
+        return vals if len(vals) >= 6 else [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+    except (TypeError, ValueError):
+        return [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+
+
+def _point_page(cm, x, y):
+    """Un point exprimé dans le repère courant, ramené au repère de la page.
+
+    Sans ce passage, tout ce qui suit est faux sur la plupart des vrais PDF : Word
+    et LibreOffice ne déplacent pas le curseur de texte, ils déplacent le REPÈRE.
+    Deux lignes différentes portent alors exactement la même position de texte, et
+    tout le document passerait pour une seule ligne.
+    """
+    return (x * cm[0] + y * cm[2] + cm[4], x * cm[1] + y * cm[3] + cm[5])
+
+
+def _echelle(cm):
+    """Facteur d'agrandissement du repère courant (1 s'il ne fait que déplacer)."""
+    aire = abs(cm[0] * cm[3] - cm[1] * cm[2])
+    return aire**0.5 if aire > 0 else 1.0
+
+
 def _pdf_morceaux(page):
-    """Texte de la page, et les morceaux observés pendant sa lecture."""
-    morceaux = []
-    etat = {"couleur": None}
+    """Texte de la page, morceaux de texte observés, et traits horizontaux dessinés."""
+    morceaux, traits = [], []
+    etat = {"couleur": None, "point": None}
 
     def avant_operateur(op, args, cm, tm):
         nom = op.decode("ascii", "replace") if isinstance(op, bytes) else str(op)
         if nom in ("rg", "g", "k"):
             etat["couleur"] = _couleur_operateur(nom, args)
+            return
+        if nom not in ("m", "l", "re"):
+            return
+        matrice = _matrice(cm)
+        try:
+            vals = [float(a) for a in args]
+        except (TypeError, ValueError):
+            return
+        if nom == "m" and len(vals) >= 2:
+            etat["point"] = _point_page(matrice, vals[0], vals[1])
+        elif nom == "l" and len(vals) >= 2 and etat["point"]:
+            x1, y1 = etat["point"]
+            x2, y2 = _point_page(matrice, vals[0], vals[1])
+            if abs(y2 - y1) < 1.2:  # un soulignement est horizontal
+                traits.append((min(x1, x2), max(x1, x2), (y1 + y2) / 2.0))
+            etat["point"] = (x2, y2)
+        elif nom == "re" and len(vals) >= 4:
+            # Beaucoup de logiciels soulignent avec un rectangle très plat.
+            x, y, larg, haut = vals[:4]
+            if abs(haut) * _echelle(matrice) < 3.0 and abs(larg) > 1.0:
+                xa, ya = _point_page(matrice, x, y)
+                xb, _yb = _point_page(matrice, x + larg, y)
+                traits.append((min(xa, xb), max(xa, xb), ya))
 
     def a_chaque_texte(texte, cm, tm, police, taille):
         if not texte or not texte.strip() or len(morceaux) >= MAX_MORCEAUX_PDF:
             return
-        nom = police.get("/BaseFont") if hasattr(police, "get") else None
-        try:
-            x, y = float(tm[4]), float(tm[5])
-        except (TypeError, ValueError, IndexError):
-            x = y = 0.0
+        matrice, tmat = _matrice(cm), _matrice(tm)
+        x, y = _point_page(matrice, tmat[4], tmat[5])
         morceaux.append(
             {
                 "texte": texte,
-                "police": nom,
-                "taille": float(taille or 0),
+                "police": police.get("/BaseFont") if hasattr(police, "get") else None,
+                "taille": float(taille or 0) * _echelle(matrice) * _echelle(tmat),
                 "x": x,
                 "y": y,
                 "couleur": etat["couleur"],
@@ -1158,7 +1307,7 @@ def _pdf_morceaux(page):
         )
 
     texte = page.extract_text(visitor_text=a_chaque_texte, visitor_operand_before=avant_operateur)
-    return texte, morceaux
+    return texte, morceaux, traits
 
 
 def _pdf_lignes(morceaux):
@@ -1172,6 +1321,25 @@ def _pdf_lignes(morceaux):
     if courante:
         lignes.append(courante)
     return lignes
+
+
+def _limites_de_mots(texte):
+    """Positions où un mot commence ou finit — les seules coupures acceptables."""
+    bornes = {0, len(texte)}
+    for m in re.finditer(r"\S+", texte):
+        bornes.add(m.start())
+        bornes.add(m.end())
+    return sorted(bornes)
+
+
+def _recale_sur_un_mot(bornes, approx):
+    """Ramène une position approximative sur la limite de mot la plus proche.
+
+    L'estimation en largeur de signes se trompe de deux ou trois caractères ; un
+    soulignement qui commencerait au milieu d'un mot se verrait immédiatement. Les
+    documents, eux, soulignent des mots entiers.
+    """
+    return min(bornes, key=lambda b: abs(b - approx))
 
 
 def _pdf_alignement(ligne, marge_corps, largeur_page):
@@ -1197,8 +1365,58 @@ def _pdf_alignement(ligne, marge_corps, largeur_page):
     return None
 
 
+def _pdf_souligne(ligne, traits, texte_ligne, decalage):
+    """Plages de caractères soulignées, en indices du TEXTE PRODUIT.
+
+    On raisonne sur la ligne telle que l'extraction l'a rendue, et non sur le
+    recollage des morceaux : pypdf insère des espaces entre eux, et travailler sur
+    le recollage décalait les indices de plusieurs signes — donc d'un mot entier
+    une fois recalé.
+    """
+    if not texte_ligne.strip() or not traits:
+        return []
+    base = ligne[0]["y"]
+    taille = max((m["taille"] for m in ligne), default=12.0) or 12.0
+    debut_x = min(m["x"] for m in ligne)
+    if taille <= 0:
+        return []
+    bornes = _limites_de_mots(texte_ligne)
+    plages = []
+    for x0, x1, y in traits:
+        # Le trait doit passer JUSTE sous la ligne : plus bas, c'est un cadre ou un
+        # filet de mise en page, et souligner tout un paragraphe serait pire que rien.
+        if not (base - 0.45 * taille <= y <= base + 0.05 * taille):
+            continue
+        i = _recale_sur_un_mot(bornes, _indice_a_la_distance(texte_ligne, x0 - debut_x, taille))
+        j = _recale_sur_un_mot(bornes, _indice_a_la_distance(texte_ligne, x1 - debut_x, taille))
+        if j > i:
+            plages.append((decalage + i, decalage + j))
+    return plages
+
+
+def _decoupe_selon_souligne(texte, depart, plages):
+    """Découpe un morceau en sous-morceaux selon ce qui y est souligné.
+
+    depart est la position du morceau dans le texte produit ; les plages sont dans
+    le même repère. Un seul repère pour tout le monde, sinon la mise en forme tombe
+    à côté des mots qu'elle vise.
+    """
+    coupes = {0, len(texte)}
+    for i, j in plages:
+        for b in (i - depart, j - depart):
+            if 0 < b < len(texte):
+                coupes.add(b)
+    bouts = []
+    ordonnees = sorted(coupes)
+    # strict=False assume : les deux listes different d'un element, par construction.
+    for a, b in zip(ordonnees, ordonnees[1:], strict=False):
+        milieu = depart + (a + b) / 2.0
+        bouts.append((texte[a:b], any(i <= milieu <= j for i, j in plages)))
+    return bouts
+
+
 def _pdf_page_segments(page, corps):
-    texte, morceaux = _pdf_morceaux(page)
+    texte, morceaux, traits = _pdf_morceaux(page)
     if not texte or not morceaux:
         return [(texte or "", {})]
     try:
@@ -1209,8 +1427,25 @@ def _pdf_page_segments(page, corps):
     lignes = _pdf_lignes(morceaux)
     marge_corps = _mode_des_tailles([round(li[0]["x"]) for li in lignes], 0)
 
+    # 1. Situer chaque morceau dans le texte produit, une fois pour toutes.
+    pos = 0
     for ligne in lignes:
+        for m in ligne:
+            noyau = m["texte"].strip()
+            m["noyau"] = noyau
+            m["ou"] = texte.find(noyau, pos) if noyau else -1
+            if m["ou"] >= 0:
+                pos = m["ou"] + len(noyau)
+
+    # 2. Ce qui appartient à la LIGNE : alignement, niveau de titre, soulignement.
+    for ligne in lignes:
+        places = [m for m in ligne if m["ou"] >= 0]
         aligne = _pdf_alignement(ligne, marge_corps, largeur_page)
+        souligne = []
+        if places:
+            debut = places[0]["ou"]
+            fin = places[-1]["ou"] + len(places[-1]["noyau"])
+            souligne = _pdf_souligne(ligne, traits, texte[debut:fin], debut)
         # Une ligne ENTIÈREMENT plus grosse que le corps est un titre, et non un
         # passage agrandi : faute de styles, c'est ainsi qu'un PDF écrit ses titres.
         entiere = min(m["taille"] for m in ligne)
@@ -1230,23 +1465,24 @@ def _pdf_page_segments(page, corps):
             if aligne:
                 styles["align"] = aligne
             m["styles"] = styles
+            m["souligne"] = souligne
         ligne[0]["niveau"] = niveau
 
-    # Repose les morceaux sur le texte produit par pypdf, dans l'ordre d'arrivée.
+    # 3. Reposer les morceaux sur le texte produit, dans l'ordre d'arrivée.
     segments = []
     pos = 0
     for ligne in lignes:
         for rang, m in enumerate(ligne):
-            noyau = m["texte"].strip()
-            trouve = texte.find(noyau, pos) if noyau else -1
-            if trouve < 0:
-                continue  # morceau que l'extraction n'a pas restitué tel quel : on l'ignore
-            if trouve > pos:
-                segments.append((texte[pos:trouve], {}))
+            if m["ou"] < 0:
+                continue  # morceau que l'extraction n'a pas restitué tel quel
+            if m["ou"] > pos:
+                segments.append((texte[pos : m["ou"]], {}))
             if rang == 0 and ligne[0].get("niveau"):
                 segments.append(("#" * ligne[0]["niveau"] + " ", {}))
-            pos = trouve + len(noyau)
-            segments.append((texte[trouve:pos], m["styles"]))
+            for bout, souligne in _decoupe_selon_souligne(m["noyau"], m["ou"], m["souligne"]):
+                if bout:
+                    segments.append((bout, dict(m["styles"], u=True) if souligne else m["styles"]))
+            pos = m["ou"] + len(m["noyau"])
     if pos < len(texte):
         segments.append((texte[pos:], {}))
     return segments
@@ -1372,6 +1608,9 @@ _SEGMENTEURS = {
     ".odt": _odt_segments,
     ".pdf": _pdf_segments,
     ".rtf": _rtf_segments,
+    ".txt": _texte_segments,
+    ".md": _texte_segments,
+    ".text": _texte_segments,
 }
 
 

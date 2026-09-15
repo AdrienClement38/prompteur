@@ -482,26 +482,32 @@ change pas encore**. Le titre devient automatiquement le nom du fichier, **sans 
 **Formats acceptés** (c'est écrit sous les deux boutons) : Word (`.docx`, `.doc`), PDF,
 LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 
-> 💡 **Vos documents arrivent avec leur mise en forme.** Ce n'est plus réservé au
-> Word : le PDF et le RTF aussi.
+> 💡 **Vos documents arrivent avec leur mise en forme.** Tous, désormais.
 >
-> | Ce que vous aviez | Word `.docx` · LibreOffice `.odt` | PDF | RTF | Texte `.txt` |
+> | Ce que vous aviez | Word · LibreOffice | PDF | RTF | Texte `.txt` |
 > |---|---|---|---|---|
-> | Titres | ✅ | ✅ | ✅ | ❌ |
-> | **Gras**, *italique* | ✅ | ✅ | ✅ | ❌ |
-> | Souligné | ✅ | ❌ | ✅ | ❌ |
-> | Texte en couleur | ✅ | ✅ | ✅ | ❌ |
-> | Passage plus gros ou plus petit | ✅ | ✅ | ✅ | ❌ |
-> | Paragraphe centré, à droite | ✅ | ✅ | ✅ | ❌ |
-> | Listes à puces | ✅ | ✅ | ✅ | ❌ |
+> | Titres | ✅ | ✅ | ✅ | ✅ |
+> | **Gras**, *italique* | ✅ | ✅ | ✅ | ✅ |
+> | Souligné | ✅ | ✅ | ✅ | ✅ |
+> | Texte en couleur | ✅ | ✅ | ✅ | — |
+> | Plus gros ou plus petit | ✅ | ✅ | ✅ | ✅ |
+> | Paragraphe centré, à droite | ✅ | ✅ | ✅ | — |
+> | Listes à puces | ✅ | ✅ | ✅ | ✅ |
 >
-> **Le `.txt` n'a rien à conserver** : un fichier texte simple ne contient aucune mise en
-> forme, c'est sa définition. Vous pouvez en revanche y écrire vos titres à la main avec
-> des dièses (voir plus bas), comme partout ailleurs.
+> **Le fichier texte simple n'a pas de mise en forme à conserver** — c'est sa définition.
+> Il a en revanche des signes qui se tapent au clavier, et le boîtier les comprend :
+> `# Un titre`, `- une puce`, `**en gras**`, `*en italique*`, `_souligné_`. Ce sont les
+> mêmes que vous pouvez taper directement dans la zone de saisie ; la télécommande les
+> rappelle sous les boutons de mise en forme, dans **« Écrire la mise en forme au
+> clavier »**.
 >
-> **La seule chose qu'un PDF perd, c'est le souligné.** Dans un PDF, le souligné n'est pas
-> une propriété du texte : c'est un simple trait dessiné en dessous. Il n'y a rien à
-> récupérer. Le gras, lui, passe très bien.
+> **Rien ne se déclenche par accident** dans un texte simple : une étoile isolée, une
+> multiplication (`3 * 4`), un nom de fichier (`mon_texte.txt`) ou une adresse internet
+> restent tels quels. Il faut une paire bien fermée, sur une même ligne, collée au mot.
+>
+> **La couleur et le centrage n'ont pas de signe à taper, et c'est volontaire** : les
+> pastilles de la télécommande les posent en un clic, sans rien à retenir. Un document
+> Word, PDF ou RTF, lui, apporte les siens.
 >
 > **Vos couleurs sont ramenées aux cinq du prompteur.** Votre rouge reste rouge, mais un
 > bleu marine devient un bleu qui se voit : sur fond noir, recopier votre couleur exacte
@@ -514,6 +520,10 @@ LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 > **Ce qui n'est repris dans aucun format** : les images, les tableaux, les polices de
 > caractères et les retraits. Ce sont des éléments de mise en page ; ils n'ont pas de sens
 > sur un texte qui défile.
+>
+> ⚠️ **Sur un très long document**, la mise en forme est conservée sur les premiers
+> passages seulement, et le boîtier vous le dit au moment de l'import. Votre texte, lui,
+> est complet.
 
 > ⚠️ **PIÈGES DES DOCUMENTS — à vérifier la veille, jamais le jour J.**
 > Dans tous les cas ci-dessous, la parade est la même : **repartir du `.docx` d'origine, ou
