@@ -20,6 +20,9 @@ WIFI_SSID="Prompteur"
 # On évite ainsi un secret par défaut partagé : le WPA2 est la seule barrière de l'API.
 WIFI_PASS="${WIFI_PASS:-$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 16)}"
 PORT="5000"
+# Nom du boitier sur le reseau local : « prompteur.local » depuis un PC relie
+# a la meme box. Modifiable : BOX_NAME=autre ./install/setup.sh
+BOX_NAME="${BOX_NAME:-prompteur}"
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 RUN_USER="$(whoami)"
@@ -147,6 +150,37 @@ else
   echo "    /!\\ nft introuvable : le port $PORT reste accessible sur toutes les interfaces."
 fi
 
+# --- 3c. Accès à distance (SSH) ----------------------------------------------
+# Raspberry Pi OS livre SSH DÉSACTIVÉ. C'est la seule raison pour laquelle la
+# première tentative de connexion au boîtier avait échoué : le pare-feu posé
+# juste au-dessus ne ferme que le port du prompteur, jamais le port 22.
+echo "==> Accès à distance : SSH + nom réseau du boîtier…"
+sudo apt-get install -y openssh-server avahi-daemon >/dev/null 2>&1 || true
+# Le service s'appelle « ssh » sur Debian, « sshd » ailleurs : on tente les deux.
+sudo systemctl enable --now ssh >/dev/null 2>&1 ||
+  sudo systemctl enable --now sshd >/dev/null 2>&1 || true
+sudo systemctl enable --now avahi-daemon >/dev/null 2>&1 || true
+
+# Nom stable sur le réseau. L'adresse distribuée par la box change d'un
+# rebranchement à l'autre ; le nom, lui, ne change pas — et « prompteur.local »
+# se résout depuis Windows, macOS et Linux sans rien installer.
+ANCIEN_NOM="$(hostname)"
+if [ "$ANCIEN_NOM" != "$BOX_NAME" ]; then
+  sudo hostnamectl set-hostname "$BOX_NAME" >/dev/null 2>&1 || true
+  # /etc/hosts doit suivre le changement. Sinon le nom de la machine ne se résout
+  # plus localement, et CHAQUE « sudo » attend dix secondes avant de rendre la
+  # main — une lenteur inexplicable qu'on met des heures à rattacher à sa cause.
+  sudo sed -i "s/\b${ANCIEN_NOM}\b/${BOX_NAME}/g" /etc/hosts >/dev/null 2>&1 || true
+  echo "    Nom du boîtier : $ANCIEN_NOM -> $BOX_NAME"
+fi
+
+if systemctl is-active --quiet ssh 2>/dev/null || systemctl is-active --quiet sshd 2>/dev/null; then
+  echo "    SSH actif. Connexion : ssh $RUN_USER@$BOX_NAME.local"
+else
+  echo "    /!\\ SSH n'a pas démarré. Active-le à la main : sudo raspi-config"
+  echo "        (Interface Options -> SSH -> Yes), puis relance ce script."
+fi
+
 # --- 4. Kiosque : Chromium plein écran au démarrage --------------------------
 echo "==> Configuration du démarrage automatique de l'écran (kiosque)…"
 KIOSK="$PROJECT_DIR/install/kiosk.sh"
@@ -208,6 +242,8 @@ echo "  • Serveur     : http://localhost:$PORT/display (écran)"
 echo "  • Téléphone   : connecte-toi au WiFi « $WIFI_SSID »"
 echo "                  (mot de passe : $WIFI_PASS)"
 echo "                  puis ouvre http://10.42.0.1:$PORT"
+echo "  • À distance  : ssh $RUN_USER@$BOX_NAME.local   (boîtier relié en Ethernet)"
+echo "                  ssh $RUN_USER@10.42.0.1       (via le WiFi du boîtier)"
 echo "  • Icône        : « Le Prompteur » sur le bureau (pour le relancer"
 echo "                   après l'avoir fermé, sans redémarrer)"
 echo "  • Redémarre le Raspberry Pi pour tout activer :  sudo reboot"

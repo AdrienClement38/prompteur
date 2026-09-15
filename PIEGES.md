@@ -65,6 +65,31 @@ l'installation sur une invite que personne n'attend.
 Sur un système en français, c'est **« Bureau »**.
 **Parade :** `xdg-user-dir DESKTOP`, avec repli sur les deux noms.
 
+### 🔴 SSH est désactivé d'usine sur Raspberry Pi OS
+La première tentative de connexion au boîtier a échoué, et on a d'abord soupçonné le
+câble, puis le pare-feu du projet. Ni l'un ni l'autre : **le service SSH n'était tout
+simplement pas démarré**, comme sur toute installation Raspberry Pi OS. Le pare-feu, lui,
+ne ferme que le port du prompteur — il laisse le port 22 tranquille, et l'a toujours fait.
+**Parade :** `install/setup.sh` l'active explicitement. Et quand un accès réseau échoue,
+vérifier d'abord que le service écoute, avant de soupçonner ce qui est entre les deux.
+
+### Changer le nom de la machine sans changer `/etc/hosts`
+`hostnamectl set-hostname` renomme la machine, mais laisse `/etc/hosts` pointer sur
+l'ancien nom. Le système ne sait alors plus résoudre son propre nom, et **chaque `sudo`
+attend dix secondes** avant de rendre la main. Rien n'échoue, rien ne s'affiche : la
+machine devient seulement inexplicablement lente, et on cherche du côté du matériel.
+**Parade :** les deux vont ensemble, toujours. Le script remplace l'ancien nom dans
+`/etc/hosts` dans la foulée.
+
+### Une adresse distribuée par une box n'est pas une adresse
+Documenter « connecte-toi à 192.168.1.42 » revient à documenter une valeur qui change au
+prochain rebranchement. L'utilisateur suit la procédure à la lettre, et elle ne marche
+plus.
+**Parade :** un nom, pas un nombre. `avahi-daemon` + un nom de machine fixe donnent
+`prompteur.local`, qui se résout sans rien installer depuis Windows, macOS et Linux. Et
+pour le cas où même cela échoue, le WiFi du boîtier offre une adresse qui, elle, ne
+dépend de personne : `10.42.0.1`.
+
 ### raspi-config change de présentation
 Les versions récentes scindent « Boot / Auto Login » en **deux lignes distinctes**.
 N'en faire qu'une laisse le boîtier sur un écran de connexion, et le prompteur ne

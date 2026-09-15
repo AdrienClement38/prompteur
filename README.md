@@ -126,6 +126,11 @@ vérifier qu'il fonctionne. **Python 3** doit y être installé.
 > ([PDF](Ecran-Tactile-Prompteur.pdf)) — les deux montages possibles, et comment
 > savoir lequel s'applique.
 
+> 🔑 **Prendre la main sur le boîtier depuis un ordinateur** :
+> **[ACCES-A-DISTANCE.md](ACCES-A-DISTANCE.md)** ([PDF](Acces-A-Distance-Prompteur.pdf))
+> — SSH par le WiFi du boîtier ou par le câble Ethernet. Raspberry Pi OS livre SSH
+> **désactivé** : `install/setup.sh` l'active et pose le nom `prompteur.local`.
+
 1. **Préparez la carte SD** avec *Raspberry Pi Imager* → « Raspberry Pi OS
    (64-bit) », la version **avec bureau**. Notez le nom d'utilisateur et le mot de
    passe choisis.

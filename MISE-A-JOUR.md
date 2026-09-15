@@ -86,11 +86,16 @@ l'aveugle.)*
 
 ---
 
-## Étape 4 — Poser l'icône sur le bureau *(recommandé)*
+## Étape 4 — Poser l'icône et ouvrir l'accès à distance
 
-Cette étape installe l'**icône « Le Prompteur »** sur le bureau et renforce la
-sécurité du boîtier. Elle n'est pas indispensable au fonctionnement, mais c'est
-elle qui vous permettra de rouvrir le prompteur d'un double-clic.
+Cette étape installe l'**icône « Le Prompteur »** sur le bureau, renforce la
+sécurité du boîtier, et **active l'accès à distance (SSH)** — qui était jusqu'ici
+impossible, Raspberry Pi OS livrant SSH désactivé. Elle donne aussi au boîtier un
+nom stable sur le réseau : **`prompteur`**.
+
+Le prompteur fonctionne sans, mais c'est cette étape qui vous permettra de
+rouvrir le prompteur d'un double-clic, et de prendre la main sur le boîtier
+depuis votre ordinateur sans vous déplacer *(voir `ACCES-A-DISTANCE.md`)*.
 
 > **🛑 LE PIÈGE À NE PAS MANQUER.** Cette commande **recrée le réseau WiFi du
 > boîtier**. Si vous oubliez d'y mettre votre mot de passe actuel, **le boîtier
@@ -145,6 +150,8 @@ Cochez au fur et à mesure. Comptez cinq minutes.
 - [ ] Le bouton **« Écran principal »** ramène à l'écran de lecture
 - [ ] Sur le bureau du Raspberry, l'icône **« Le Prompteur »** est présente
       *(seulement si vous avez fait l'étape 4)*
+- [ ] Depuis votre ordinateur, `ssh nom@prompteur.local` ouvre une session sur le
+      boîtier *(voir `ACCES-A-DISTANCE.md`)*
 - [ ] Depuis le téléphone connecté au WiFi **Prompteur**, la page
       `http://10.42.0.1:5000` s'ouvre normalement
 - [ ] Dans la zone de texte, **sélectionnez quelques mots et appuyez sur G** :
@@ -155,7 +162,7 @@ Cochez au fur et à mesure. Comptez cinq minutes.
 - [ ] Onglet **Réglages** → carte **Pédales** : il y a maintenant **trois modes**
       (Maintien, Impulsion, Dynamique)
 
-Si les onze cases sont cochées, la mise à jour est réussie.
+Si les douze cases sont cochées, la mise à jour est réussie.
 
 ---
 
@@ -307,6 +314,7 @@ rien remettre en cause.
 
 ---
 
-*Voir aussi : `MODE-EMPLOI.md` (usage quotidien, à jour de toutes ces
+*Voir aussi : `ACCES-A-DISTANCE.md` (prendre la main sur le boîtier depuis votre
+ordinateur), `MODE-EMPLOI.md` (usage quotidien, à jour de toutes ces
 nouveautés), `SAUVEGARDE-ET-RESTAURATION.md` (revenir en arrière), et
 `MISE-EN-ROUTE.md` (installation complète depuis zéro).*
