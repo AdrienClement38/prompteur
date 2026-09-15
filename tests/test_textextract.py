@@ -460,6 +460,48 @@ def test_txt_ne_se_declenche_pas_sur_un_texte_ordinaire():
         assert plages == [], ligne
 
 
+def test_txt_couleurs_nommees_et_alignement():
+    """La couleur et l'alignement n'ont aucune convention etablie en texte simple :
+    on les ecrit en toutes lettres entre crochets, dans l'ordre des pastilles."""
+    source = "[centre] Le titre du sujet\n[droite] Signature\nUne [rouge]alerte[/rouge] et un [bleu]rappel[/bleu].\n"
+    texte, plages = tx.extract_rich("n.txt", source.encode("utf-8"))
+    assert texte.split("\n") == ["Le titre du sujet", "Signature", "Une alerte et un rappel."]
+    trouve = {texte[p["start"] : p["end"]]: p for p in plages}
+    assert trouve["Le titre du sujet"]["align"] == "center"
+    assert trouve["Signature"]["align"] == "right"
+    assert trouve["alerte"]["color"] == 2
+    assert trouve["rappel"]["color"] == 4
+
+
+def test_txt_les_cinq_couleurs_suivent_les_pastilles():
+    for nom, numero in tx.COULEURS_NOMMEES.items():
+        texte, plages = tx.extract_rich("c.txt", ("Un [%s]mot[/%s] ici." % (nom, nom)).encode("utf-8"))
+        assert texte == "Un mot ici.", nom
+        assert _seule(plages)["color"] == numero, nom
+
+
+def test_txt_marqueurs_combines():
+    """« **[rouge]urgent[/rouge]** » doit AJOUTER les styles, pas les remplacer."""
+    texte, plages = tx.extract_rich("k.txt", "Voici **[rouge]urgent[/rouge]** ici.".encode("utf-8"))
+    assert texte == "Voici urgent ici."
+    p = _seule(plages)
+    assert texte[p["start"] : p["end"]] == "urgent"
+    assert p.get("b") is True and p.get("color") == 2
+
+
+def test_txt_un_crochet_qui_n_est_pas_un_marqueur_ne_fait_rien():
+    """Seuls les mots de la liste comptent : un crochet ordinaire doit ressortir tel quel."""
+    for ligne in (
+        "Il faut [voir encadre] avant de lire.",
+        "Une note [1] et une autre [2].",
+        "Un [rouge sang] qui n'est pas un marqueur.",
+        "Ouvert [rouge] mais jamais ferme.",
+    ):
+        texte, plages = tx.extract_rich("q.txt", ligne.encode("utf-8"))
+        assert texte == ligne, ligne
+        assert plages == [], ligne
+
+
 def test_txt_et_md_suivent_les_memes_conventions():
     for nom in ("note.txt", "note.md", "note.text"):
         texte, plages = tx.extract_rich(nom, "Du **gras** ici.".encode("utf-8"))

@@ -842,25 +842,34 @@ def _from_odt(data):
 # début de ligne pour une puce. Ce sont elles qu'on lit ici — et comme ce sont des
 # signes qui se tapent au clavier, elles marchent aussi dans la zone de saisie.
 #
+# La couleur et l'alignement n'ont, eux, aucune convention établie. Plutôt que de
+# laisser ces deux cases vides, on les écrit en toutes lettres entre crochets :
+# « [rouge]…[/rouge] », « [centre] … ». C'est plus long que deux astérisques, et
+# c'est voulu — un marqueur nommé se relit six mois plus tard sans rien avoir à
+# retenir, et il ne peut pas se déclencher par accident : seuls ces mots-là
+# comptent, « [voir encadré] » ne produit rien.
+#
 # DEUX PRÉCAUTIONS, parce qu'une syntaxe qui se déclenche toute seule peut abîmer
 # un texte existant :
 #
-# 1. Seules les paires SOIGNÉES comptent. Le marqueur doit ouvrir contre un signe
-#    visible et fermer contre un signe visible, au sein d'une même ligne. Un
-#    astérisque isolé (un appel de note), un souligné au milieu d'un identifiant
-#    (« nom_du_fichier ») ou une multiplication ne déclenchent rien.
+# 1. Seules les paires SOIGNÉES comptent. Pour le gras, l'italique et le souligné,
+#    le marqueur doit ouvrir contre un signe visible et fermer contre un signe
+#    visible, au sein d'une même ligne. Un astérisque isolé (un appel de note), un
+#    souligné au milieu d'un identifiant (« nom_du_fichier ») ou une
+#    multiplication ne déclenchent rien.
 # 2. La conversion n'a lieu qu'à l'IMPORT d'un fichier. Un texte déjà enregistré
 #    dans la bibliothèque est relu tel quel, avec ses marques rangées à côté : il
 #    ne peut donc pas changer d'aspect des mois plus tard, sous les yeux de
 #    quelqu'un qui n'a rien demandé.
-#
-# La couleur et le centrage, eux, n'ont pas de convention en texte simple. Leur en
-# inventer une obligerait à apprendre un langage pour faire moins bien que les
-# boutons de la télécommande, qui les posent en un clic.
 _OUVRANTS = "([{«“\"'"
 _FERMANTS = ".,;:!?…)]}»”\"'"
-_RE_TXT_MARQUES = re.compile(
-    r"(?:(?<=^)|(?<=[\s" + re.escape(_OUVRANTS) + r"]))"
+# Les cinq couleurs du prompteur, nommées. L'ordre suit les pastilles de la
+# télécommande, de gauche à droite.
+COULEURS_NOMMEES = {"jaune": 1, "rouge": 2, "vert": 3, "bleu": 4, "gris": 5}
+_ALIGNEMENTS_NOMMES = {"centre": "center", "droite": "right"}
+_RE_TXT_INLINE = re.compile(
+    r"\[(?P<couleur>" + "|".join(COULEURS_NOMMEES) + r")\](?P<ctexte>.+?)\[/(?P=couleur)\]"
+    r"|(?:(?<=^)|(?<=[\s" + re.escape(_OUVRANTS) + r"]))"
     r"(?:"
     r"\*\*(?P<b>\S(?:[^*\n]*\S)?)\*\*"
     r"|\*(?P<i>\S(?:[^*\n]*\S)?)\*"
@@ -869,26 +878,54 @@ _RE_TXT_MARQUES = re.compile(
     r"(?=$|[\s" + re.escape(_FERMANTS) + r"])"
 )
 _RE_TXT_PUCE = re.compile(r"^[ \t]*[-*+•][ \t]+(?=\S)")
+_RE_TXT_ALIGNE = re.compile(r"^[ \t]*\[(" + "|".join(_ALIGNEMENTS_NOMMES) + r")\][ \t]*", re.I)
+PROFONDEUR_MAX_TXT = 6  # imbrication des marqueurs : au-delà, c'est du bruit
+
+
+def _txt_inline_segments(texte, herites, profondeur=0):
+    """Segments d'un fragment de ligne, marqueurs imbriqués compris.
+
+    L'appel récursif est ce qui permet d'écrire « **[rouge]urgent[/rouge]** » :
+    chaque marqueur AJOUTE son style à ceux qui l'entourent, au lieu de les
+    remplacer.
+    """
+    if not texte:
+        return []
+    if profondeur >= PROFONDEUR_MAX_TXT:
+        return [(texte, dict(herites))]
+    segments = []
+    pos = 0
+    for m in _RE_TXT_INLINE.finditer(texte):
+        if m.start() < pos:
+            continue
+        if m.group("couleur"):
+            interieur, style = m.group("ctexte"), {"color": COULEURS_NOMMEES[m.group("couleur")]}
+        else:
+            cle = next(c for c in ("b", "i", "u") if m.group(c) is not None)
+            interieur, style = m.group(cle), {cle: True}
+        if m.start() > pos:
+            segments.append((texte[pos : m.start()], dict(herites)))
+        segments.extend(_txt_inline_segments(interieur, dict(herites, **style), profondeur + 1))
+        pos = m.end()
+    if pos < len(texte):
+        segments.append((texte[pos:], dict(herites)))
+    return segments
 
 
 def _texte_ligne_segments(ligne):
     """Segments d'une ligne de texte simple, marqueurs d'écriture compris."""
+    aligne = None
+    m = _RE_TXT_ALIGNE.match(ligne)
+    if m:
+        aligne = _ALIGNEMENTS_NOMMES[m.group(1).lower()]
+        ligne = ligne[m.end() :]
     puce = bool(_RE_TXT_PUCE.match(ligne))
     if puce:
         ligne = _RE_TXT_PUCE.sub("", ligne, count=1)
-    segments = []
-    pos = 0
-    for m in _RE_TXT_MARQUES.finditer(ligne):
-        cle = next(c for c in ("b", "i", "u") if m.group(c) is not None)
-        if m.start() > pos:
-            segments.append((ligne[pos : m.start()], {}))
-        segments.append((m.group(cle), {cle: True}))
-        pos = m.end()
-    if pos < len(ligne):
-        segments.append((ligne[pos:], {}))
+    segments = [(t, s) for t, s in _txt_inline_segments(ligne, {}) if t]
     # Un titre reste écrit tel quel : les dièses SONT la convention, ici comme
     # dans un document importé, et l'écran les traduit lui-même.
-    return _titrer_segments(0, segments, puce, None)
+    return _titrer_segments(0, segments, puce, aligne)
 
 
 def _texte_segments(data):

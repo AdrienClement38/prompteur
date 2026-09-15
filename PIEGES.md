@@ -346,6 +346,26 @@ d'octets illisibles, avec un **code 200** pour dire que tout allait bien.
 les chemins d'entrée, plutôt que d'être recopiée dans chaque appelant. Un test
 vérifie aussi l'inverse : qu'aucun format promis au client n'est refusé.
 
+### Un marqueur bavard vaut mieux qu'un marqueur malin
+Pour la couleur et l'alignement en texte simple, aucune convention n'existe — il fallait
+en inventer une. La tentation est de faire court : `==texte==`, `->texte<-`. Deux défauts,
+et le second est le vrai : personne ne se souvient de ce que signifiait `==` six mois plus
+tard, et un signe court se déclenche par accident au milieu d'un texte ordinaire.
+**Parade :** écrire le marqueur **en toutes lettres** — `[rouge]…[/rouge]`, `[centre] `.
+C'est plus long à taper, et cette longueur est la fonctionnalité : elle rend le marqueur
+relisible sans mode d'emploi, et impossible à produire par hasard. Seuls les mots de la
+liste comptent, donc `[voir encadré]` et `[1]` traversent intacts.
+
+### J'avais écarté ce qui n'avait pas de convention, au lieu d'en créer une
+Deux cases du tableau des formats sont restées vides une version de trop, avec une
+justification qui tenait debout : inventer une syntaxe obligerait à apprendre un langage
+pour faire moins bien que les boutons de la télécommande. C'est vrai pour un passage
+isolé, et faux pour quelqu'un qui prépare son texte ailleurs, dans un simple fichier — le
+cas même où le boîtier n'a aucun bouton à offrir.
+**Parade :** distinguer « ça n'a pas de sens » de « ça n'en a pas dans l'usage auquel je
+pensais ». Une case vide dans un tableau demande une raison qui tient pour TOUS les
+usages, pas seulement pour celui qu'on a en tête en l'écrivant.
+
 ### 🔴 Une syntaxe qui se déclenche toute seule peut abîmer un texte existant
 Reconnaître `**gras**` dans un fichier texte rend service. Mais la même règle, appliquée
 sans précaution, transforme `3 * 4 = 12` en calcul mis en forme, `mon_fichier.txt` en mot

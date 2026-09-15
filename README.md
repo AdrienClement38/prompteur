@@ -330,9 +330,9 @@ pas. C'est aussi la forme que prennent les titres d'un document Word importé.
 > | Titres | ✅ par les styles | ✅ par la taille de la ligne | ✅ par la taille | ✅ `# ` `## ` `### ` |
 > | Gras, italique | ✅ | ✅ par le **nom de la police** | ✅ | ✅ `**gras**` `*italique*` |
 > | Souligné | ✅ | ✅ par la **géométrie du trait** | ✅ | ✅ `_souligné_` |
-> | Couleur du texte | ✅ | ✅ | ✅ | — *(la barre, en un clic)* |
+> | Couleur du texte | ✅ | ✅ | ✅ | ✅ `[rouge]…[/rouge]` |
 > | Plus gros / plus petit | ✅ | ✅ | ✅ | ✅ *(par les niveaux de titre)* |
-> | Centré, aligné à droite | ✅ | ✅ par la **position sur la page** | ✅ | — *(la barre, en un clic)* |
+> | Centré, aligné à droite | ✅ | ✅ par la **position sur la page** | ✅ | ✅ `[centre] ` `[droite] ` |
 > | Listes à puces | ✅ → « • » | ✅ | ✅ → « • » | ✅ `- ` → « • » |
 > | Images, tableaux, polices, retraits | ❌ | ❌ | ❌ | ❌ |
 >
@@ -363,9 +363,13 @@ pas. C'est aussi la forme que prennent les titres d'un document Word importé.
 > d'aspect des mois plus tard. Ainsi `3 * 4 = 12`, `mon_fichier.txt`, une note isolée `*`
 > ou une adresse `http://x/a_b_c` ressortent intacts.
 >
-> **Pourquoi pas de couleur en texte simple.** Il faudrait inventer un langage à apprendre
-> pour faire moins bien que les pastilles de la télécommande, qui la posent en un clic.
-> Même chose pour le centrage.
+> **La couleur et l'alignement s'écrivent en toutes lettres** — `[rouge]alerte[/rouge]`,
+> `[centre] `, `[droite] ` — parce qu'ils n'ont, eux, aucune convention établie. Les cinq
+> noms suivent l'ordre des pastilles : `jaune`, `rouge`, `vert`, `bleu`, `gris`. C'est plus
+> bavard que deux astérisques, et c'est voulu : un marqueur **nommé** se relit six mois plus
+> tard sans rien avoir à retenir, et il ne peut pas se déclencher par accident — seuls ces
+> mots-là comptent, `[voir encadré]` ou `[1]` ne produisent rien. Les marqueurs se
+> combinent : `**[rouge]très urgent[/rouge]**`.
 >
 > Le texte d'un PDF n'est **pas** reconstruit à partir des morceaux observés : l'extraction
 > existante reste maîtresse du découpage en lignes et de l'espacement, et la mise en forme

@@ -489,14 +489,15 @@ LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 > | Titres | ✅ | ✅ | ✅ | ✅ |
 > | **Gras**, *italique* | ✅ | ✅ | ✅ | ✅ |
 > | Souligné | ✅ | ✅ | ✅ | ✅ |
-> | Texte en couleur | ✅ | ✅ | ✅ | — |
+> | Texte en couleur | ✅ | ✅ | ✅ | ✅ |
 > | Plus gros ou plus petit | ✅ | ✅ | ✅ | ✅ |
-> | Paragraphe centré, à droite | ✅ | ✅ | ✅ | — |
+> | Paragraphe centré, à droite | ✅ | ✅ | ✅ | ✅ |
 > | Listes à puces | ✅ | ✅ | ✅ | ✅ |
 >
 > **Le fichier texte simple n'a pas de mise en forme à conserver** — c'est sa définition.
 > Il a en revanche des signes qui se tapent au clavier, et le boîtier les comprend :
-> `# Un titre`, `- une puce`, `**en gras**`, `*en italique*`, `_souligné_`. Ce sont les
+> `# Un titre`, `- une puce`, `**en gras**`, `*en italique*`, `_souligné_`,
+> `[rouge]en rouge[/rouge]`, `[centre] `. Ce sont les
 > mêmes que vous pouvez taper directement dans la zone de saisie ; la télécommande les
 > rappelle sous les boutons de mise en forme, dans **« Écrire la mise en forme au
 > clavier »**.
@@ -505,9 +506,15 @@ LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 > multiplication (`3 * 4`), un nom de fichier (`mon_texte.txt`) ou une adresse internet
 > restent tels quels. Il faut une paire bien fermée, sur une même ligne, collée au mot.
 >
-> **La couleur et le centrage n'ont pas de signe à taper, et c'est volontaire** : les
-> pastilles de la télécommande les posent en un clic, sans rien à retenir. Un document
-> Word, PDF ou RTF, lui, apporte les siens.
+> **La couleur et l'alignement s'écrivent en toutes lettres** : `[rouge]une alerte[/rouge]`,
+> et `[centre] ` ou `[droite] ` en début de ligne. Les cinq noms sont ceux des pastilles, de
+> gauche à droite : `jaune`, `rouge`, `vert`, `bleu`, `gris`. C'est plus long à taper que
+> deux astérisques, et c'est fait exprès — on relit `[rouge]` six mois plus tard sans se
+> demander ce que c'était, et rien ne se déclenche par accident : `[voir encadré]` ou `[1]`
+> restent tels quels. Les signes se combinent : `**[rouge]très urgent[/rouge]**`.
+>
+> 💡 Pour un passage isolé, les **boutons et pastilles restent plus rapides**. Ces signes
+> servent surtout quand vous préparez votre texte ailleurs, dans un simple fichier.
 >
 > **Vos couleurs sont ramenées aux cinq du prompteur.** Votre rouge reste rouge, mais un
 > bleu marine devient un bleu qui se voit : sur fond noir, recopier votre couleur exacte

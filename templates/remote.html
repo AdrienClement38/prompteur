@@ -243,11 +243,11 @@
         <button id="fmtXL" title="Grand titre">Grand titre</button>
       </div>
       <div class="fmtcolors">
-        <button class="swatchBtn" data-color="1" style="background:#ffd400"></button>
-        <button class="swatchBtn" data-color="2" style="background:#ff7a68"></button>
-        <button class="swatchBtn" data-color="3" style="background:#5ee08a"></button>
-        <button class="swatchBtn" data-color="4" style="background:#7cc4ff"></button>
-        <button class="swatchBtn" data-color="5" style="background:#a9b2c2"></button>
+        <button class="swatchBtn" data-color="1" style="background:#ffd400" title="jaune"></button>
+        <button class="swatchBtn" data-color="2" style="background:#ff7a68" title="rouge"></button>
+        <button class="swatchBtn" data-color="3" style="background:#5ee08a" title="vert"></button>
+        <button class="swatchBtn" data-color="4" style="background:#7cc4ff" title="bleu"></button>
+        <button class="swatchBtn" data-color="5" style="background:#a9b2c2" title="gris"></button>
       </div>
       <div class="muted" id="fmtInfo">Sélectionnez un passage, puis G, I ou S.</div>
 
@@ -266,10 +266,22 @@
           <div class="synt"><code>### </code><span>Petit titre</span></div>
           <div class="synt"><code>- </code><span>Puce</span></div>
 
+          <div class="synt"><code>[centre] </code><span>ligne centrée</span></div>
+          <div class="synt"><code>[droite] </code><span>ligne à droite</span></div>
+
           <p class="muted" style="margin:12px 0 4px;"><b>Autour d'un mot</b></p>
           <div class="synt"><code>**important**</code><span><b>gras</b></span></div>
           <div class="synt"><code>*nuance*</code><span><i>italique</i></span></div>
           <div class="synt"><code>_appuyé_</code><span><u>souligné</u></span></div>
+          <div class="synt"><code>[rouge]alerte[/rouge]</code><span class="c2">rouge</span></div>
+
+          <p class="muted" style="margin:8px 0 0;">
+            Les cinq couleurs s'écrivent en toutes lettres, dans l'ordre des pastilles :
+            <span class="c1">jaune</span>, <span class="c2">rouge</span>,
+            <span class="c3">vert</span>, <span class="c4">bleu</span>,
+            <span class="c5">gris</span>. Les marqueurs se combinent :
+            <code>**[rouge]très urgent[/rouge]**</code>.
+          </p>
 
           <p class="muted">
             <b>L'espace après les dièses est obligatoire.</b> Les dièses et les
@@ -283,10 +295,12 @@
             faut une paire bien fermée, sur une même ligne, collée au mot.
           </p>
           <p class="muted" style="margin-bottom:0;">
-            <b>La couleur et le centrage n'ont pas de signe à taper</b>, et c'est
-            volontaire : les pastilles de couleur les posent en un clic, sans rien
-            à retenir. Un document importé, lui, apporte les siens. Le centrage se
-            voit sur l'écran de lecture, pas dans cette zone de saisie.
+            <b>Les crochets sont volontairement bavards.</b> Un marqueur nommé se
+            relit six mois plus tard sans rien avoir à retenir, et il ne peut pas se
+            déclencher par accident : seuls ces mots-là comptent,
+            <code>[voir encadré]</code> ne produit rien. Les pastilles et les boutons
+            restent plus rapides pour un passage isolé ; ces signes servent surtout
+            quand vous préparez votre texte ailleurs, dans un simple fichier.
           </p>
         </div>
       </details>

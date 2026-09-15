@@ -198,12 +198,25 @@ ses **tailles** (en proportion du reste), le **centrage** de ses paragraphes et 
 puces** — et cela vaut pour **Word (`.docx`), LibreOffice (`.odt`), le PDF et le RTF**.
 
 Le **fichier texte simple**, lui, n'a pas de mise en forme à conserver — c'est sa
-définition. Il comprend en revanche les signes qui se tapent au clavier : `# Un titre`,
-`- une puce`, `**en gras**`, `*en italique*`, `_souligné_`. Les mêmes fonctionnent
-directement dans la zone de saisie.
+définition. Il comprend en revanche les signes qui se tapent au clavier, et ils couvrent
+tout :
 
-Seules la **couleur** et le **centrage** n'ont pas de signe à taper : les pastilles de la
-télécommande les posent en un clic, sans rien à retenir.
+| Ce que vous tapez | Ce que ça donne |
+|---|---|
+| `# ` `## ` `### ` en début de ligne | les trois niveaux de titre |
+| `- ` en début de ligne | une puce |
+| `[centre] ` `[droite] ` en début de ligne | la ligne est centrée, ou à droite |
+| `**important**` | **gras** |
+| `*nuance*` | *italique* |
+| `_appuyé_` | souligné |
+| `[rouge]alerte[/rouge]` | en rouge |
+
+Les cinq couleurs portent le nom des pastilles, de gauche à droite : `jaune`, `rouge`,
+`vert`, `bleu`, `gris`. Les signes se combinent : `**[rouge]très urgent[/rouge]**`.
+
+**Rien ne se déclenche par accident** : `3 * 4 = 12`, `mon_texte.txt`, `[voir encadré]` ou
+une note isolée `*` restent tels quels. Les mêmes signes fonctionnent directement dans la
+zone de saisie de la télécommande.
 
 Deux précisions qui évitent une mauvaise surprise :
 
@@ -220,9 +233,9 @@ dire.
 ### Écrire la mise en forme au clavier
 
 Sous les boutons de mise en forme, un bloc **« Écrire la mise en forme au clavier »** se
-déplie et rappelle tous les signes : `# ` `## ` `### ` pour les trois niveaux de titre, `- `
-pour une puce, `**gras**`, `*italique*`, `_souligné_`. L'espace après les dièses et le tiret
-est obligatoire. C'est exactement la forme sous laquelle arrive un fichier texte importé.
+déplie et rappelle tous les signes du tableau ci-dessus. L'espace après les dièses et le
+tiret est obligatoire. C'est exactement la forme sous laquelle arrive un fichier texte
+importé.
 
 ### L'import ne part plus tout seul
 
