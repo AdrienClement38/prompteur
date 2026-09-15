@@ -327,13 +327,13 @@ pas. C'est aussi la forme que prennent les titres d'un document Word importé.
 >
 > | | .docx / .odt | .pdf | .rtf | .txt / .md |
 > |---|---|---|---|---|
-> | Titres | ✅ par les styles | ✅ par la taille de la ligne | ✅ par la taille | ✅ `# ` `## ` `### ` |
+> | Titres | ✅ par les styles | ✅ par la taille de la ligne | ✅ par la taille | ✅ `# ` `## ` `### ` *(aussi au clavier)* |
 > | Gras, italique | ✅ | ✅ par le **nom de la police** | ✅ | ✅ `**gras**` `*italique*` |
 > | Souligné | ✅ | ✅ par la **géométrie du trait** | ✅ | ✅ `_souligné_` |
 > | Couleur du texte | ✅ | ✅ | ✅ | ✅ `[rouge]…[/rouge]` |
 > | Plus gros / plus petit | ✅ | ✅ | ✅ | ✅ *(par les niveaux de titre)* |
-> | Centré, aligné à droite | ✅ | ✅ par la **position sur la page** | ✅ | ✅ `[centre] ` `[droite] ` |
-> | Listes à puces | ✅ → « • » | ✅ | ✅ → « • » | ✅ `- ` → « • » |
+> | Centré, aligné à droite | ✅ | ✅ par la **position sur la page** | ✅ | ✅ `[centre] ` `[droite] ` *(aussi au clavier)* |
+> | Listes à puces | ✅ → « • » | ✅ | ✅ → « • » | ✅ `- ` *(aussi au clavier)* |
 > | Images, tableaux, polices, retraits | ❌ | ❌ | ❌ | ❌ |
 >
 > **Chaque format demande une méthode différente.**
@@ -351,9 +351,21 @@ pas. C'est aussi la forme que prennent les titres d'un document Word importé.
 >   juste au-dessus, puis en recalant le résultat sur les **limites de mots** — un mot
 >   n'est jamais souligné à moitié.
 > - **`.txt` / `.md`** ne contiennent aucun style : c'est leur définition. Ils ont en
->   revanche des **conventions d'écriture**, les mêmes depuis quarante ans. Comme ce sont
->   des signes qui se tapent au clavier, ils marchent aussi dans la zone de saisie — la
->   télécommande les rappelle sous la barre de mise en forme.
+>   revanche des **conventions d'écriture**, les mêmes depuis quarante ans.
+>
+> **Deux familles de signes, et la frontière est nette.** Les marqueurs de **début de
+> ligne** (`# `, `- `, `[centre] `, `[droite] `) ne sont **jamais convertis** : ils restent
+> dans le texte, et ce sont les écrans de lecture qui les traduisent — comme le dièse de
+> titre l'a toujours fait. C'est ce qui les fait marcher **aussi bien sur un fichier
+> importé que sur du texte tapé** dans la zone de saisie, où aucune conversion n'a lieu.
+> C'est aussi ce qui les rend réversibles : il n'existe aucun bouton pour centrer une
+> ligne, donc garder le marqueur, c'est garder de quoi le défaire.
+>
+> Les marqueurs qui **entourent un passage** (`**gras**`, `[rouge]…[/rouge]`) sont, eux,
+> convertis en plages à l'import et disparaissent du texte. Les reproduire au rendu
+> mêlerait le retrait de caractères au calcul des indices de plages, à l'intérieur du
+> moteur d'affichage — exactement le problème qui a été le plus coûteux de ce projet. Et
+> dans la zone de saisie, les boutons font le travail en un clic.
 >
 > **Deux précautions sur les conventions de texte simple**, parce qu'une syntaxe qui se
 > déclenche toute seule peut abîmer un texte existant : seules les **paires soignées**

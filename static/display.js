@@ -158,6 +158,16 @@
     }
   }
 
+  // Marqueurs de DEBUT DE LIGNE, traites ici, au rendu. C'est ce qui les fait
+  // marcher aussi bien sur un fichier importe que sur du texte TAPE dans la zone
+  // de saisie, ou aucune conversion n'a lieu. Le diese le faisait deja ; le tiret
+  // de puce et l'alignement suivent desormais la meme regle, plutot que d'etre
+  // convertis a l'import seulement — un signe qui marche a un endroit et pas a
+  // l'autre passe pour une panne.
+  const RE_TITRE = /^(#{1,3})[ \t]+(.*)$/;
+  const RE_PUCE = /^[-*+•][ \t]+(.*)$/;
+  const RE_ALIGNE = /^\[(centre|droite)\][ \t]*/i;
+
   function renderScript(text, marks) {
     const plages = Array.isArray(marks) ? marks : [];
     const bornes = [];
@@ -167,25 +177,51 @@
     const alignements = plages.filter((m) => ALIGN_CLASS[m.align]);
     const frag = document.createDocumentFragment();
     let offset = 0;
-    for (const line of String(text).split("\n")) {
+    for (const brute of String(text).split("\n")) {
       const div = document.createElement("div");
-      const m = /^(#{1,3})\s+(.*)$/.exec(line);
+      // L'alignement se retire en premier : il peut precéder un titre ou une puce.
+      let line = brute;
+      let base = offset;
+      let classeAligne = "";
+      const al = RE_ALIGNE.exec(line);
+      if (al) {
+        classeAligne = al[1].toLowerCase() === "centre" ? " al-c" : " al-r";
+        base += al[0].length;
+        line = line.slice(al[0].length);
+      }
+      const m = RE_TITRE.exec(line);
+      const puce = m ? null : RE_PUCE.exec(line);
       if (m) {
         div.className = "ln h" + m[1].length;
         // Le dièse et son espace ne sont pas affichés : les plages du titre sont
         // donc décalées d'autant.
         const decalage = line.length - m[2].length;
-        if (plages.length) fillLine(div, m[2], offset + decalage, plages, bornes);
+        if (plages.length) fillLine(div, m[2], base + decalage, plages, bornes);
         else div.textContent = m[2]; // textContent -> aucun risque d'injection
+      } else if (puce) {
+        div.className = "ln puce";
+        // Le point de puce est un element a part : le retrait pendant du CSS le
+        // laisse seul dans la marge, et une puce dont le texte passe a la ligne
+        // reste alignee sur son texte au lieu de revenir sous le point.
+        const point = document.createElement("span");
+        point.className = "bul";
+        point.textContent = "• ";
+        div.appendChild(point);
+        const corps = document.createElement("span");
+        const decalage = line.length - puce[1].length;
+        if (plages.length) fillLine(corps, puce[1], base + decalage, plages, bornes);
+        else corps.textContent = puce[1];
+        div.appendChild(corps);
       } else if (line.trim() === "") {
         div.className = "ln blank";
       } else {
         div.className = "ln";
-        if (plages.length) fillLine(div, line, offset, plages, bornes);
+        if (plages.length) fillLine(div, line, base, plages, bornes);
         else div.textContent = line;
       }
+      div.className += classeAligne;
       const aligne = alignementAt(alignements, offset);
-      if (aligne) div.className += " " + aligne;
+      if (aligne && !classeAligne) div.className += " " + aligne;
       frag.appendChild(div);
       offset += line.length + 1; // +1 pour le saut de ligne retiré par split
     }

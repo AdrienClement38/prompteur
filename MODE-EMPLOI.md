@@ -495,12 +495,32 @@ LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 > | Listes à puces | ✅ | ✅ | ✅ | ✅ |
 >
 > **Le fichier texte simple n'a pas de mise en forme à conserver** — c'est sa définition.
-> Il a en revanche des signes qui se tapent au clavier, et le boîtier les comprend :
-> `# Un titre`, `- une puce`, `**en gras**`, `*en italique*`, `_souligné_`,
-> `[rouge]en rouge[/rouge]`, `[centre] `. Ce sont les
-> mêmes que vous pouvez taper directement dans la zone de saisie ; la télécommande les
-> rappelle sous les boutons de mise en forme, dans **« Écrire la mise en forme au
-> clavier »**.
+> Il a en revanche des signes qui se tapent au clavier, et le boîtier les comprend. Ils se
+> répartissent en **deux familles**, et la différence compte :
+>
+
+> **1. En début de ligne — ça marche partout**, que vous le tapiez dans la zone de saisie
+> ou que ça vienne d'un fichier :
+>
+> | Ce que vous tapez | Ce que ça donne |
+> |---|---|
+> | `# ` `## ` `### ` | les trois niveaux de titre |
+> | `- ` *(ou `* `)* | une puce |
+> | `[centre] ` | la ligne est centrée |
+> | `[droite] ` | la ligne est alignée à droite |
+>
+> L'espace après le signe est **obligatoire** — `3 - 4` ne devient pas une puce. Le signe
+> ne s'affiche pas à l'écran de lecture, mais il **reste dans la zone de saisie** : c'est ce
+> qui vous permet de l'enlever. Ils se cumulent : `[centre] # Le titre`.
+>
+> **2. Autour d'un mot — pour un texte préparé ailleurs.** `**en gras**`, `*en italique*`,
+> `_souligné_`, `[rouge]une alerte[/rouge]`. Ceux-là s'appliquent **à l'import d'un
+> fichier**. Dans la zone de saisie, les **boutons sont plus rapides** : sélectionnez,
+> cliquez. Ces signes servent quand vous écrivez votre texte dans un éditeur, sur un
+> ordinateur, avant de l'importer.
+>
+> La télécommande rappelle les deux familles sous les boutons de mise en forme, dans
+> **« Écrire la mise en forme au clavier »**.
 >
 > **Rien ne se déclenche par accident** dans un texte simple : une étoile isolée, une
 > multiplication (`3 * 4`), un nom de fichier (`mon_texte.txt`) ou une adresse internet
@@ -516,6 +536,7 @@ LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 > 💡 Pour un passage isolé, les **boutons et pastilles restent plus rapides**. Ces signes
 > servent surtout quand vous préparez votre texte ailleurs, dans un simple fichier.
 >
+
 > **Vos couleurs sont ramenées aux cinq du prompteur.** Votre rouge reste rouge, mais un
 > bleu marine devient un bleu qui se voit : sur fond noir, recopier votre couleur exacte
 > rendrait le passage invisible — au moment précis où vous comptiez dessus.

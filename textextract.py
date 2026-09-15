@@ -877,8 +877,6 @@ _RE_TXT_INLINE = re.compile(
     r")"
     r"(?=$|[\s" + re.escape(_FERMANTS) + r"])"
 )
-_RE_TXT_PUCE = re.compile(r"^[ \t]*[-*+•][ \t]+(?=\S)")
-_RE_TXT_ALIGNE = re.compile(r"^[ \t]*\[(" + "|".join(_ALIGNEMENTS_NOMMES) + r")\][ \t]*", re.I)
 PROFONDEUR_MAX_TXT = 6  # imbrication des marqueurs : au-delà, c'est du bruit
 
 
@@ -913,19 +911,16 @@ def _txt_inline_segments(texte, herites, profondeur=0):
 
 
 def _texte_ligne_segments(ligne):
-    """Segments d'une ligne de texte simple, marqueurs d'écriture compris."""
-    aligne = None
-    m = _RE_TXT_ALIGNE.match(ligne)
-    if m:
-        aligne = _ALIGNEMENTS_NOMMES[m.group(1).lower()]
-        ligne = ligne[m.end() :]
-    puce = bool(_RE_TXT_PUCE.match(ligne))
-    if puce:
-        ligne = _RE_TXT_PUCE.sub("", ligne, count=1)
-    segments = [(t, s) for t, s in _txt_inline_segments(ligne, {}) if t]
-    # Un titre reste écrit tel quel : les dièses SONT la convention, ici comme
-    # dans un document importé, et l'écran les traduit lui-même.
-    return _titrer_segments(0, segments, puce, aligne)
+    """Segments d'une ligne de texte simple, marqueurs d'écriture compris.
+
+    Les marqueurs de DÉBUT DE LIGNE — « # », « - », « [centre] » — ne sont PAS
+    retirés ici : l'écran de lecture les traduit lui-même. Une seule mécanique,
+    donc, pour un fichier importé comme pour du texte tapé dans la zone de saisie,
+    où aucune conversion n'a lieu. Un signe qui marcherait à l'import mais pas au
+    clavier passerait pour une panne — et il n'y a d'ailleurs aucun bouton pour
+    centrer une ligne : garder le marqueur, c'est garder de quoi le défaire.
+    """
+    return [(t, s) for t, s in _txt_inline_segments(ligne, {}) if t]
 
 
 def _texte_segments(data):

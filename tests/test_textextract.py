@@ -437,9 +437,11 @@ def test_txt_conventions_d_ecriture():
     # Les marqueurs eux-memes ont disparu du texte : ils ne doivent pas se lire a l'ecran.
     for marqueur in ("**", "_souligne_", "*nuance*"):
         assert marqueur not in texte
+    # Les marqueurs de DEBUT de ligne ne sont pas retires : c'est l'ecran qui les
+    # traduit, ce qui les fait marcher aussi sur du texte tape dans la zone de saisie.
     lignes = texte.split("\n")
-    assert lignes[0] == "# Le sujet du jour"  # les dieses restent : c'est la convention
-    assert lignes[2:] == [tx.PUCE + "puce une", tx.PUCE + "puce deux", tx.PUCE + "puce trois"]
+    assert lignes[0] == "# Le sujet du jour"
+    assert lignes[2:] == ["- puce une", "* puce deux", tx.PUCE + "puce trois"]
 
 
 def test_txt_ne_se_declenche_pas_sur_un_texte_ordinaire():
@@ -465,10 +467,14 @@ def test_txt_couleurs_nommees_et_alignement():
     on les ecrit en toutes lettres entre crochets, dans l'ordre des pastilles."""
     source = "[centre] Le titre du sujet\n[droite] Signature\nUne [rouge]alerte[/rouge] et un [bleu]rappel[/bleu].\n"
     texte, plages = tx.extract_rich("n.txt", source.encode("utf-8"))
-    assert texte.split("\n") == ["Le titre du sujet", "Signature", "Une alerte et un rappel."]
+    # « [centre] » reste ecrit : c'est l'ecran qui l'applique, exactement comme le
+    # diese de titre. Seuls les marqueurs qui ENTOURENT un passage sont retires ici.
+    assert texte.split("\n") == [
+        "[centre] Le titre du sujet",
+        "[droite] Signature",
+        "Une alerte et un rappel.",
+    ]
     trouve = {texte[p["start"] : p["end"]]: p for p in plages}
-    assert trouve["Le titre du sujet"]["align"] == "center"
-    assert trouve["Signature"]["align"] == "right"
     assert trouve["alerte"]["color"] == 2
     assert trouve["rappel"]["color"] == 4
 

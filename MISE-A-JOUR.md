@@ -201,11 +201,19 @@ Le **fichier texte simple**, lui, n'a pas de mise en forme à conserver — c'es
 définition. Il comprend en revanche les signes qui se tapent au clavier, et ils couvrent
 tout :
 
+**En début de ligne — ça marche partout**, tapé dans la zone de saisie comme importé :
+
 | Ce que vous tapez | Ce que ça donne |
 |---|---|
-| `# ` `## ` `### ` en début de ligne | les trois niveaux de titre |
-| `- ` en début de ligne | une puce |
-| `[centre] ` `[droite] ` en début de ligne | la ligne est centrée, ou à droite |
+| `# ` `## ` `### ` | les trois niveaux de titre |
+| `- ` *(ou `* `)* | une puce |
+| `[centre] ` `[droite] ` | la ligne est centrée, ou alignée à droite |
+
+**Autour d'un mot — à l'import d'un fichier.** Dans la zone de saisie, les boutons sont
+plus rapides ; ces signes servent pour un texte préparé sur un ordinateur.
+
+| Ce que vous tapez | Ce que ça donne |
+|---|---|
 | `**important**` | **gras** |
 | `*nuance*` | *italique* |
 | `_appuyé_` | souligné |

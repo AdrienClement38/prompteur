@@ -346,6 +346,26 @@ d'octets illisibles, avec un **code 200** pour dire que tout allait bien.
 les chemins d'entrée, plutôt que d'être recopiée dans chaque appelant. Un test
 vérifie aussi l'inverse : qu'aucun format promis au client n'est refusé.
 
+### 🔴 Un signe qui marche à l'import mais pas au clavier passe pour une panne
+Le tiret de puce était converti à l'import et nulle part ailleurs. Tapé dans la zone de
+saisie, il ne produisait rien — alors que l'aide, écrite par mes soins, affirmait
+« si vous préférez taper, ces signes font la même chose ». Le journaliste a signalé une
+panne ; le code faisait exactement ce que j'avais écrit, et c'est la promesse qui était
+fausse. Le dièse de titre, lui, marchait depuis toujours aux deux endroits — parce qu'il
+est traduit **au rendu**, et non converti à l'entrée.
+**Parade :** une règle, pas deux. Les marqueurs de DÉBUT DE LIGNE (`# `, `- `,
+`[centre] `) ne sont jamais convertis : ils restent dans le texte et l'écran les traduit.
+Ceux qui ENTOURENT un passage (`**gras**`, `[rouge]…[/rouge]`) sont convertis à l'import,
+et la zone de saisie a des boutons pour eux. La frontière est explicable en une phrase,
+donc elle est documentée en une phrase — et ce qui reste dans le texte reste effaçable,
+ce qui compte d'autant plus qu'aucun bouton ne permet de centrer une ligne.
+
+### Vérifier une promesse de documentation comme on vérifie du code
+L'écart n'a pas été trouvé par un test : aucun ne portait sur « ce que l'aide affirme ».
+Il a été trouvé par l'utilisateur, sur une capture d'écran.
+**Parade :** quand une aide dit « ceci marche ici », en faire un cas d'essai. Une phrase
+de documentation est une affirmation sur le comportement, au même titre qu'une assertion.
+
 ### Un marqueur bavard vaut mieux qu'un marqueur malin
 Pour la couleur et l'alignement en texte simple, aucune convention n'existe — il fallait
 en inventer une. La tentation est de faire court : `==texte==`, `->texte<-`. Deux défauts,

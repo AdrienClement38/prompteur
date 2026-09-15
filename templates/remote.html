@@ -254,53 +254,46 @@
       <details class="boxbar" style="margin:12px 0 0;">
         <summary>Écrire la mise en forme au clavier</summary>
         <div class="inner">
-          <p class="muted" style="margin-top:0;">
-            Les boutons ci-dessus s'appliquent au passage <b>sélectionné</b>. Si vous
-            préférez taper, ces signes font la même chose — et c'est exactement sous
-            cette forme qu'arrive un fichier texte importé.
+          <p class="muted" style="margin:0 0 4px;">
+            <b>En début de ligne — marche partout</b>, que vous le tapiez ici ou qu'il
+            vienne d'un fichier importé.
           </p>
-
-          <p class="muted" style="margin:10px 0 4px;"><b>En début de ligne</b></p>
           <div class="synt"><code># </code><span>Grand titre</span></div>
           <div class="synt"><code>## </code><span>Sous-titre</span></div>
           <div class="synt"><code>### </code><span>Petit titre</span></div>
-          <div class="synt"><code>- </code><span>Puce</span></div>
+          <div class="synt"><code>- </code><span>Puce <span class="muted">(ou <code>*</code>)</span></span></div>
+          <div class="synt"><code>[centre] </code><span>Ligne centrée</span></div>
+          <div class="synt"><code>[droite] </code><span>Ligne à droite</span></div>
+          <p class="muted" style="margin:6px 0 0;">
+            L'espace après le signe est <b>obligatoire</b> : <code>3 - 4</code> et
+            <code># suivi de rien</code> ne changent rien. Le signe lui-même ne s'affiche
+            pas à l'écran de lecture — il reste ici, pour que vous puissiez le retirer.
+            Ils se cumulent : <code>[centre] # Le titre</code>.
+          </p>
 
-          <div class="synt"><code>[centre] </code><span>ligne centrée</span></div>
-          <div class="synt"><code>[droite] </code><span>ligne à droite</span></div>
-
-          <p class="muted" style="margin:12px 0 4px;"><b>Autour d'un mot</b></p>
+          <p class="muted" style="margin:14px 0 4px;">
+            <b>Autour d'un mot — pour un fichier préparé ailleurs.</b> Ici, dans la
+            zone de saisie, les <b>boutons ci-dessus sont plus rapides</b> : sélectionnez,
+            cliquez. Ces signes servent quand vous écrivez votre texte dans un
+            éditeur, sur un ordinateur, avant de l'importer.
+          </p>
           <div class="synt"><code>**important**</code><span><b>gras</b></span></div>
           <div class="synt"><code>*nuance*</code><span><i>italique</i></span></div>
           <div class="synt"><code>_appuyé_</code><span><u>souligné</u></span></div>
           <div class="synt"><code>[rouge]alerte[/rouge]</code><span class="c2">rouge</span></div>
-
-          <p class="muted" style="margin:8px 0 0;">
-            Les cinq couleurs s'écrivent en toutes lettres, dans l'ordre des pastilles :
+          <p class="muted" style="margin:6px 0 0;">
+            Les cinq couleurs portent le nom des pastilles, dans l'ordre :
             <span class="c1">jaune</span>, <span class="c2">rouge</span>,
             <span class="c3">vert</span>, <span class="c4">bleu</span>,
-            <span class="c5">gris</span>. Les marqueurs se combinent :
+            <span class="c5">gris</span>. Ils se combinent :
             <code>**[rouge]très urgent[/rouge]**</code>.
           </p>
 
-          <p class="muted">
-            <b>L'espace après les dièses est obligatoire.</b> Les dièses et les
-            étoiles ne s'affichent pas à l'écran : ils ne servent qu'à indiquer la
-            mise en forme.
-          </p>
-          <p class="muted">
+          <p class="muted" style="margin-bottom:0;">
             <b>Rien ne se déclenche par accident.</b> Une étoile isolée, une
             multiplication (<code>3 * 4</code>), un nom de fichier
-            (<code>mon_texte.txt</code>) ou une adresse restent tels quels : il
-            faut une paire bien fermée, sur une même ligne, collée au mot.
-          </p>
-          <p class="muted" style="margin-bottom:0;">
-            <b>Les crochets sont volontairement bavards.</b> Un marqueur nommé se
-            relit six mois plus tard sans rien avoir à retenir, et il ne peut pas se
-            déclencher par accident : seuls ces mots-là comptent,
-            <code>[voir encadré]</code> ne produit rien. Les pastilles et les boutons
-            restent plus rapides pour un passage isolé ; ces signes servent surtout
-            quand vous préparez votre texte ailleurs, dans un simple fichier.
+            (<code>mon_texte.txt</code>) ou un crochet ordinaire
+            (<code>[voir encadré]</code>) restent tels quels.
           </p>
         </div>
       </details>
