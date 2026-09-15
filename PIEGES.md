@@ -223,6 +223,15 @@ ancien fichier devient ambigu.
 **Parade :** le texte reste une chaîne brute, la mise en forme est une liste de
 plages posées dessus. Rien à échapper, et les anciens textes s'affichent inchangés.
 
+### 🔴 Une liste blanche posée sur un seul des deux chemins d'entrée
+L'import par clé USB vérifiait l'extension du fichier ; l'envoi depuis le
+téléphone, non. Une photo choisie par erreur ne donnait aucun message : elle
+tombait dans le décodage texte de secours et remplissait la zone de saisie
+d'octets illisibles, avec un **code 200** pour dire que tout allait bien.
+**Parade :** la vérification descend dans `extract_rich()`, là où passent **tous**
+les chemins d'entrée, plutôt que d'être recopiée dans chaque appelant. Un test
+vérifie aussi l'inverse : qu'aucun format promis au client n'est refusé.
+
 ### Une syntaxe de type markdown changerait les textes existants
 Un `*` ou un `#` au milieu d'une phrase déjà enregistrée se mettrait soudain à
 signifier quelque chose.

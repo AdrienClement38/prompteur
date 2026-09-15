@@ -659,6 +659,14 @@ def test_import_fichier_avec_apply_false_ne_touche_pas_l_ecran(client):
     assert client.get("/api/state").get_json()["text"] == "a l'antenne"
 
 
+def test_upload_refuse_un_fichier_qui_n_est_pas_un_document(client):
+    """Choisir une photo par erreur depuis le telephone doit donner un message,
+    pas une zone de texte remplie d octets illisibles."""
+    r = _upload(client, bytes([255, 216, 255, 224]) + bytes(range(256)), "photo.jpg")
+    assert r.status_code == 400
+    assert "Formats acceptés" in r.get_json()["error"]
+
+
 def test_import_usb_avec_apply_false_ne_touche_pas_l_ecran(client, tmp_path, monkeypatch):
     cle = tmp_path / "cle"
     cle.mkdir()

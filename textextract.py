@@ -715,6 +715,15 @@ def extract_rich(filename, data):
     renvoyé. Lève ValueError avec un message clair si le format ne peut pas être lu.
     """
     ext = Path(filename or "").suffix.lower()
+    # Garde-barriere UNIQUE, ici et pas dans chaque appelant : sans elle, un fichier
+    # qui n'est pas un document (une photo, une archive) tombait dans le decodage
+    # texte de secours et remplissait la zone de texte d'octets illisibles, sans le
+    # moindre message. Mieux vaut un refus clair qu'un ecran de charabia.
+    if ext not in SUPPORTED_EXTS:
+        raise ValueError(
+            "Ce fichier n'est pas un document texte (%s). "
+            "Formats acceptés : %s." % (ext or "sans extension", ", ".join(SUPPORTED_EXTS))
+        )
     segmenteur = _SEGMENTEURS.get(ext)
     extractor = _EXTRACTORS.get(ext)
     try:

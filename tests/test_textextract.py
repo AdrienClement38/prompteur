@@ -262,6 +262,24 @@ def test_txt_et_rtf_sans_plages():
     assert tx.extract_rich("x.rtf", rtf.encode("latin-1"))[1] == []
 
 
+def test_fichier_qui_n_est_pas_un_document_est_refuse():
+    """Une photo ne doit pas finir en charabia dans le prompteur, mais en refus."""
+    octets = bytes([255, 216, 255, 224]) + b" nimporte quels octets"
+    for nom in ("photo.jpg", "archive.zip", "programme.exe", "sans_extension"):
+        with pytest.raises(ValueError) as e:
+            tx.extract_rich(nom, octets)
+        assert "Formats acceptés" in str(e.value)
+
+
+def test_tous_les_formats_annonces_restent_acceptes():
+    """Le garde-barriere ne doit jamais refuser un format promis au client."""
+    for ext in tx.SUPPORTED_EXTS:
+        try:
+            tx.extract_rich("essai" + ext, b"texte simple")
+        except ValueError as e:
+            assert "Formats acceptés" not in str(e), ext
+
+
 def test_document_trop_gros_toujours_refuse():
     with pytest.raises(tx.TextTooLarge):
         tx.extract_rich("gros.txt", ("a" * (tx.MAX_TEXT_CHARS + 1)).encode("utf-8"))

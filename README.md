@@ -323,8 +323,16 @@ Une ligne commençant par **#** (jusqu'à **###**) s'affiche en **titre** sur l'
 de lecture, sans rien avoir à sélectionner ; les **#** eux-mêmes ne s'affichent
 pas. C'est aussi la forme que prennent les titres d'un document Word importé.
 
-> Un import conserve les **titres**, mais **pas le gras ni l'italique** du document
-> d'origine : remettez-les avec la barre de mise en forme.
+> **Ce qu'un import conserve, selon le format.** Un document **Word (.docx)** ou
+> **LibreOffice (.odt)** arrive avec ses **titres**, son **gras**, son *italique* et
+> son <u>souligné</u>. Les **couleurs**, les **tailles de police**, les
+> alignements et les puces ne sont **pas** repris : ils relèvent de la mise en page
+> du document, pas de la lecture à l'écran.
+>
+> Un **.pdf**, un **.rtf** ou un **.txt** n'apportent que le **texte** : remettez le
+> gras avec la barre de mise en forme. Un fichier qui n'est pas un document texte
+> (une photo, une archive) est **refusé** avec un message, il ne remplit plus la
+> zone de saisie de caractères illisibles.
 
 ---
 
