@@ -79,10 +79,13 @@
     settings = s.settings || {};
     knownVersion = s.version;
     $("title").value = s.title || "";
+    // Les marques AVANT setText : c'est setText qui redessine la zone de saisie,
+    // et il lit « marks ». Dans l'autre ordre, l'editeur affichait la mise en forme
+    // du texte precedent — et rien du tout au premier chargement.
+    marks = Array.isArray(s.marks) ? s.marks : [];
     setText(s.text || "");
     sentText = s.text || "";
     texteAvant = s.text || "";
-    marks = Array.isArray(s.marks) ? s.marks : [];
     textDirty = false;
     reflectSettings();
     refreshLibrary();
@@ -140,10 +143,10 @@
       return;
     }
     $("title").value = st.title || "";
+    marks = Array.isArray(st.marks) ? st.marks : []; // avant setText : voir plus haut
     setText(st.text || "");
     sentText = st.text || "";
     texteAvant = st.text || "";
-    marks = Array.isArray(st.marks) ? st.marks : [];
     refreshLibrary();
     refreshUnsent();
   }

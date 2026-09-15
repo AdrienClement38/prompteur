@@ -323,16 +323,39 @@ Une ligne commençant par **#** (jusqu'à **###**) s'affiche en **titre** sur l'
 de lecture, sans rien avoir à sélectionner ; les **#** eux-mêmes ne s'affichent
 pas. C'est aussi la forme que prennent les titres d'un document Word importé.
 
-> **Ce qu'un import conserve, selon le format.** Un document **Word (.docx)** ou
-> **LibreOffice (.odt)** arrive avec ses **titres**, son **gras**, son *italique* et
-> son <u>souligné</u>. Les **couleurs**, les **tailles de police**, les
-> alignements et les puces ne sont **pas** repris : ils relèvent de la mise en page
-> du document, pas de la lecture à l'écran.
+> **Ce qu'un import conserve, selon le format.**
 >
-> Un **.pdf**, un **.rtf** ou un **.txt** n'apportent que le **texte** : remettez le
-> gras avec la barre de mise en forme. Un fichier qui n'est pas un document texte
-> (une photo, une archive) est **refusé** avec un message, il ne remplit plus la
-> zone de saisie de caractères illisibles.
+> | | .docx / .odt | .pdf / .rtf / .txt |
+> |---|---|---|
+> | Titres | ✅ `#` / `##` / `###` | ❌ sauf écrits à la main |
+> | Gras, italique, souligné | ✅ au caractère près | ❌ |
+> | Couleur du texte | ✅ ramenée à la plus proche des cinq | ❌ |
+> | Passage plus gros / plus petit | ✅ **en proportion** du reste | ❌ |
+> | Paragraphe centré, aligné à droite | ✅ sur l'écran de lecture | ❌ |
+> | Listes à puces | ✅ deviennent des lignes « • … » | ❌ |
+> | Images, tableaux, polices, retraits | ❌ | ❌ |
+>
+> **Trois choix assumés, et leur raison.**
+>
+> - **La couleur est ramenée à la palette** (cinq couleurs, toutes lisibles sur fond
+>   noir) au lieu d'être recopiée. Un bleu marine recopié fidèlement serait invisible
+>   à l'écran, au moment précis où l'on compte sur le passage mis en avant. La
+>   correspondance se fait sur la **teinte** : un rouge sombre devient le rouge de la
+>   palette, pas le gris qui s'en approche numériquement.
+> - **La taille est relative, jamais absolue.** Sur un prompteur, c'est le lecteur qui
+>   fixe la taille générale selon sa distance à l'écran. Un « 8 points » recopié serait
+>   illisible ; ce qui compte, c'est « plus petit que le reste » ou « bien plus gros ».
+>   La référence est la taille **la plus répandue du document**.
+> - **Titres et puces deviennent du texte** (`# `, `• `) et non un style. C'est ce qui
+>   permet de les écrire au clavier, et de les retrouver intacts dans un fichier
+>   enregistré puis relu des mois plus tard.
+>
+> L'alignement, lui, n'a pas d'écriture possible au clavier : il voyage comme une plage
+> posée sur la ligne entière, et ne se voit que sur les écrans de lecture — la zone de
+> saisie de la télécommande est une simple ligne de texte, sans blocs.
+>
+> Un fichier qui n'est pas un document texte (une photo, une archive) est **refusé**
+> avec un message ; il ne remplit plus la zone de saisie de caractères illisibles.
 
 ---
 

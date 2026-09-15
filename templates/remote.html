@@ -97,6 +97,10 @@
     .boxbar summary::after{content:"▾"; margin-left:auto; color:var(--muted);}
     .boxbar[open] summary::after{content:"▴";}
     .boxbar .inner{padding:0 14px 14px;}
+    /* Aide a la saisie : la syntaxe des titres, montree telle qu'on la tape. */
+    .synt{display:flex; align-items:center; gap:10px; padding:4px 0;}
+    .synt code{background:var(--card2); border:1px solid var(--line); border-radius:6px;
+      padding:2px 9px; white-space:pre; font-size:14px;}
     .boxbar .state{font-size:13px; color:var(--muted); margin-bottom:10px;}
     .boxbar .state b{color:var(--fg);}
     /* Aller lire : l'action principale de cette page, et la suite naturelle d'un
@@ -246,6 +250,31 @@
         <button class="swatchBtn" data-color="5" style="background:#a9b2c2"></button>
       </div>
       <div class="muted" id="fmtInfo">Sélectionnez un passage, puis G, I ou S.</div>
+
+      <details class="boxbar" style="margin:12px 0 0;">
+        <summary>Écrire un titre à la main</summary>
+        <div class="inner">
+          <p class="muted" style="margin-top:0;">
+            Les boutons ci-dessus s'appliquent au passage <b>sélectionné</b>. Les titres,
+            eux, s'écrivent <b>en début de ligne</b> — et c'est exactement sous cette
+            forme qu'arrivent les titres d'un document Word ou LibreOffice importé.
+          </p>
+          <div class="synt"><code># </code><span>Grand titre</span></div>
+          <div class="synt"><code>## </code><span>Sous-titre</span></div>
+          <div class="synt"><code>### </code><span>Petit titre</span></div>
+          <p class="muted">
+            <b>L'espace après les dièses est obligatoire.</b> Les dièses eux-mêmes ne
+            s'affichent pas à l'écran de lecture : ils servent seulement à dire
+            « cette ligne est un titre ».
+          </p>
+          <p class="muted" style="margin-bottom:0;">
+            Les <b>puces</b> d'un document importé deviennent le caractère « • » : c'est
+            du texte ordinaire, vous pouvez en ajouter ou en retirer. Le <b>centrage</b>
+            d'un document importé est conservé, mais il ne se voit que sur l'écran de
+            lecture — pas dans cette zone de saisie, qui est une simple ligne de texte.
+          </p>
+        </div>
+      </details>
 
       <div class="unsent hide" id="unsent">
         Ce texte n'est <b>pas encore à l'écran</b> — appuyez sur « Envoyer à l'écran ».

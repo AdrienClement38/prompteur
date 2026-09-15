@@ -482,9 +482,26 @@ change pas encore**. Le titre devient automatiquement le nom du fichier, **sans 
 **Formats acceptés** (c'est écrit sous les deux boutons) : Word (`.docx`, `.doc`), PDF,
 LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 
-> 💡 **Le meilleur format, de loin : le `.docx` (Word ou LibreOffice).** Il est léger, il garde
-> vos paragraphes propres, et vos titres restent des titres (affichés plus gros et en gras sur
-> l'écran). Les couleurs, images et mises en page, elles, sont retirées : c'est normal.
+> 💡 **Le meilleur format, de loin : le `.docx` (Word ou LibreOffice).** C'est le seul, avec
+> le `.odt`, qui arrive **avec sa mise en forme** :
+>
+> | Ce que vous aviez dans Word | Ce que vous retrouvez |
+> |---|---|
+> | Titres (styles « Titre 1 », « Titre 2 »…) | affichés **en gros et en gras** |
+> | **Gras**, *italique*, souligné | conservés, au mot près |
+> | Texte en couleur | conservé, ramené à **la couleur la plus proche parmi les cinq** du prompteur |
+> | Passage plus gros ou plus petit que le reste | conservé, **en proportion** du reste |
+> | Paragraphe centré ou aligné à droite | conservé, visible **sur l'écran de lecture** |
+> | Listes à puces | deviennent des lignes commençant par « • » |
+>
+> **Pourquoi « la couleur la plus proche » et non la vôtre.** Le prompteur n'a que cinq
+> couleurs, toutes choisies lisibles sur fond noir. Un bleu marine ou un gris foncé de
+> votre document deviendrait invisible à l'écran — au moment précis où vous comptiez
+> dessus. Votre rouge reste donc rouge, mais un rouge qui se voit.
+>
+> **Ce qui n'est pas repris** : les images, les tableaux, les polices de caractères et les
+> retraits. Ce sont des éléments de mise en page ; ils n'ont pas de sens sur un texte qui
+> défile.
 
 > ⚠️ **PIÈGES DES DOCUMENTS — à vérifier la veille, jamais le jour J.**
 > Dans tous les cas ci-dessous, la parade est la même : **repartir du `.docx` d'origine, ou
@@ -497,8 +514,9 @@ LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 >   **un texte amputé de sa fin, sans aucun avertissement**. Un PDF plein de photos dépasse très
 >   vite cette limite : **descendez toujours jusqu'à la dernière ligne dans la zone de saisie**
 >   avant d'envoyer.
-> - **Format non reconnu** (`.pages` d'Apple, `.key`, `.jpg`, `.zip`…) : **aucun message
->   d'erreur**, mais la zone se remplit de charabia.
+> - **Format non reconnu** (`.pages` d'Apple, `.key`, `.jpg`, `.zip`…) : le boîtier **refuse
+>   le fichier** et affiche la liste des formats acceptés. Rien n'est abîmé ; rouvrez le
+>   document dans Word et enregistrez-le en `.docx`.
 > - **Lignes hachées** : un PDF ou un `.txt` déjà coupé à la largeur d'une page s'affiche en
 >   lignes courtes et irrégulières, désagréables à lire.
 
@@ -600,9 +618,24 @@ Le bouton **« Tout effacer »** retire la mise en forme de **tout** le texte (m
 > 💡 **Restez sobre** : sur un écran de 7 pouces, deux ou trois passages en couleur suffisent.
 
 > 💡 **Astuce des titres.** Une ligne que vous commencez par un **dièse suivi d'un espace**
-> (`# Introduction`) s'affiche **en gros et en gras** sur le grand écran, sans rien sélectionner.
+> s'affiche **en gros et en gras** sur le grand écran, sans rien sélectionner. Il y a trois
+> tailles, du plus gros au plus petit :
+>
+> | Ce que vous tapez | Ce que ça donne |
+> |---|---|
+> | `# Introduction` | grand titre |
+> | `## Le témoignage` | sous-titre |
+> | `### Relance` | petit titre |
+>
+> **L'espace après les dièses est obligatoire**, et les dièses eux-mêmes ne s'affichent pas
+> à l'écran. C'est aussi sous cette forme qu'arrivent les titres d'un document importé : vous
+> pouvez donc en ajouter à la main, exactement comme les autres.
+>
 > C'est aussi pourquoi une ligne commençant par un dièse change d'aspect sans prévenir : si vous
 > ne voulez pas de titre, ne commencez pas la ligne par un dièse.
+>
+> *Ce mémo est rappelé sur la télécommande elle-même : sous les boutons de mise en forme,
+> dépliez **« Écrire un titre à la main »**.*
 
 La mise en forme est **conservée par « Enregistrer »** et revient telle quelle quand vous
 rappelez le texte avec « Charger ».

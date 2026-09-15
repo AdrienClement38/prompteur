@@ -225,6 +225,10 @@ MARK_SIZES = ("s", "l", "xl")
 # d'écrire en bleu marine sur noir, donc de rendre un passage invisible en
 # tournage — au moment précis où l'on comptait sur lui.
 MARK_COLORS = (1, 2, 3, 4, 5)
+# L'alignement vient des documents importes. Il porte sur la LIGNE entiere, pas sur
+# des caracteres : l'ecran le lit au premier caractere de la ligne. « left » n'est pas
+# de la liste, c'est deja le comportement normal — une marque de plus pour rien.
+MARK_ALIGNS = ("center", "right")
 
 
 def sanitize_marks(marks, length):
@@ -259,6 +263,8 @@ def sanitize_marks(marks, length):
             couleur = None
         if couleur in MARK_COLORS:
             styles["color"] = couleur
+        if mark.get("align") in MARK_ALIGNS:
+            styles["align"] = mark["align"]
         if not styles:
             continue
         clean.append({"start": start, "end": end, **styles})

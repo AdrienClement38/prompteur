@@ -163,6 +163,15 @@ jamais**.
 **Parade :** écouter la sortie de plein écran et la traiter comme la demande de
 quitter.
 
+### 🔴 Affecter l'état APRÈS avoir demandé le réaffichage
+La fonction de chargement écrivait `setText(...)` puis `marks = ...`. Or c'est `setText`
+qui redessine la zone de saisie, et il lit `marks`. L'éditeur affichait donc la mise en
+forme du texte PRÉCÉDENT — et **aucune au tout premier chargement**, quand la liste
+est encore vide. Rien ne signalait l'erreur : le texte, lui, était juste.
+**Parade :** affecter tout ce dont dépend un rendu AVANT de le déclencher. Le défaut a
+survécu plusieurs semaines parce qu'on vérifiait la mise en forme sur l'écran de
+lecture, où elle était correcte, et jamais sur la zone de saisie au premier chargement.
+
 ### Un bouton prend le focus au clic, et la sélection disparaît
 Appliquer un style au texte sélectionné échoue dans certains navigateurs, parce
 que le bouton a vidé la sélection avant même le clic.
@@ -222,6 +231,30 @@ Tentant, et c'est le piège : il faut alors se fier à un échappement partout, 
 ancien fichier devient ambigu.
 **Parade :** le texte reste une chaîne brute, la mise en forme est une liste de
 plages posées dessus. Rien à échapper, et les anciens textes s'affichent inchangés.
+
+### 🔴 Une limite de mot qui accepte le tiret
+`<text:list` suivi d'une limite de mot reconnait aussi `<text:list-item`, puisque le
+tiret n'est pas un caractère de mot. Mais `</text:list>` ne reconnait pas
+`</text:list-item>` : chaque élément ouvrait donc une liste que rien ne refermait, et
+**tout le document à partir de la première liste se retrouvait à puces**.
+**Parade :** `(?=[\s/>])` au lieu de la limite de mot, et un test de non-régression qui
+vérifie ce qui suit la liste, pas seulement la liste.
+
+### Une référence calculée sur les seules valeurs écrites
+Pour savoir si un passage est « plus gros que le reste », il faut la taille du corps du
+texte. La prendre comme la plus répandue parmi les tailles écrites donnait le
+contraire du résultat voulu : dans un document où un seul mot est agrandi, ce mot est
+la seule taille écrite — donc la référence — donc il n'a plus rien de spécial.
+**Parade :** compter aussi les passages SANS taille écrite, pour la valeur par défaut.
+Ce qui n'est pas écrit fait partie du décompte.
+
+### Recopier fidèlement peut rendre invisible
+Reproduire à l'identique la couleur d'un document semble être la bonne réponse à « que
+ça rende comme l'original ». Sur un prompteur à fond noir, un bleu marine fidèlement
+recopié devient illisible — au moment précis où l'on comptait sur le passage mis en avant.
+**Parade :** garder l'INTENTION et non la valeur. La correspondance se fait sur la teinte,
+vers une palette fermée dont toutes les couleurs sont lisibles. Même raisonnement pour la
+taille, gardée relative : c'est le lecteur qui fixe la taille générale selon sa distance.
 
 ### 🔴 Une liste blanche posée sur un seul des deux chemins d'entrée
 L'import par clé USB vérifiait l'extension du fichier ; l'envoi depuis le

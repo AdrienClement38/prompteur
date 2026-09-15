@@ -16,6 +16,7 @@ texte et reste donc compatible avec ses appelants actuels.
 """
 
 import bisect
+import colorsys
 import html
 import io
 import os
@@ -412,12 +413,105 @@ def _rogner_segments(segments):
     return [seg for seg in segments[:fin] if seg[0]]
 
 
-def _titrer_segments(niveau, segments):
-    """Préfixe les dièses de titre, comme _mark(), en un segment sans style."""
+PUCE = "• "  # le point de puce, suivi d'une espace
+
+
+def _titrer_segments(niveau, segments, puce=False, alignement=None):
+    """Pose ce qui appartient au PARAGRAPHE : dièses de titre, puce, alignement.
+
+    Le titre et la puce deviennent du TEXTE (« # », « • ») et non un style : c'est
+    ce qui permet de les écrire aussi à la main, et de les retrouver intacts dans un
+    fichier enregistré puis relu des mois plus tard. L'alignement, lui, n'a pas
+    d'écriture possible au clavier : il voyage comme une plage posée sur toute la
+    ligne, que l'écran lit au premier caractère.
+    """
     segments = _rogner_segments(segments)
-    if niveau and segments:
-        segments.insert(0, ("#" * niveau + " ", {}))
+    if segments:
+        prefixe = ("#" * niveau + " ") if niveau else (PUCE if puce else "")
+        if prefixe:
+            segments.insert(0, (prefixe, {}))
+        if alignement:
+            segments = [(t, dict(st, align=alignement)) for t, st in segments]
     return segments
+
+
+# --------------------------------------------------------------------------
+# Couleur et taille : de la mise en page du document vers ce qui est LISIBLE
+# --------------------------------------------------------------------------
+# Le prompteur n'offre que CINQ couleurs, toutes choisies lisibles sur fond
+# sombre. Un document, lui, peut en contenir des millions — dont du bleu marine
+# et du gris anthracite, invisibles sur l'ecran d'un prompteur, au moment precis
+# ou l'on comptait sur le passage mis en avant.
+#
+# On ne recopie donc pas la couleur du document : on garde son INTENTION
+# (« ce passage est en rouge ») en tombant sur la couleur lisible la plus proche.
+# La correspondance se fait sur la TEINTE et non sur la distance RVB : un rouge
+# sombre doit devenir le rouge de la palette, pas le gris qui se trouve etre
+# numeriquement plus proche.
+PALETTE_TEINTES = ((1, 50.0), (2, 9.0), (3, 142.0), (4, 207.0))  # jaune, rouge, vert, bleu
+PALETTE_GRIS = 5
+_RE_HEXA = re.compile(r"^[0-9a-f]{6}$")
+
+
+def _couleur_palette(valeur):
+    """Couleur ecrite dans le document -> numero de palette (1-5), ou None.
+
+    None signifie « texte ordinaire » : noir, blanc, automatique. Les marquer
+    serait pire que de les ignorer, car cela figerait la couleur du texte et
+    empecherait le reglage general de la changer.
+    """
+    if not valeur:
+        return None
+    brut = valeur.strip().lstrip("#").lower()
+    if brut in ("auto", "automatic", "windowtext", "transparent"):
+        return None
+    if len(brut) == 3:
+        brut = "".join(c * 2 for c in brut)
+    if not _RE_HEXA.match(brut):
+        return None
+    r, v, b = (int(brut[i : i + 2], 16) / 255.0 for i in (0, 2, 4))
+    teinte, lum, sat = colorsys.rgb_to_hls(r, v, b)
+    if sat < 0.15:
+        # Gris franc -> la couleur grise de la palette ; noir et blanc -> rien,
+        # c'est la couleur normale du texte.
+        return None if lum < 0.25 or lum > 0.85 else PALETTE_GRIS
+    degres = teinte * 360.0
+    meilleur, ecart_min = PALETTE_GRIS, 999.0
+    for numero, ref in PALETTE_TEINTES:
+        ecart = abs(degres - ref)
+        ecart = min(ecart, 360.0 - ecart)  # le cercle des teintes se referme
+        if ecart < ecart_min:
+            meilleur, ecart_min = numero, ecart
+    return meilleur
+
+
+def _taille_relative(rapport):
+    """Taille du document, RAPPORTEE au corps du texte -> « s », « l », « xl ».
+
+    Rapportee et non absolue : sur un prompteur, c'est le lecteur qui fixe la
+    taille generale selon sa distance a l'ecran. Recopier un « 8 points » rendrait
+    le passage illisible ; ce qu'il faut conserver, c'est « plus petit que le
+    reste » ou « bien plus gros que le reste ».
+    """
+    if not rapport or rapport <= 0:
+        return None
+    if rapport <= 0.85:
+        return "s"
+    if rapport >= 1.45:
+        return "xl"
+    if rapport >= 1.15:
+        return "l"
+    return None
+
+
+def _mode_des_tailles(valeurs, defaut):
+    """Taille du corps du texte = la plus repandue dans le document."""
+    if not valeurs:
+        return defaut
+    comptes = {}
+    for v in valeurs:
+        comptes[v] = comptes.get(v, 0) + 1
+    return max(comptes.items(), key=lambda kv: (kv[1], -kv[0]))[0]
 
 
 def _actif(balise):
@@ -426,22 +520,77 @@ def _actif(balise):
     return not (m and m.group(1).strip().lower() in _VALEURS_OFF)
 
 
-def _styles_docx_rpr(rpr_xml):
-    """Gras / italique / souligné lus dans un <w:rPr> de .docx."""
+_RE_SZ_DOCX = re.compile(r'<w:sz\b[^>]*\bw:val="(\d+)"')
+_RE_COLOR_DOCX = re.compile(r'<w:color\b[^>]*\bw:val="([^"]*)"')
+_RE_OUVRE_RUN_COMPTE = re.compile(r"<w:r(?:\s[^>]*)?>")
+_RE_JC_DOCX = re.compile(r'<w:jc\b[^>]*\bw:val="([^"]*)"')
+_ALIGNEMENTS = {"center": "center", "right": "right", "end": "right"}
+
+
+_DEFAUT_SZ_DOCX = 22  # 11 points, la taille par défaut de Word
+
+
+def _docx_corps_taille(xml):
+    """Taille du corps du texte : la plus répandue du document, en demi-points.
+
+    Les passages SANS taille explicite comptent, eux aussi, pour la taille par
+    défaut. Sans cela, un document dont un seul mot est agrandi ferait de ce mot
+    la référence — et le mot agrandi ne ressortirait plus du tout.
+    """
+    tailles = [int(v) for v in _RE_SZ_DOCX.findall(xml)]
+    runs = len(_RE_OUVRE_RUN_COMPTE.findall(xml))
+    tailles += [_DEFAUT_SZ_DOCX] * max(0, runs - len(tailles))
+    return _mode_des_tailles(tailles, _DEFAUT_SZ_DOCX)
+
+
+def _docx_alignement(p_xml):
+    """Alignement du paragraphe, seulement s'il s'écarte du réglage par défaut."""
+    m = _RE_JC_DOCX.search(p_xml)
+    return _ALIGNEMENTS.get(m.group(1).strip().lower()) if m else None
+
+
+def _docx_puce(p_xml):
+    """Le paragraphe est-il un élément de liste ?
+
+    Deux signes, car Word emploie l'un ou l'autre selon la version : la numérotation
+    proprement dite, ou le style « Paragraphe de liste » posé par le bouton de puces.
+    """
+    entete = p_xml[: p_xml.find("</w:pPr>") + 1] if "</w:pPr>" in p_xml else p_xml[:400]
+    if "<w:numPr" in entete:
+        return True
+    style = re.search(r'<w:pStyle\b[^>]*\bw:val="([^"]*)"', entete)
+    if not style:
+        return False
+    nom = style.group(1).strip().lower().replace(" ", "").replace("-", "")
+    return nom in ("listparagraph", "paragraphedeliste", "listbullet", "listnumber")
+
+
+def _styles_docx_rpr(rpr_xml, corps=22):
+    """Gras / italique / souligné / couleur / taille lus dans un <w:rPr> de .docx."""
     styles = {}
     for cle, motif in (("b", r"<w:b\b[^>]*>"), ("i", r"<w:i\b[^>]*>"), ("u", r"<w:u\b[^>]*>")):
         m = re.search(motif, rpr_xml)
         if m and _actif(m.group(0)):
             styles[cle] = True
+    couleur = _RE_COLOR_DOCX.search(rpr_xml)
+    if couleur:
+        numero = _couleur_palette(couleur.group(1))
+        if numero:
+            styles["color"] = numero
+    taille = _RE_SZ_DOCX.search(rpr_xml)
+    if taille and corps:
+        relative = _taille_relative(int(taille.group(1)) / float(corps))
+        if relative:
+            styles["size"] = relative
     return styles
 
 
-def _styles_docx_run(run_xml):
+def _styles_docx_run(run_xml, corps=22):
     m = _RE_RPR_DOCX.search(run_xml)
-    return _styles_docx_rpr(m.group(1)) if m else {}
+    return _styles_docx_rpr(m.group(1), corps) if m else {}
 
 
-def _docx_para_segments(p_xml):
+def _docx_para_segments(p_xml, corps=22):
     """Découpe un paragraphe .docx en segments (texte, styles)."""
     niveau = _docx_heading_level(p_xml)
     segments = []
@@ -450,29 +599,56 @@ def _docx_para_segments(p_xml):
         if debut > pos:  # hors run : <w:pPr>, <w:br/> isolé, etc.
             segments.append((_para_body(p_xml[pos:debut]), {}))
         run_xml = p_xml[debut:fin]
-        segments.append((_para_body(run_xml), _styles_docx_run(run_xml)))
+        segments.append((_para_body(run_xml), _styles_docx_run(run_xml, corps)))
         pos = fin
     if pos < len(p_xml):
         segments.append((_para_body(p_xml[pos:]), {}))
-    return _titrer_segments(niveau, segments)
+    return _titrer_segments(niveau, segments, _docx_puce(p_xml), _docx_alignement(p_xml))
 
 
 def _docx_segments(data):
     with zipfile.ZipFile(io.BytesIO(data)) as z:
         xml = _read_zip_entry(z, "word/document.xml").decode("utf-8", "replace")
+    corps = _docx_corps_taille(xml)
     segments = []
     for rang, (debut, fin, _m) in enumerate(_blocs(xml, _OUVRE_PARA_DOCX, "</w:p>")):
         if rang:
             segments.append(("\n", {}))
-        segments.extend(_docx_para_segments(xml[debut:fin]))
+        segments.extend(_docx_para_segments(xml[debut:fin], corps))
     return segments
 
 
-def _styles_odt_props(props_xml):
-    """Gras / italique / souligné lus dans un <style:text-properties> d'ODT.
+_RE_TAILLE_ODT = re.compile(r'\bfo:font-size="([0-9.]+)(pt|%)"')
+_RE_COULEUR_ODT = re.compile(r'\bfo:color="([^"]*)"')
+_RE_ALIGN_ODT = re.compile(r'\bfo:text-align="([^"]*)"')
+_DEFAUT_PT_ODT = 12.0
+
+
+def _odt_corps_taille(xml):
+    """Taille du corps du texte d'un .odt, en points.
+
+    On la lit dans le style par défaut du document plutôt que de prendre la plus
+    répandue : contrairement au .docx, un .odt n'écrit la taille que là où elle
+    s'écarte du défaut, donc « la plus répandue » ne voudrait rien dire.
+    """
+    for motif in (
+        r"<style:default-style\b[^>]*?style:family=\"paragraph\".*?</style:default-style>",
+        r"<style:style\b[^>]*?style:name=\"Standard\".*?</style:style>",
+    ):
+        bloc = re.search(motif, xml, re.S)
+        if bloc:
+            m = _RE_TAILLE_ODT.search(bloc.group(0))
+            if m and m.group(2) == "pt":
+                return float(m.group(1))
+    return _DEFAUT_PT_ODT
+
+
+def _styles_odt_props(props_xml, corps_pt=_DEFAUT_PT_ODT):
+    """Gras / italique / souligné / couleur / taille lus dans un <style:text-properties>.
 
     Renvoie un état à TROIS valeurs : clé absente = « le style ne se prononce pas,
-    on garde ce qui est hérité » ; True = activé ; False = DÉSACTIVÉ EXPLICITEMENT.
+    on garde ce qui est hérité » ; valeur vraie = activé ; valeur FAUSSE = annulé
+    explicitement.
 
     Cette troisième valeur n'est pas un raffinement, elle est indispensable. Dans un
     .odt, la mise en forme des caractères se CUMULE : un span dans un span, et un
@@ -480,7 +656,8 @@ def _styles_odt_props(props_xml):
     en gras, LibreOffice n'enlève rien au span extérieur — il imbrique un span
     portant fo:font-weight="normal". Sans le False, l'annulation passait inaperçue
     et le mot dégrassé ressortait EN GRAS : la mise en forme tombait sur les
-    mauvais mots, précisément ce qu'on cherche à éviter.
+    mauvais mots, précisément ce qu'on cherche à éviter. La couleur et la taille
+    suivent la même règle, avec 0 et "" pour valeurs d'annulation.
     """
     styles = {}
     graisse = re.search(r'\bfo:font-weight="([^"]*)"', props_xml)
@@ -493,10 +670,18 @@ def _styles_odt_props(props_xml):
     souligne = re.search(r'\bstyle:text-underline-style="([^"]*)"', props_xml)
     if souligne:
         styles["u"] = souligne.group(1).strip().lower() not in ("", "none")
+    couleur = _RE_COULEUR_ODT.search(props_xml)
+    if couleur:
+        styles["color"] = _couleur_palette(couleur.group(1)) or 0
+    taille = _RE_TAILLE_ODT.search(props_xml)
+    if taille:
+        valeur = float(taille.group(1))
+        rapport = valeur / 100.0 if taille.group(2) == "%" else valeur / (corps_pt or _DEFAUT_PT_ODT)
+        styles["size"] = _taille_relative(rapport) or ""
     return styles
 
 
-def _odt_table_styles(xml):
+def _odt_table_styles(xml, corps_pt=_DEFAUT_PT_ODT):
     """Dictionnaire « nom de style de texte » -> styles, héritage résolu."""
     bruts = {}
     for debut, fin, _m in _blocs(xml, _OUVRE_STYLE_ODT, "</style:style>"):
@@ -511,7 +696,7 @@ def _odt_table_styles(xml):
         props = re.search(r"<style:text-properties\b([^>]*)>", bloc)
         bruts[nom.group(1)] = (
             parent.group(1) if parent else None,
-            _styles_odt_props(props.group(1)) if props else {},
+            _styles_odt_props(props.group(1), corps_pt) if props else {},
         )
 
     table = {}
@@ -555,14 +740,70 @@ def _odt_para_segments(inner, table):
         if texte:
             # La pile conserve l'état à trois valeurs (voir _styles_odt_props) ;
             # le segment, lui, ne porte que ce qui est réellement activé.
-            segments.append((texte, {cle: True for cle, val in pile[-1].items() if val}))
+            segments.append((texte, {cle: val for cle, val in pile[-1].items() if val}))
     return segments
+
+
+def _odt_table_paragraphes(xml):
+    """Dictionnaire « nom de style de paragraphe » -> alignement, héritage résolu."""
+    bruts = {}
+    for debut, fin, _m in _blocs(xml, _OUVRE_STYLE_ODT, "</style:style>"):
+        bloc = xml[debut:fin]
+        entete = bloc[: bloc.find(">") + 1]
+        if 'style:family="paragraph"' not in entete:
+            continue
+        nom = re.search(r'\bstyle:name="([^"]*)"', entete)
+        if not nom:
+            continue
+        parent = re.search(r'\bstyle:parent-style-name="([^"]*)"', entete)
+        props = re.search(r"<style:paragraph-properties\b([^>]*)>", bloc)
+        aligne = None
+        if props:
+            m = _RE_ALIGN_ODT.search(props.group(1))
+            if m:
+                aligne = _ALIGNEMENTS.get(m.group(1).strip().lower())
+        bruts[nom.group(1)] = (parent.group(1) if parent else None, aligne)
+
+    table = {}
+    for nom in bruts:
+        courant, vus = nom, set()
+        while courant in bruts and courant not in vus:
+            vus.add(courant)
+            if bruts[courant][1]:
+                table[nom] = bruts[courant][1]
+                break
+            courant = bruts[courant][0]
+    return table
+
+
+def _odt_plages_listes(xml):
+    """Positions des <text:list> : un paragraphe qui s'y trouve est un élément de liste."""
+    plages, pile = [], []
+    # Le garde (?=[\s/>]) est indispensable : sans lui, <text:list-item> passait
+    # pour une ouverture de liste, alors que </text:list-item> ne la refermait pas —
+    # et toute la fin du document se retrouvait a puces.
+    for m in re.finditer(r"<text:list(?=[\s/>])[^>]*?(/?)>|</text:list>", xml):
+        if m.group(0).startswith("</"):
+            if pile:
+                plages.append((pile.pop(), m.end()))
+        elif not m.group(1):  # <text:list/> vide : rien à ouvrir
+            pile.append(m.start())
+    for reste in pile:  # document tronqué : la liste court jusqu'à la fin
+        plages.append((reste, len(xml)))
+    return plages
+
+
+def _odt_dans_liste(position, plages):
+    return any(debut <= position < fin for debut, fin in plages)
 
 
 def _odt_segments(data):
     with zipfile.ZipFile(io.BytesIO(data)) as z:
         xml = _read_zip_entry(z, "content.xml").decode("utf-8", "replace")
-    table = _odt_table_styles(xml)
+    corps = _odt_corps_taille(xml)
+    table = _odt_table_styles(xml, corps)
+    alignements = _odt_table_paragraphes(xml)
+    listes = _odt_plages_listes(xml)
     segments = []
     # auto_fermant=False : le motif d'origine ne prévoyait pas « <text:p/> », qui reste
     # donc traité comme une ouverture — on ne change pas ce comportement.
@@ -577,7 +818,10 @@ def _odt_segments(data):
         if tag == "h":
             lvl = re.search(r'text:outline-level="(\d+)"', attrs)
             niveau = max(1, min(3, int(lvl.group(1)))) if lvl else 1
-        segments.extend(_titrer_segments(niveau, _odt_para_segments(inner, table)))
+        nom_style = re.search(r'\btext:style-name="([^"]*)"', attrs)
+        aligne = alignements.get(nom_style.group(1)) if nom_style else None
+        puce = _odt_dans_liste(m.start(), listes)
+        segments.extend(_titrer_segments(niveau, _odt_para_segments(inner, table), puce, aligne))
     return segments
 
 

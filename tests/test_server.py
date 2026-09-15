@@ -659,6 +659,21 @@ def test_import_fichier_avec_apply_false_ne_touche_pas_l_ecran(client):
     assert client.get("/api/state").get_json()["text"] == "a l'antenne"
 
 
+def test_alignement_accepte_seulement_centre_et_droite():
+    """« left » est deja le comportement normal : une marque de plus pour rien."""
+    marques = server.sanitize_marks(
+        [
+            {"start": 0, "end": 4, "align": "center"},
+            {"start": 4, "end": 8, "align": "right"},
+            {"start": 8, "end": 12, "align": "left"},
+            {"start": 12, "end": 16, "align": "<script>"},
+            {"start": 16, "end": 20, "align": 7},
+        ],
+        20,
+    )
+    assert [m.get("align") for m in marques] == ["center", "right"]
+
+
 def test_upload_refuse_un_fichier_qui_n_est_pas_un_document(client):
     """Choisir une photo par erreur depuis le telephone doit donner un message,
     pas une zone de texte remplie d octets illisibles."""

@@ -262,6 +262,158 @@ def test_txt_et_rtf_sans_plages():
     assert tx.extract_rich("x.rtf", rtf.encode("latin-1"))[1] == []
 
 
+# ----------------------------------------------------------------------------
+# Ce qu'un document apporte AVEC LUI : couleurs, tailles, alignement, puces
+# ----------------------------------------------------------------------------
+def _docx_pp(paragraphes):
+    """paragraphes : liste de (contenu du <w:pPr>, contenu XML du paragraphe)."""
+    xml = '<?xml version="1.0"?><w:document xmlns:w="x"><w:body>'
+    for ppr, contenu in paragraphes:
+        xml += "<w:p>" + (f"<w:pPr>{ppr}</w:pPr>" if ppr else "") + contenu + "</w:p>"
+    xml += "</w:body></w:document>"
+    return _zip({"word/document.xml": xml})
+
+
+def _style_para_odt(nom, props):
+    return (
+        f'<style:style style:name="{nom}" style:family="paragraph"><style:paragraph-properties {props}/></style:style>'
+    )
+
+
+def _odt_complet(styles_texte, styles_para, corps):
+    xml = (
+        '<?xml version="1.0"?><office:document-content xmlns:office="o" xmlns:text="t" '
+        'xmlns:style="s" xmlns:fo="f"><office:automatic-styles>'
+        + "".join(styles_texte)
+        + "".join(styles_para)
+        + f"</office:automatic-styles><office:body><office:text>{corps}</office:text>"
+        "</office:body></office:document-content>"
+    )
+    return _zip({"content.xml": xml})
+
+
+def test_couleur_du_document_tombe_sur_la_palette_lisible():
+    """On garde l'INTENTION de la couleur, pas sa valeur : la palette du prompteur
+    est fermee et toutes ses couleurs sont lisibles sur fond sombre."""
+    assert tx._couleur_palette("FF0000") == 2  # rouge
+    assert tx._couleur_palette("C00000") == 2  # rouge sombre : meme intention
+    assert tx._couleur_palette("0070C0") == 4  # bleu
+    assert tx._couleur_palette("00B050") == 3  # vert
+    assert tx._couleur_palette("FFC000") == 1  # orange -> jaune
+    assert tx._couleur_palette("808080") == 5  # gris
+    # Texte ordinaire : aucune marque, sinon le reglage general de couleur serait fige.
+    for neutre in ("000000", "FFFFFF", "auto", "", None, "pas une couleur"):
+        assert tx._couleur_palette(neutre) is None
+
+
+def test_docx_couleur_devient_une_plage():
+    data = _docx_pp([("", _run("normal ") + _run("alerte", '<w:color w:val="FF0000"/>'))])
+    texte, plages = tx.extract_rich("c.docx", data)
+    p = _seule(plages)
+    assert texte[p["start"] : p["end"]] == "alerte"
+    assert p["color"] == 2
+
+
+def test_docx_texte_noir_ne_produit_aucune_plage():
+    data = _docx_pp([("", _run("texte ") + _run("noir", '<w:color w:val="000000"/>'))])
+    assert tx.extract_rich("n.docx", data)[1] == []
+
+
+def test_docx_taille_est_relative_au_corps_du_texte():
+    runs = "".join(_run(f"mot{i} ", '<w:sz w:val="22"/>') for i in range(8))
+    runs += _run("ENORME", '<w:sz w:val="44"/>') + _run(" minus", '<w:sz w:val="14"/>')
+    texte, plages = tx.extract_rich("t.docx", _docx_pp([("", runs)]))
+    tailles = {texte[p["start"] : p["end"]]: p.get("size") for p in plages}
+    assert tailles["ENORME"] == "xl"
+    assert tailles["minus"] == "s"
+
+
+def test_docx_un_seul_mot_agrandi_ne_devient_pas_la_reference():
+    """Le piege : si seuls les mots agrandis portent une taille, la plus repandue
+    serait la leur — et le mot agrandi n'aurait plus rien de special."""
+    runs = "".join(_run(f"mot{i} ") for i in range(8)) + _run("ENORME", '<w:sz w:val="44"/>')
+    assert _seule(tx.extract_rich("u.docx", _docx_pp([("", runs)]))[1])["size"] == "xl"
+
+
+def test_docx_alignement_centre_et_droite_seulement():
+    data = _docx_pp(
+        [
+            ('<w:jc w:val="center"/>', _run("centre")),
+            ('<w:jc w:val="right"/>', _run("droite")),
+            ('<w:jc w:val="left"/>', _run("gauche")),
+            ("", _run("rien")),
+        ]
+    )
+    texte, plages = tx.extract_rich("a.docx", data)
+    poses = {texte[p["start"] : p["end"]]: p.get("align") for p in plages}
+    assert poses == {"centre": "center", "droite": "right"}
+
+
+def test_docx_puces_des_deux_ecritures_de_word():
+    data = _docx_pp(
+        [
+            ('<w:numPr><w:ilvl w:val="0"/></w:numPr>', _run("par numerotation")),
+            ('<w:pStyle w:val="ListParagraph"/>', _run("par style")),
+            ("", _run("paragraphe ordinaire")),
+        ]
+    )
+    texte, _ = tx.extract_rich("p.docx", data)
+    assert texte.split("\n") == [
+        tx.PUCE + "par numerotation",
+        tx.PUCE + "par style",
+        "paragraphe ordinaire",
+    ]
+
+
+def test_docx_un_titre_en_liste_reste_un_titre():
+    data = _docx_pp([('<w:pStyle w:val="Heading1"/><w:numPr/>', _run("Titre en liste"))])
+    assert tx.extract_rich("h.docx", data)[0] == "# Titre en liste"
+
+
+def test_odt_couleur_et_taille():
+    styles = [_style_odt("T1", 'fo:color="#0070c0"'), _style_odt("T2", 'fo:font-size="200%"')]
+    corps = (
+        '<text:p>bleu <text:span text:style-name="T1">ici</text:span> et '
+        '<text:span text:style-name="T2">gros</text:span>.</text:p>'
+    )
+    texte, plages = tx.extract_rich("c.odt", _odt_complet(styles, [], corps))
+    trouve = {texte[p["start"] : p["end"]]: p for p in plages}
+    assert trouve["ici"]["color"] == 4
+    assert trouve["gros"]["size"] == "xl"
+
+
+def test_odt_couleur_annulee_par_un_span_interieur():
+    """Meme regle que le gras : un style qui remet le noir ANNULE la couleur heritee."""
+    styles = [_style_odt("T1", 'fo:color="#ff0000"'), _style_odt("T2", 'fo:color="#000000"')]
+    corps = (
+        '<text:p><text:span text:style-name="T1">rouge sauf '
+        '<text:span text:style-name="T2">ce mot</text:span> la</text:span></text:p>'
+    )
+    texte, plages = tx.extract_rich("x.odt", _odt_complet(styles, [], corps))
+    colores = [texte[p["start"] : p["end"]] for p in plages if p.get("color")]
+    assert colores == ["rouge sauf", "la"]
+
+
+def test_odt_alignement_par_style_de_paragraphe():
+    paras = [_style_para_odt("P1", 'fo:text-align="center"'), _style_para_odt("P2", 'fo:text-align="start"')]
+    corps = '<text:p text:style-name="P1">centre</text:p><text:p text:style-name="P2">gauche</text:p>'
+    texte, plages = tx.extract_rich("a.odt", _odt_complet([], paras, corps))
+    poses = {texte[p["start"] : p["end"]]: p.get("align") for p in plages}
+    assert poses == {"centre": "center"}
+
+
+def test_odt_puces_ne_debordent_pas_sur_la_suite():
+    """Regression : <text:list-item> passait pour une ouverture de liste que
+    </text:list-item> ne refermait pas — tout le reste du document prenait une puce."""
+    corps = (
+        "<text:list><text:list-item><text:p>une</text:p></text:list-item>"
+        "<text:list-item><text:p>deux</text:p></text:list-item></text:list>"
+        "<text:p>apres la liste</text:p>"
+    )
+    texte, _ = tx.extract_rich("l.odt", _odt_complet([], [], corps))
+    assert texte.split("\n") == [tx.PUCE + "une", tx.PUCE + "deux", "apres la liste"]
+
+
 def test_fichier_qui_n_est_pas_un_document_est_refuse():
     """Une photo ne doit pas finir en charabia dans le prompteur, mais en refus."""
     octets = bytes([255, 216, 255, 224]) + b" nimporte quels octets"

@@ -29,7 +29,7 @@ choses deviennent plus simples.
 | Sortir du prompteur demandait deux raccourcis clavier, et y revenir un redémarrage | **La touche Échap** ramène à la page d'accueil. Une **icône sur le bureau** rouvre le prompteur |
 | Un texte importé partait à l'écran tout seul, sans qu'on l'ait demandé | L'import **remplit la zone de texte**. C'est « Envoyer à l'écran » qui diffuse, et rien d'autre |
 | Le texte s'affichait tout uni | On peut mettre des passages en **gras**, en *italique*, en souligné, en plus gros ou **en couleur** |
-| Un document Word arrivait en texte plat | Son **gras et son italique sont conservés** |
+| Un document Word arrivait en texte plat | Il arrive **avec sa mise en forme** : titres, gras, italique, souligné, couleurs, tailles, centrage et puces |
 | Deux modes de pédales | **Trois**, dont un où l'on règle la vitesse au pied |
 | Un réglage changé sur le téléphone n'apparaissait pas sur les autres appareils | Tout se met à jour **tout seul**, partout |
 
@@ -150,7 +150,8 @@ Cochez au fur et à mesure. Comptez cinq minutes.
 - [ ] Dans la zone de texte, **sélectionnez quelques mots et appuyez sur G** :
       ils passent en gras **sous vos yeux**
 - [ ] **« Envoyer à l'écran »** : le gras apparaît aussi sur le grand écran
-- [ ] Importez un document Word contenant du gras : **le gras est conservé**
+- [ ] Importez un document Word contenant du **gras**, un **passage en couleur**, un
+      **titre** et une **liste à puces** : tout se retrouve à l'écran de lecture
 - [ ] Onglet **Réglages** → carte **Pédales** : il y a maintenant **trois modes**
       (Maintien, Impulsion, Dynamique)
 
@@ -189,6 +190,31 @@ toute la mise en forme d'un coup.
 
 La mise en forme apparaît **directement dans la zone de texte**, telle qu'elle
 sera à l'écran.
+
+### Un document Word arrive avec sa mise en forme
+
+Un `.docx` ou un `.odt` importé conserve ses **titres**, son **gras**, son *italique*, son
+souligné, ses **couleurs**, ses **tailles** (en proportion du reste), le **centrage** de ses
+paragraphes et ses **listes à puces**.
+
+Deux précisions qui évitent une mauvaise surprise :
+
+- **La couleur est ramenée à la plus proche des cinq du prompteur.** Votre rouge reste rouge,
+  mais un bleu marine devient un bleu qui se voit : sur fond noir, recopier votre couleur
+  exacte rendrait le passage invisible.
+- **Le centrage ne se voit que sur l'écran de lecture**, pas dans la zone de saisie de la
+  télécommande, qui est une simple ligne de texte.
+
+Un fichier qui n'est pas un document texte (une photo, une archive) est maintenant **refusé
+avec un message**. Avant, il remplissait la zone de texte de caractères illisibles sans rien
+dire.
+
+### Écrire un titre à la main
+
+Sous les boutons de mise en forme, un bloc **« Écrire un titre à la main »** se déplie et
+rappelle la syntaxe : `# ` grand titre, `## ` sous-titre, `### ` petit titre — l'espace après
+les dièses étant obligatoire. C'est exactement la forme sous laquelle arrivent les titres d'un
+document importé.
 
 ### L'import ne part plus tout seul
 

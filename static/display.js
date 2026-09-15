@@ -93,6 +93,18 @@
   // des TITRES (gros/gras) ; les autres lignes et les lignes vides sont préservées.
   // Classes de mise en forme actives a une position donnee du texte.
   const SIZE_CLASS = { s: "ms", l: "ml", xl: "mxl" };
+  const ALIGN_CLASS = { center: "al-c", right: "al-r" };
+
+  // L'alignement ne porte pas sur des caracteres mais sur la LIGNE entiere : on le
+  // lit donc a son premier caractere. Les plages d'alignement sont isolees en amont
+  // parce qu'elles sont rares : sans cela, chaque ligne d'un script de 300 000
+  // signes reparcourrait toute la mise en forme.
+  function alignementAt(alignements, index) {
+    for (const m of alignements) {
+      if (index >= m.start && index < m.end) return ALIGN_CLASS[m.align];
+    }
+    return "";
+  }
 
   function styleClassesAt(marks, index) {
     let cls = "";
@@ -152,6 +164,7 @@
     for (const m of plages) bornes.push(m.start, m.end);
     bornes.sort((a, b) => a - b);
 
+    const alignements = plages.filter((m) => ALIGN_CLASS[m.align]);
     const frag = document.createDocumentFragment();
     let offset = 0;
     for (const line of String(text).split("\n")) {
@@ -171,6 +184,8 @@
         if (plages.length) fillLine(div, line, offset, plages, bornes);
         else div.textContent = line;
       }
+      const aligne = alignementAt(alignements, offset);
+      if (aligne) div.className += " " + aligne;
       frag.appendChild(div);
       offset += line.length + 1; // +1 pour le saut de ligne retiré par split
     }
