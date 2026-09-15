@@ -13,6 +13,12 @@ produit, et la parade retenue.*
 
 ---
 
+## Sommaire
+
+[SOMMAIRE]
+
+---
+
 ## 1. Le boîtier et son système
 
 ### 🔴 Un chemin entre guillemets dans une unité systemd

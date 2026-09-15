@@ -23,37 +23,17 @@
 > installation la veille au soir d'un tournage. Faites-la un jour tranquille, où
 > vous aurez le temps de tout tester deux fois.
 
-> **🖨️ Ce document est fait pour être imprimé et suivi papier à la main.**
-> Les renvois d'une partie à l'autre nomment toujours la partie en toutes lettres
-> (« voir l'étape F »), pour rester utilisables sur papier. Le sommaire ci-dessous
-> comporte une colonne vide : après impression, écrivez-y au stylo le numéro de
-> page correspondant.
+> **🖨️ Fait pour être imprimé et suivi papier à la main.**
+> Les renvois nomment toujours la partie en toutes lettres (« voir l'étape F »), et
+> le sommaire ci-dessous porte les **vrais numéros de page**. **Chaque étape commence
+> sur une page neuve**, et son nom est rappelé en haut à droite : vous retrouvez
+> votre place d'un coup d'œil après avoir levé les yeux.
 
 ---
 
 ## Sommaire
 
-| Repère | Partie | Page |
-|---|---|---|
-| **1** | Avant de commencer — ce qu'il faut avoir sous la main | ....... |
-| **2** | Les trois informations à choisir avant de commencer | ....... |
-| **A** | Préparer la carte mémoire (à sauter si elle est déjà prête) | ....... |
-| **B** | Brancher le boîtier | ....... |
-| **C** | Le premier démarrage | ....... |
-| **D** | Ouvrir la fenêtre noire | ....... |
-| **E** | Les trois réglages dans le menu bleu | ....... |
-| **F** | Les lignes à recopier, une par une | ....... |
-| **G** | Le redémarrage qui révèle tout | ....... |
-| **G bis** | Sortir du prompteur, et y revenir (touche Échap) | ....... |
-| **G ter** | Éteindre le boîtier proprement | ....... |
-| **H** | Connecter le téléphone | ....... |
-| **I** | Le pédalier | ....... |
-| **J** | Préparer la répétition générale | ....... |
-| **K** | Checklist finale : la répétition générale | ....... |
-| **L** | La roue de secours : la deuxième carte mémoire | ....... |
-| **M** | Si ça ne marche pas | ....... |
-| **N** | Mettre à jour ou réinstaller plus tard | ....... |
-| **O** | Quand tout marche : à transmettre au journaliste | ....... |
+[SOMMAIRE]
 
 ---
 
