@@ -29,7 +29,7 @@ choses deviennent plus simples.
 | Sortir du prompteur demandait deux raccourcis clavier, et y revenir un redémarrage | **La touche Échap** ramène à la page d'accueil. Une **icône sur le bureau** rouvre le prompteur |
 | Un texte importé partait à l'écran tout seul, sans qu'on l'ait demandé | L'import **remplit la zone de texte**. C'est « Envoyer à l'écran » qui diffuse, et rien d'autre |
 | Le texte s'affichait tout uni | On peut mettre des passages en **gras**, en *italique*, en souligné, en plus gros ou **en couleur** |
-| Un document Word arrivait en texte plat | Il arrive **avec sa mise en forme** : titres, gras, italique, souligné, couleurs, tailles, centrage et puces |
+| Un document arrivait en texte plat | **Word, LibreOffice, PDF et RTF** arrivent avec leur mise en forme : titres, gras, italique, couleurs, tailles, centrage et puces |
 | Deux modes de pédales | **Trois**, dont un où l'on règle la vitesse au pied |
 | Un réglage changé sur le téléphone n'apparaissait pas sur les autres appareils | Tout se met à jour **tout seul**, partout |
 
@@ -150,7 +150,7 @@ Cochez au fur et à mesure. Comptez cinq minutes.
 - [ ] Dans la zone de texte, **sélectionnez quelques mots et appuyez sur G** :
       ils passent en gras **sous vos yeux**
 - [ ] **« Envoyer à l'écran »** : le gras apparaît aussi sur le grand écran
-- [ ] Importez un document Word contenant du **gras**, un **passage en couleur**, un
+- [ ] Importez un document Word **puis un PDF** contenant du **gras**, un **passage en couleur**, un
       **titre** et une **liste à puces** : tout se retrouve à l'écran de lecture
 - [ ] Onglet **Réglages** → carte **Pédales** : il y a maintenant **trois modes**
       (Maintien, Impulsion, Dynamique)
@@ -191,11 +191,18 @@ toute la mise en forme d'un coup.
 La mise en forme apparaît **directement dans la zone de texte**, telle qu'elle
 sera à l'écran.
 
-### Un document Word arrive avec sa mise en forme
+### Vos documents arrivent avec leur mise en forme
 
-Un `.docx` ou un `.odt` importé conserve ses **titres**, son **gras**, son *italique*, son
-souligné, ses **couleurs**, ses **tailles** (en proportion du reste), le **centrage** de ses
-paragraphes et ses **listes à puces**.
+Un document importé conserve ses **titres**, son **gras**, son *italique*, ses **couleurs**,
+ses **tailles** (en proportion du reste), le **centrage** de ses paragraphes et ses **listes à
+puces** — et cela vaut pour **Word (`.docx`), LibreOffice (`.odt`), le PDF et le RTF**.
+
+Deux exceptions, et elles sont logiques :
+
+- **Le `.txt` n'a rien à conserver** : un fichier texte simple ne contient aucune mise en
+  forme, c'est sa définition.
+- **Le PDF perd le souligné** : dans un PDF, ce n'est pas une propriété du texte mais un
+  simple trait dessiné en dessous. Le gras, lui, passe très bien.
 
 Deux précisions qui évitent une mauvaise surprise :
 

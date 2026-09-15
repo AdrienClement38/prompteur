@@ -659,6 +659,40 @@ def test_import_fichier_avec_apply_false_ne_touche_pas_l_ecran(client):
     assert client.get("/api/state").get_json()["text"] == "a l'antenne"
 
 
+def test_un_document_tres_long_signale_sa_mise_en_forme_ecretee(client):
+    """Le plafond de 500 plages protege l'affichage, mais s'il s'appliquait en
+    SILENCE on croirait que la fin du document n'etait pas mise en forme."""
+    runs = "".join(
+        "<w:r><w:rPr><w:b/></w:rPr><w:t>gras%d</w:t></w:r><w:r><w:t> normal%d </w:t></w:r>" % (i, i) for i in range(600)
+    )
+    docx = io.BytesIO()
+    with zipfile.ZipFile(docx, "w") as z:
+        z.writestr(
+            "word/document.xml",
+            '<?xml version="1.0"?><w:document xmlns:w="x"><w:body><w:p>' + runs + "</w:p></w:body></w:document>",
+        )
+    r = client.post(
+        "/api/upload",
+        data={"file": (io.BytesIO(docx.getvalue()), "long.docx"), "apply": "false"},
+        content_type="multipart/form-data",
+        headers={server.CLIENT_HEADER: "1"},
+    )
+    corps = r.get_json()
+    assert corps["ok"] is True
+    assert len(corps["marks"]) == server.MAX_MARKS
+    assert corps["marksTruncated"] is True
+
+
+def test_un_document_ordinaire_ne_signale_aucun_ecretage(client):
+    r = client.post(
+        "/api/upload",
+        data={"file": (io.BytesIO("Un texte court.".encode("utf-8")), "court.txt"), "apply": "false"},
+        content_type="multipart/form-data",
+        headers={server.CLIENT_HEADER: "1"},
+    )
+    assert r.get_json()["marksTruncated"] is False
+
+
 def test_alignement_accepte_seulement_centre_et_droite():
     """« left » est deja le comportement normal : une marque de plus pour rien."""
     marques = server.sanitize_marks(

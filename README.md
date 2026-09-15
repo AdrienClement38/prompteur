@@ -325,15 +325,33 @@ pas. C'est aussi la forme que prennent les titres d'un document Word importé.
 
 > **Ce qu'un import conserve, selon le format.**
 >
-> | | .docx / .odt | .pdf / .rtf / .txt |
-> |---|---|---|
-> | Titres | ✅ `#` / `##` / `###` | ❌ sauf écrits à la main |
-> | Gras, italique, souligné | ✅ au caractère près | ❌ |
-> | Couleur du texte | ✅ ramenée à la plus proche des cinq | ❌ |
-> | Passage plus gros / plus petit | ✅ **en proportion** du reste | ❌ |
-> | Paragraphe centré, aligné à droite | ✅ sur l'écran de lecture | ❌ |
-> | Listes à puces | ✅ deviennent des lignes « • … » | ❌ |
-> | Images, tableaux, polices, retraits | ❌ | ❌ |
+> | | .docx / .odt | .pdf | .rtf | .txt |
+> |---|---|---|---|---|
+> | Titres | ✅ par les styles | ✅ déduits de la taille | ✅ déduits de la taille | ❌ sauf `#` écrit à la main |
+> | Gras, italique | ✅ | ✅ par le **nom de la police** | ✅ | ❌ |
+> | Souligné | ✅ | ❌ *(voir plus bas)* | ✅ | ❌ |
+> | Couleur du texte | ✅ ramenée à la palette | ✅ ramenée à la palette | ✅ ramenée à la palette | ❌ |
+> | Plus gros / plus petit | ✅ en proportion | ✅ en proportion | ✅ en proportion | ❌ |
+> | Centré, aligné à droite | ✅ | ✅ déduit de la **position sur la page** | ✅ | ❌ |
+> | Listes à puces | ✅ → « • » | ✅ déjà dans le texte | ✅ → « • » | ❌ |
+> | Images, tableaux, polices, retraits | ❌ | ❌ | ❌ | ❌ |
+>
+> **Un `.txt` ne contient aucune mise en forme**, par construction : il n'y a rien à
+> en tirer de plus que son texte. Les `#` et les « • » qu'on y écrit à la main sont
+> pris en compte comme partout ailleurs.
+>
+> **Un PDF ne déclare aucun style.** Il ne dit pas « ce mot est en gras », il dit
+> « ce mot est peint avec la police Arial-BoldMT ». Le gras et l'italique sont donc
+> lus dans le **nom de la police**, la couleur dans l'**opérateur de remplissage**,
+> le centrage dans la **position de la ligne** sur la page, et un titre est une ligne
+> **entièrement** plus grosse que le corps du texte. Le **souligné, lui, n'est pas
+> récupérable** : dans un PDF, c'est un trait dessiné sous le texte, pas une propriété
+> du texte. C'est la seule chose qu'un `.docx` conserve et qu'un `.pdf` perd.
+>
+> Le texte d'un PDF, lui, n'est **pas** reconstruit : l'extraction existante reste
+> maîtresse du découpage en lignes et de l'espacement, et la mise en forme est
+> **reposée par-dessus**. Un test verrouille cet invariant — aux dièses de titre près,
+> le texte produit est exactement celui d'avant.
 >
 > **Trois choix assumés, et leur raison.**
 >
@@ -345,7 +363,8 @@ pas. C'est aussi la forme que prennent les titres d'un document Word importé.
 > - **La taille est relative, jamais absolue.** Sur un prompteur, c'est le lecteur qui
 >   fixe la taille générale selon sa distance à l'écran. Un « 8 points » recopié serait
 >   illisible ; ce qui compte, c'est « plus petit que le reste » ou « bien plus gros ».
->   La référence est la taille **la plus répandue du document**.
+>   La référence est la taille **la plus répandue du document**, en comptant aussi les
+>   passages qui n'en déclarent aucune.
 > - **Titres et puces deviennent du texte** (`# `, `• `) et non un style. C'est ce qui
 >   permet de les écrire au clavier, et de les retrouver intacts dans un fichier
 >   enregistré puis relu des mois plus tard.

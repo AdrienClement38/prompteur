@@ -749,6 +749,17 @@ def api_library_delete():
     return jsonify({"ok": True})
 
 
+def _mise_en_forme_tronquee(marques):
+    """La mise en forme d'un très long document a-t-elle été écrêtée ?
+
+    Le plafond de 500 plages protège l'affichage : le calcul du style est quadratique
+    en nombre de plages, et un Pi n'y survivrait pas au-delà. Mais un plafond qui
+    s'applique en SILENCE ferait croire que la fin du document n'était pas mise en
+    forme. On le dit donc, plutôt que de laisser conclure à un import raté.
+    """
+    return len(marques) >= MAX_MARKS
+
+
 def _wants_apply(value):
     """Faut-il envoyer le texte importé directement à l'écran ?
 
@@ -803,7 +814,16 @@ def api_usb_load():
     title = Path(path).stem
     if not _wants_apply(data.get("apply")):
         # Le client remplira lui-même sa zone de texte : rien ne part à l'écran.
-        return jsonify({"ok": True, "title": title, "text": text, "marks": marques, "applied": False})
+        return jsonify(
+            {
+                "ok": True,
+                "title": title,
+                "text": text,
+                "marks": marques,
+                "applied": False,
+                "marksTruncated": _mise_en_forme_tronquee(marques),
+            }
+        )
     with _lock:
         STATE["text"] = text
         STATE["title"] = title
@@ -830,7 +850,16 @@ def api_upload():
     title = Path(file.filename).stem or "Import"
     if not _wants_apply(request.form.get("apply")):
         # Le client remplira lui-meme sa zone de texte : rien ne part a l'ecran.
-        return jsonify({"ok": True, "title": title, "text": text, "marks": marques, "applied": False})
+        return jsonify(
+            {
+                "ok": True,
+                "title": title,
+                "text": text,
+                "marks": marques,
+                "applied": False,
+                "marksTruncated": _mise_en_forme_tronquee(marques),
+            }
+        )
     with _lock:
         STATE["text"] = text
         STATE["title"] = title

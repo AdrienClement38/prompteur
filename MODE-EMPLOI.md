@@ -482,26 +482,38 @@ change pas encore**. Le titre devient automatiquement le nom du fichier, **sans 
 **Formats acceptés** (c'est écrit sous les deux boutons) : Word (`.docx`, `.doc`), PDF,
 LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 
-> 💡 **Le meilleur format, de loin : le `.docx` (Word ou LibreOffice).** C'est le seul, avec
-> le `.odt`, qui arrive **avec sa mise en forme** :
+> 💡 **Vos documents arrivent avec leur mise en forme.** Ce n'est plus réservé au
+> Word : le PDF et le RTF aussi.
 >
-> | Ce que vous aviez dans Word | Ce que vous retrouvez |
-> |---|---|
-> | Titres (styles « Titre 1 », « Titre 2 »…) | affichés **en gros et en gras** |
-> | **Gras**, *italique*, souligné | conservés, au mot près |
-> | Texte en couleur | conservé, ramené à **la couleur la plus proche parmi les cinq** du prompteur |
-> | Passage plus gros ou plus petit que le reste | conservé, **en proportion** du reste |
-> | Paragraphe centré ou aligné à droite | conservé, visible **sur l'écran de lecture** |
-> | Listes à puces | deviennent des lignes commençant par « • » |
+> | Ce que vous aviez | Word `.docx` · LibreOffice `.odt` | PDF | RTF | Texte `.txt` |
+> |---|---|---|---|---|
+> | Titres | ✅ | ✅ | ✅ | ❌ |
+> | **Gras**, *italique* | ✅ | ✅ | ✅ | ❌ |
+> | Souligné | ✅ | ❌ | ✅ | ❌ |
+> | Texte en couleur | ✅ | ✅ | ✅ | ❌ |
+> | Passage plus gros ou plus petit | ✅ | ✅ | ✅ | ❌ |
+> | Paragraphe centré, à droite | ✅ | ✅ | ✅ | ❌ |
+> | Listes à puces | ✅ | ✅ | ✅ | ❌ |
 >
-> **Pourquoi « la couleur la plus proche » et non la vôtre.** Le prompteur n'a que cinq
-> couleurs, toutes choisies lisibles sur fond noir. Un bleu marine ou un gris foncé de
-> votre document deviendrait invisible à l'écran — au moment précis où vous comptiez
-> dessus. Votre rouge reste donc rouge, mais un rouge qui se voit.
+> **Le `.txt` n'a rien à conserver** : un fichier texte simple ne contient aucune mise en
+> forme, c'est sa définition. Vous pouvez en revanche y écrire vos titres à la main avec
+> des dièses (voir plus bas), comme partout ailleurs.
 >
-> **Ce qui n'est pas repris** : les images, les tableaux, les polices de caractères et les
-> retraits. Ce sont des éléments de mise en page ; ils n'ont pas de sens sur un texte qui
-> défile.
+> **La seule chose qu'un PDF perd, c'est le souligné.** Dans un PDF, le souligné n'est pas
+> une propriété du texte : c'est un simple trait dessiné en dessous. Il n'y a rien à
+> récupérer. Le gras, lui, passe très bien.
+>
+> **Vos couleurs sont ramenées aux cinq du prompteur.** Votre rouge reste rouge, mais un
+> bleu marine devient un bleu qui se voit : sur fond noir, recopier votre couleur exacte
+> rendrait le passage invisible — au moment précis où vous comptiez dessus.
+>
+> **Les tailles sont conservées en proportion**, pas en points. C'est vous qui fixez la
+> taille générale selon votre distance à l'écran ; un « 8 points » recopié tel quel serait
+> illisible. Ce qui est conservé, c'est « plus gros que le reste ».
+>
+> **Ce qui n'est repris dans aucun format** : les images, les tableaux, les polices de
+> caractères et les retraits. Ce sont des éléments de mise en page ; ils n'ont pas de sens
+> sur un texte qui défile.
 
 > ⚠️ **PIÈGES DES DOCUMENTS — à vérifier la veille, jamais le jour J.**
 > Dans tous les cas ci-dessous, la parade est la même : **repartir du `.docx` d'origine, ou
@@ -1036,7 +1048,7 @@ toujours du tout début**.
 | **Le texte est à l'envers, ou la tête en bas** | Onglet **Réglages**, carte **Affichage** : vérifiez **les DEUX interrupteurs**, « Miroir horizontal » et « Miroir vertical », et éteignez celui qui est allumé à tort. *(Si vous lisez dans une vitre sans tain, seul l'horizontal doit être allumé. Le miroir ne touche que l'écran principal : les écrans secondaires sont toujours à l'endroit.)* |
 | **Le texte démarre trop bas sur l'écran** | C'est voulu : la première ligne est placée sous la ligne rouge, et le texte monte vers elle dès la première pression sur la pédale. |
 | **La clé USB n'est pas détectée, ou mon document n'apparaît pas dans la liste** | Retirez la clé, rebranchez-la **sur le boîtier**, attendez 5 secondes, réappuyez sur **« Clé USB »**. Si votre document n'est toujours pas listé, il est probablement **trop lourd** (plus de 5 Mo) : il est alors ignoré **sans aucun message**. Utilisez un `.docx` léger, posé **à la racine** d'une petite clé ordinaire. |
-| **Un import échoue, ou remplit la zone de saisie de charabia** | Le format n'est pas lisible (PDF scanné, document protégé, format Apple, fichier trop lourd). N'envoyez pas à l'écran : repartez du document Word d'origine, ou **copiez-collez le texte** dans la télécommande — cette voie marche toujours. |
+| **Un import échoue, ou ne remplit rien** | Le document n'est pas lisible (PDF scanné, document protégé, fichier trop lourd) ; un format qui n'est pas un document texte, lui, est refusé avec un message. N'envoyez pas à l'écran : repartez du document Word d'origine, ou **copiez-collez le texte** dans la télécommande — cette voie marche toujours. |
 | **Le texte importé s'arrête au milieu** | Le fichier dépassait 5 Mo : il a été **coupé sans avertissement**. Après un import, descendez jusqu'à **la dernière ligne dans la zone de saisie** avant d'appuyer sur « Envoyer à l'écran », et repartez d'un `.docx` léger. |
 | **L'écran de la régie n'affiche pas l'étiquette jaune « SPECTATEUR »** | Il a été ouvert en écran principal. Refermez cette page et rouvrez-la par le bouton **« Écran secondaire »** de la page d'accueil (chapitre 11). |
 | **Rien de tout cela ne marche** | **Éteignez** : débranchez l'alimentation du boîtier. Attendez **10 secondes**. **Rallumez** : écran d'abord, boîtier ensuite. Attendez **une minute complète** sans rien toucher. Si l'écran reste définitivement noir ou si le réseau « Prompteur » n'apparaît jamais : **passez à votre plan B** (votre texte imprimé en gros caractères, ou ouvert en très grand sur une tablette) pour que le tournage ait lieu quand même, **remplacez la carte mémoire par celle de secours** si l'installateur vous en a préparé une, et **appelez la personne qui a installé le boîtier** (coordonnées sur la fiche au dos). Ne démontez rien. |

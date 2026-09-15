@@ -232,6 +232,56 @@ ancien fichier devient ambigu.
 **Parade :** le texte reste une chaîne brute, la mise en forme est une liste de
 plages posées dessus. Rien à échapper, et les anciens textes s'affichent inchangés.
 
+### 🔴 Un plafond qui s'applique en silence
+La mise en forme est bornée à 500 plages, parce que le calcul du style est quadratique
+en nombre de plages et qu'un Pi n'y survivrait pas au-delà. Mais sur un document long,
+l'écrêtage était **muet** : la fin du texte arrivait sans mise en forme, et rien ne
+distinguait ce cas d'un import raté.
+**Parade :** la borne reste, le silence non. L'import renvoie `marksTruncated`, et la
+télécommande le dit en clair. Une limite annoncée est une limite ; une limite tue est un
+bogue que l'utilisateur découvre seul, en tournage.
+
+### 🔴 Un format qui ne déclare rien oblige à tout déduire
+Un PDF ne dit jamais « ce mot est en gras ». Il dit « ce mot est peint avec la police
+Arial-BoldMT », à telle position, avec telle couleur de remplissage. Chercher une
+propriété « gras » n'aurait rien donné et aurait fait conclure, à tort, que le format ne
+porte aucune mise en forme.
+**Parade :** déduire de ce que le format dit réellement — le **nom de la police** pour le
+gras et l'italique, l'**opérateur de remplissage** pour la couleur, la **position de la
+ligne** pour le centrage, et « ligne entièrement plus grosse que le corps » pour un titre.
+
+### Ce qui est dessiné n'est pas une propriété
+Dans un PDF, le souligné n'est pas un attribut du texte : c'est un **trait tracé en
+dessous**, un objet graphique sans lien déclaré avec les mots qu'il souligne. Aucune
+lecture du texte ne peut donc le retrouver.
+**Parade :** le dire, plutôt que de laisser croire à un oubli. C'est la seule chose qu'un
+`.docx` conserve et qu'un `.pdf` perd — une ligne dans le mode d'emploi vaut mieux qu'un
+utilisateur qui croit à une panne.
+
+### Ajouter sans reconstruire
+La tentation, en lisant les morceaux d'un PDF un par un, est de recoller le texte
+soi-même à partir d'eux. On perd alors tout le travail d'espacement et de découpage en
+lignes de la bibliothèque — et le texte, lui, **régresse** pendant qu'on croit l'enrichir.
+**Parade :** laisser l'extraction existante produire le texte, et **reposer** la mise en
+forme dessus en cherchant chaque morceau dans l'ordre. Un test verrouille l'invariant :
+aux dièses de titre près, le texte produit est identique à celui d'avant.
+
+### Un nom qui diffère entre le format et le modèle
+Le RTF écrit le souligné `\ul`. Le modèle interne, lui, l'appelle `u`. Le code écrivait
+`etat[mot]`, donc `etat["ul"]` — une clé que personne ne lisait. Le souligné disparaissait
+sans la moindre erreur : tout le reste fonctionnait, et l'oubli portait sur un seul des
+trois styles.
+**Parade :** traduire explicitement au point d'entrée, et tester **chacun** des styles
+séparément. Un test qui ne vérifie que le gras aurait laissé passer celui-ci.
+
+### Les tables internes d'un format ne doivent jamais atteindre l'écran
+Un RTF commence par sa table des polices, sa table des couleurs, sa feuille de styles et
+les propriétés du document — titre, auteur, logiciel générateur. Tout cela est du texte,
+entre accolades, au même titre que le script. Sans mise à l'écart explicite, le prompteur
+aurait affiché « Times New Roman;Symbol;red255green0blue0 » avant la première phrase.
+**Parade :** une liste des groupes à ignorer, appliquée à la profondeur d'accolade, et un
+test qui vérifie l'ABSENCE de ces contenus — pas seulement la présence du bon texte.
+
 ### 🔴 Une limite de mot qui accepte le tiret
 `<text:list` suivi d'une limite de mot reconnait aussi `<text:list-item`, puisque le
 tiret n'est pas un caractère de mot. Mais `</text:list>` ne reconnait pas

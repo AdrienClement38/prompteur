@@ -836,7 +836,221 @@ def _from_odt(data):
 # --------------------------------------------------------------------------
 # RTF
 # --------------------------------------------------------------------------
-def _from_rtf(data):
+# Le RTF, lui, DIT sa mise en forme : « \b » ouvre le gras, « \fs28 » fixe la
+# taille, « \cf2 » désigne la deuxième couleur de la table des couleurs. Il n'y a
+# donc rien à deviner — seulement à suivre correctement l'imbrication des
+# accolades, car un style ouvert dans un groupe se referme à la fin de ce groupe.
+#
+# Le repli reste en place : si l'analyse échoue ou ne rend rien, on retombe sur
+# l'extraction de texte simple d'avant. Un script qui arrive sans son gras vaut
+# infiniment mieux qu'un script qui n'arrive pas.
+_RE_RTF_JETON = re.compile(
+    r"\\'([0-9a-fA-F]{2})"  # \'e9 : un octet écrit en hexadécimal
+    r"|\\([a-zA-Z]+)(-?\d+)? ?"  # \b, \fs28, \cf2, \par...
+    r"|\\([^a-zA-Z])"  # \\, \{, \}, \~ ...
+    r"|([{}])"  # ouverture / fermeture de groupe
+    r"|([^\\{}]+)"  # du texte ordinaire
+)
+# Groupes dont le CONTENU ne doit jamais arriver à l'écran : tables internes,
+# propriétés du document, images. Les oublier remplirait le prompteur de réglages.
+_RTF_DESTINATIONS = {
+    "fonttbl",
+    "colortbl",
+    "stylesheet",
+    "info",
+    "pict",
+    "object",
+    "header",
+    "footer",
+    "headerl",
+    "headerr",
+    "footerl",
+    "footerr",
+    "footnote",
+    "generator",
+    "themedata",
+    "colorschememapping",
+    "latentstyles",
+    "datastore",
+    "listtable",
+    "listoverridetable",
+    "rsidtbl",
+    "xmlnstbl",
+    "mmathPr",
+    "filetbl",
+    "revtbl",
+    "upr",
+    "annotation",
+    "atnid",
+    "atnauthor",
+}
+# Groupes dont le contenu est le REPÈRE de puce, et rien d'autre : on ne le garde
+# pas tel quel (c'est souvent un caractère de police symbole), on note la puce.
+_RTF_PUCES = {"pntext", "listtext"}
+_RTF_CARACTERES = {
+    "tab": "\t",
+    "line": "\n",
+    "emdash": "\u2014",
+    "endash": "\u2013",
+    "lquote": "\u2018",
+    "rquote": "\u2019",
+    "ldblquote": "\u201c",
+    "rdblquote": "\u201d",
+    "bullet": "\u2022",
+    "enspace": " ",
+    "emspace": " ",
+    "nbsp": "\u00a0",
+}
+_RTF_ALIGNEMENTS = {"qc": "center", "qr": "right", "ql": None, "qj": None}
+_DEFAUT_FS_RTF = 24  # 12 points, en demi-points comme l'écrit le RTF
+
+
+def _rtf_couleurs(source):
+    """Table des couleurs : indice RTF -> numéro de palette du prompteur.
+
+    L'indice 0 est la couleur « automatique » : la table commence par un « ; »
+    vide. Le confondre avec la première vraie couleur décalerait tout d'un cran.
+    """
+    m = re.search(r"\{\\colortbl(.*?)\}", source, re.S)
+    if not m:
+        return {}
+    table = {}
+    for indice, entree in enumerate(m.group(1).split(";")):
+        r = re.search(r"\\red(\d+)", entree)
+        v = re.search(r"\\green(\d+)", entree)
+        b = re.search(r"\\blue(\d+)", entree)
+        if not (r and v and b):
+            continue  # entrée vide = couleur automatique : aucune marque
+        octets = tuple(max(0, min(255, int(x.group(1)))) for x in (r, v, b))
+        numero = _couleur_palette("%02x%02x%02x" % octets)
+        if numero:
+            table[indice] = numero
+    return table
+
+
+def _rtf_analyse(source):
+    """Découpe un RTF en segments (texte, styles), accolades comprises."""
+    couleurs = _rtf_couleurs(source)
+    etat = {"b": False, "i": False, "u": False, "fs": None, "cf": 0}
+    pile = []
+    profondeur = 0
+    saut = None  # profondeur du groupe ignoré, le cas échéant
+    uc = 1  # nombre de caractères de repli à sauter après un \u
+    a_sauter = 0
+
+    bruts = []  # (texte, etat fige) du paragraphe courant
+    paragraphes = []  # listes de bruts
+    aligne = None
+    puce = False
+
+    def ajouter(texte):
+        nonlocal a_sauter
+        if a_sauter > 0:  # repli d'un \u déjà rendu : on le jette
+            pris = min(a_sauter, len(texte))
+            a_sauter -= pris
+            texte = texte[pris:]
+        if texte and saut is None:
+            bruts.append((texte, dict(etat)))
+
+    def finir_paragraphe():
+        nonlocal bruts, aligne, puce
+        paragraphes.append((bruts, aligne, puce))
+        bruts, puce = [], False
+
+    for m in _RE_RTF_JETON.finditer(source):
+        hexa, mot, param, echappe, accolade, texte = m.groups()
+        if accolade == "{":
+            profondeur += 1
+            pile.append(dict(etat))
+            continue
+        if accolade == "}":
+            profondeur -= 1
+            if pile:
+                etat = pile.pop()
+            if saut is not None and profondeur < saut:
+                saut = None
+            continue
+        if saut is not None:
+            continue
+        if hexa:
+            ajouter(bytes([int(hexa, 16)]).decode("cp1252", "replace"))
+            continue
+        if echappe:
+            ajouter({"\\": "\\", "{": "{", "}": "}", "~": "\u00a0", "-": "", "_": "-"}.get(echappe, ""))
+            continue
+        if texte:
+            ajouter(texte)
+            continue
+        if not mot:
+            continue
+        valeur = int(param) if param else None
+        if mot == "*" or mot in _RTF_DESTINATIONS:
+            saut = profondeur
+        elif mot in _RTF_PUCES:
+            puce = True
+            saut = profondeur
+        elif mot == "u" and valeur is not None:
+            ajouter(chr(valeur if valeur >= 0 else valeur + 65536))
+            a_sauter = uc
+        elif mot == "uc" and valeur is not None:
+            uc = max(0, valeur)
+        elif mot in ("b", "i", "ul"):
+            # « ul » est le nom RTF du souligne ; notre cle, c'est « u ». Sans cette
+            # traduction, on alimentait une cle fantome et le souligne se perdait.
+            etat["u" if mot == "ul" else mot] = valeur != 0
+        elif mot in ("ulnone", "ulw"):
+            etat["u"] = False
+        elif mot == "fs" and valeur:
+            etat["fs"] = valeur
+        elif mot == "cf":
+            etat["cf"] = valeur or 0
+        elif mot in _RTF_ALIGNEMENTS:
+            aligne = _RTF_ALIGNEMENTS[mot]
+        elif mot == "pard":
+            aligne = None
+        elif mot == "par":
+            finir_paragraphe()
+        elif mot in _RTF_CARACTERES:
+            ajouter(_RTF_CARACTERES[mot])
+    finir_paragraphe()
+
+    # La taille du corps du texte, comme ailleurs : la plus répandue, en comptant
+    # les passages qui n'en déclarent aucune pour la valeur par défaut.
+    tailles = []
+    for bruts_p, _a, _p in paragraphes:
+        for txt, st in bruts_p:
+            tailles.extend([st["fs"] or _DEFAUT_FS_RTF] * max(1, len(txt.strip())))
+    corps = _mode_des_tailles(tailles, _DEFAUT_FS_RTF)
+
+    segments = []
+    for rang, (bruts_p, align_p, puce_p) in enumerate(paragraphes):
+        if rang:
+            segments.append(("\n", {}))
+        # Un paragraphe ENTIEREMENT plus gros que le corps est un titre, et non un
+        # passage agrandi : comme dans un PDF, c'est ainsi qu'un RTF ecrit ses titres.
+        avec_texte = [st["fs"] or corps for txt, st in bruts_p if txt.strip()]
+        entiere = min(avec_texte) if avec_texte else 0
+        niveau = 0
+        if corps and entiere >= corps * 1.45:
+            niveau = 1
+        elif corps and entiere >= corps * 1.15:
+            niveau = 2
+        para = []
+        for txt, st in bruts_p:
+            styles = {cle: True for cle in ("b", "i", "u") if st[cle]}
+            if couleurs.get(st["cf"]):
+                styles["color"] = couleurs[st["cf"]]
+            if not niveau and st["fs"] and corps:
+                relative = _taille_relative(st["fs"] / float(corps))
+                if relative:
+                    styles["size"] = relative
+            para.append((txt, styles))
+        segments.extend(_titrer_segments(niveau, para, puce_p, align_p))
+    return segments
+
+
+def _rtf_plat(data):
+    """Repli : le texte seul, sans mise en forme (comportement d'origine)."""
     text = _decode(data)
     try:
         from striprtf.striprtf import rtf_to_text
@@ -849,14 +1063,222 @@ def _from_rtf(data):
         return text.replace("{", "").replace("}", "")
 
 
+def _rtf_segments(data):
+    source = _decode(data)
+    try:
+        segments = _rtf_analyse(source)
+    except Exception:  # noqa: BLE001 - un RTF biscornu ne doit pas faire perdre le texte
+        segments = []
+    if "".join(t for t, _ in segments).strip():
+        return segments
+    return [(_rtf_plat(data), {})]
+
+
+def _from_rtf(data):
+    return "".join(texte for texte, _ in _rtf_segments(data))
+
+
 # --------------------------------------------------------------------------
 # PDF
 # --------------------------------------------------------------------------
-def _from_pdf(data):
+# Un PDF ne dit pas « ce mot est en gras » : il dit « ce mot est écrit avec la
+# police Arial-BoldMT ». Le gras, l'italique, la taille, la couleur et le
+# centrage doivent donc être DÉDUITS de la façon dont la page est peinte.
+#
+# On ne remplace pas pour autant l'extraction de texte existante : elle reste
+# maîtresse du découpage en lignes et de l'espacement, que pypdf calcule mieux
+# qu'un recollage de morceaux. Les morceaux observés sont ensuite REPOSÉS sur ce
+# texte, dans l'ordre où ils sont venus. Le texte ne change donc pas d'un iota
+# par rapport à la version précédente : on ne fait qu'ajouter par-dessus.
+_MOTS_GRAS = ("bold", "black", "heavy", "semibold", "demibold")
+_MOTS_ITALIQUE = ("italic", "oblique")
+MAX_MORCEAUX_PDF = 20000  # borne de coût sur un PDF pathologique
+
+
+def _police_styles(nom):
+    """Gras / italique déduits du nom de la police (Arial-BoldMT, Times-Italic...)."""
+    bas = str(nom or "").lower()
+    styles = {}
+    if any(mot in bas for mot in _MOTS_GRAS):
+        styles["b"] = True
+    if any(mot in bas for mot in _MOTS_ITALIQUE):
+        styles["i"] = True
+    return styles
+
+
+def _couleur_operateur(op, args):
+    """Couleur de remplissage du texte -> numéro de palette, ou None.
+
+    « rg » est du RVB, « g » du gris, « k » du CMJN. Les valeurs vont de 0 à 1.
+    """
+    try:
+        vals = [float(a) for a in args]
+    except (TypeError, ValueError):
+        return None
+    if op == "rg" and len(vals) >= 3:
+        r, v, b = vals[:3]
+    elif op == "g" and len(vals) >= 1:
+        r = v = b = vals[0]
+    elif op == "k" and len(vals) >= 4:
+        c, m, j, n = vals[:4]
+        r, v, b = 1 - min(1, c + n), 1 - min(1, m + n), 1 - min(1, j + n)
+    else:
+        return None
+    octets = tuple(max(0, min(255, round(x * 255))) for x in (r, v, b))
+    return _couleur_palette("%02x%02x%02x" % octets)
+
+
+def _pdf_morceaux(page):
+    """Texte de la page, et les morceaux observés pendant sa lecture."""
+    morceaux = []
+    etat = {"couleur": None}
+
+    def avant_operateur(op, args, cm, tm):
+        nom = op.decode("ascii", "replace") if isinstance(op, bytes) else str(op)
+        if nom in ("rg", "g", "k"):
+            etat["couleur"] = _couleur_operateur(nom, args)
+
+    def a_chaque_texte(texte, cm, tm, police, taille):
+        if not texte or not texte.strip() or len(morceaux) >= MAX_MORCEAUX_PDF:
+            return
+        nom = police.get("/BaseFont") if hasattr(police, "get") else None
+        try:
+            x, y = float(tm[4]), float(tm[5])
+        except (TypeError, ValueError, IndexError):
+            x = y = 0.0
+        morceaux.append(
+            {
+                "texte": texte,
+                "police": nom,
+                "taille": float(taille or 0),
+                "x": x,
+                "y": y,
+                "couleur": etat["couleur"],
+            }
+        )
+
+    texte = page.extract_text(visitor_text=a_chaque_texte, visitor_operand_before=avant_operateur)
+    return texte, morceaux
+
+
+def _pdf_lignes(morceaux):
+    """Regroupe les morceaux par ligne (même hauteur sur la page)."""
+    lignes, courante = [], []
+    for m in morceaux:
+        if courante and abs(m["y"] - courante[-1]["y"]) > 1.5:
+            lignes.append(courante)
+            courante = []
+        courante.append(m)
+    if courante:
+        lignes.append(courante)
+    return lignes
+
+
+def _pdf_alignement(ligne, marge_corps, largeur_page):
+    """Centré / à droite, déduits de la position de la ligne sur la page.
+
+    Une ligne qui commence à la marge ordinaire est alignée à gauche : c'est le cas
+    de l'immense majorité, et on ne pose alors aucune marque.
+    """
+    if not ligne or not largeur_page:
+        return None
+    gauche = ligne[0]["x"]
+    if gauche <= marge_corps + 12:
+        return None
+    # Largeur estimée : un PDF ne la donne pas. Une demi-chasse par signe est
+    # grossier, mais suffit à distinguer « centré » de « collé à droite ».
+    signes = sum(len(m["texte"]) for m in ligne)
+    taille = max(m["taille"] for m in ligne) or 12.0
+    largeur = 0.5 * taille * signes
+    if abs(gauche + largeur / 2.0 - largeur_page / 2.0) < largeur_page * 0.07:
+        return "center"
+    if gauche + largeur > largeur_page - marge_corps - 12:
+        return "right"
+    return None
+
+
+def _pdf_page_segments(page, corps):
+    texte, morceaux = _pdf_morceaux(page)
+    if not texte or not morceaux:
+        return [(texte or "", {})]
+    try:
+        largeur_page = float(page.mediabox.width)
+    except (AttributeError, TypeError, ValueError):
+        largeur_page = 0.0
+
+    lignes = _pdf_lignes(morceaux)
+    marge_corps = _mode_des_tailles([round(li[0]["x"]) for li in lignes], 0)
+
+    for ligne in lignes:
+        aligne = _pdf_alignement(ligne, marge_corps, largeur_page)
+        # Une ligne ENTIÈREMENT plus grosse que le corps est un titre, et non un
+        # passage agrandi : faute de styles, c'est ainsi qu'un PDF écrit ses titres.
+        entiere = min(m["taille"] for m in ligne)
+        niveau = 0
+        if corps and entiere >= corps * 1.45:
+            niveau = 1
+        elif corps and entiere >= corps * 1.15:
+            niveau = 2
+        for m in ligne:
+            styles = _police_styles(m["police"])
+            if m["couleur"]:
+                styles["color"] = m["couleur"]
+            if not niveau and corps:
+                relative = _taille_relative(m["taille"] / corps)
+                if relative:
+                    styles["size"] = relative
+            if aligne:
+                styles["align"] = aligne
+            m["styles"] = styles
+        ligne[0]["niveau"] = niveau
+
+    # Repose les morceaux sur le texte produit par pypdf, dans l'ordre d'arrivée.
+    segments = []
+    pos = 0
+    for ligne in lignes:
+        for rang, m in enumerate(ligne):
+            noyau = m["texte"].strip()
+            trouve = texte.find(noyau, pos) if noyau else -1
+            if trouve < 0:
+                continue  # morceau que l'extraction n'a pas restitué tel quel : on l'ignore
+            if trouve > pos:
+                segments.append((texte[pos:trouve], {}))
+            if rang == 0 and ligne[0].get("niveau"):
+                segments.append(("#" * ligne[0]["niveau"] + " ", {}))
+            pos = trouve + len(noyau)
+            segments.append((texte[trouve:pos], m["styles"]))
+    if pos < len(texte):
+        segments.append((texte[pos:], {}))
+    return segments
+
+
+def _pdf_corps_taille(pages_morceaux):
+    """Taille du corps du texte : la plus répandue, pondérée par le nombre de signes."""
+    tailles = []
+    for morceaux in pages_morceaux:
+        for m in morceaux:
+            tailles.extend([round(m["taille"], 1)] * max(1, len(m["texte"].strip())))
+    return _mode_des_tailles(tailles, 0) or 0
+
+
+def _pdf_segments(data):
     from pypdf import PdfReader
 
     reader = PdfReader(io.BytesIO(data))
-    return "\n\n".join((page.extract_text() or "") for page in reader.pages)
+    # Deux passes : la première pour connaître la taille du corps du texte, qui sert
+    # de référence à tout le reste. Sans elle, « plus gros que le reste » n'a pas de
+    # sens — et c'est la seule chose qu'un prompteur doive retenir d'une taille.
+    corps = _pdf_corps_taille([_pdf_morceaux(page)[1] for page in reader.pages])
+    segments = []
+    for rang, page in enumerate(reader.pages):
+        if rang:
+            segments.append(("\n\n", {}))
+        segments.extend(_pdf_page_segments(page, corps))
+    return segments
+
+
+def _from_pdf(data):
+    return "".join(texte for texte, _ in _pdf_segments(data))
 
 
 # --------------------------------------------------------------------------
@@ -948,6 +1370,8 @@ _EXTRACTORS = {
 _SEGMENTEURS = {
     ".docx": _docx_segments,
     ".odt": _odt_segments,
+    ".pdf": _pdf_segments,
+    ".rtf": _rtf_segments,
 }
 
 

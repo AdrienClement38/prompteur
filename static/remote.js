@@ -498,7 +498,11 @@
     setText(res.text || ""); // apres les plages : le rendu les utilise
     textDirty = true;
     refreshUnsent();
-    toast("Importé : " + res.title + " — appuyez sur « Envoyer à l'écran »");
+    // Un plafond qui s'applique en silence ferait croire que la fin du document
+    // n'était pas mise en forme. On le dit.
+    toast(res.marksTruncated
+      ? "Importé : " + res.title + " — document long : mise en forme gardée sur les premiers passages"
+      : "Importé : " + res.title + " — appuyez sur « Envoyer à l'écran »");
   }
 
   // --- Import fichier -------------------------------------------------------

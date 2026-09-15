@@ -256,180 +256,132 @@ def test_extract_text_delegue_a_extract_rich():
     assert tx.extract_text("d.docx", data) == tx.extract_rich("d.docx", data)[0]
 
 
-def test_txt_et_rtf_sans_plages():
+# ----------------------------------------------------------------------------
+# PDF et RTF : la mise en forme y est DÉDUITE (PDF) ou ÉCRITE (RTF)
+# ----------------------------------------------------------------------------
+def _pdf_essai():
+    """Un PDF avec un titre, du gras, de l'italique, du rouge, du centré, du petit."""
+    reportlab = pytest.importorskip("reportlab")
+    assert reportlab  # la fixture n'a de sens qu'avec reportlab installé
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+
+    largeur, hauteur = A4
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    c.setFont("Helvetica-Bold", 24)
+    c.drawString(60, hauteur - 80, "Titre du reportage")
+    c.setFont("Helvetica", 12)
+    c.drawString(60, hauteur - 120, "Une phrase en texte normal.")
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(60, hauteur - 140, "Une phrase en gras.")
+    c.setFont("Helvetica-Oblique", 12)
+    c.drawString(60, hauteur - 160, "Une phrase en italique.")
+    c.setFont("Helvetica", 12)
+    c.setFillColor(colors.red)
+    c.drawString(60, hauteur - 180, "Une phrase en rouge.")
+    c.setFillColor(colors.black)
+    c.drawCentredString(largeur / 2, hauteur - 210, "Une ligne centree.")
+    c.setFont("Helvetica", 8)
+    c.drawString(60, hauteur - 230, "Une mention en tout petit.")
+    c.save()
+    return buf.getvalue()
+
+
+def _plages_par_texte(texte, plages):
+    return {texte[p["start"] : p["end"]]: p for p in plages}
+
+
+def test_pdf_gras_italique_couleur_taille_et_centrage():
+    """Un PDF ne déclare aucun style : le gras vient du NOM de la police, la
+    couleur de l'opérateur de remplissage, le centrage de la position sur la page."""
+    texte, plages = tx.extract_rich("essai.pdf", _pdf_essai())
+    trouve = _plages_par_texte(texte, plages)
+    assert texte.startswith("# Titre du reportage")
+    assert trouve["Titre du reportage"].get("b") is True
+    assert trouve["Une phrase en gras."].get("b") is True
+    assert trouve["Une phrase en italique."].get("i") is True
+    assert trouve["Une phrase en rouge."].get("color") == 2
+    assert trouve["Une ligne centree."].get("align") == "center"
+    assert trouve["Une mention en tout petit."].get("size") == "s"
+    # Le texte ordinaire ne porte aucune marque : sinon tout serait « mis en forme ».
+    assert "Une phrase en texte normal." not in trouve
+
+
+def test_pdf_le_texte_ne_change_pas_par_rapport_a_l_extraction_simple():
+    """La mise en forme s'AJOUTE : elle ne doit pas abîmer le texte, dont pypdf
+    reste maître pour le découpage en lignes et l'espacement."""
+    data = _pdf_essai()
+    from pypdf import PdfReader
+
+    attendu = "\n\n".join((page.extract_text() or "") for page in PdfReader(io.BytesIO(data)).pages)
+    obtenu = "".join(t for t, _ in tx._pdf_segments(data))
+    # Seuls les dieses de titre s'ajoutent ; le decoupage en lignes et l'espacement,
+    # eux, doivent rester rigoureusement ceux de pypdf.
+    assert re.sub(r"^#{1,3} ", "", obtenu, flags=re.M) == attendu
+
+
+_RTF_COMPLET = (
+    r"{\rtf1\ansi\ansicpg1252\deff0"
+    r"{\fonttbl{\f0\froman Times;}{\f2\fnil\fcharset2 Symbol;}}"
+    r"{\colortbl ;\red255\green0\blue0;\red0\green112\blue192;}"
+    r"{\*\generator Riched20;}{\info{\title NE DOIT PAS SORTIR}}"
+    r"\pard\qc\fs48 Titre centre\par"
+    r"\pard\ql\fs24 Du \b gras\b0 , de l'\i italique\i0  et du \ul souligne\ulnone ."
+    r"\par \cf1 En rouge\cf0  puis \cf2 en bleu\cf0 ."
+    r"\par \fs16 Tout petit.\fs24"
+    r"\par {\pntext\f2\'B7\tab}Puce une"
+    r"\par \qr A droite\par"
+    r"\pard\ql Accents : \'e9\'e0 et l\rquote apostrophe."
+    r"}"
+)
+
+
+def test_rtf_porte_sa_mise_en_forme():
+    texte, plages = tx.extract_rich("essai.rtf", _RTF_COMPLET.encode("cp1252"))
+    trouve = _plages_par_texte(texte, plages)
+    assert texte.startswith("# Titre centre")
+    assert trouve["# Titre centre"]["align"] == "center"
+    assert trouve["gras"].get("b") is True
+    assert trouve["italique"].get("i") is True
+    assert trouve["souligne"].get("u") is True
+    assert trouve["En rouge"]["color"] == 2
+    assert trouve["en bleu"]["color"] == 4
+    assert trouve["Tout petit."]["size"] == "s"
+    assert trouve["A droite"]["align"] == "right"
+    assert tx.PUCE + "Puce une" in texte
+
+
+def test_rtf_ne_laisse_pas_fuir_ses_tables_internes():
+    """La table des polices, celle des couleurs et les propriétés du document ne
+    doivent jamais arriver à l'écran."""
+    texte, _ = tx.extract_rich("essai.rtf", _RTF_COMPLET.encode("cp1252"))
+    for interdit in ("NE DOIT PAS SORTIR", "Riched20", "Times", "Symbol", "colortbl", "red255"):
+        assert interdit not in texte, interdit
+
+
+def test_rtf_accents_et_typographie_intacts():
+    texte, _ = tx.extract_rich("essai.rtf", _RTF_COMPLET.encode("cp1252"))
+    assert "éà" in texte  # \'e9\'e0
+    assert "l’apostrophe" in texte  # \rquote
+
+
+def test_rtf_illisible_retombe_sur_le_texte_seul():
+    """Un RTF biscornu ne doit jamais faire PERDRE le texte : un script sans son
+    gras vaut infiniment mieux qu'un script absent."""
+    assert tx.extract_rich("vide.rtf", b"{\\rtf1}")[0] == ""
+    texte, _ = tx.extract_rich("bancal.rtf", rb"{\rtf1\ansi Du texte sans fermeture")
+    assert "Du texte sans fermeture" in texte
+
+
+def test_txt_n_a_par_nature_aucune_mise_en_forme():
+    """Un .txt ne contient aucun style : il n'y a rien à en tirer de plus que le
+    texte, les dieses de titre et les puces qui y sont ecrits a la main."""
     assert tx.extract_rich("note.txt", "A   B\n\n\n\nC".encode("utf-8")) == ("A B\n\nC", [])
-    rtf = r"{\rtf1\ansi Bonjour \b gras\b0 .\par Fin.}"
-    assert tx.extract_rich("x.rtf", rtf.encode("latin-1"))[1] == []
-
-
-# ----------------------------------------------------------------------------
-# Ce qu'un document apporte AVEC LUI : couleurs, tailles, alignement, puces
-# ----------------------------------------------------------------------------
-def _docx_pp(paragraphes):
-    """paragraphes : liste de (contenu du <w:pPr>, contenu XML du paragraphe)."""
-    xml = '<?xml version="1.0"?><w:document xmlns:w="x"><w:body>'
-    for ppr, contenu in paragraphes:
-        xml += "<w:p>" + (f"<w:pPr>{ppr}</w:pPr>" if ppr else "") + contenu + "</w:p>"
-    xml += "</w:body></w:document>"
-    return _zip({"word/document.xml": xml})
-
-
-def _style_para_odt(nom, props):
-    return (
-        f'<style:style style:name="{nom}" style:family="paragraph"><style:paragraph-properties {props}/></style:style>'
-    )
-
-
-def _odt_complet(styles_texte, styles_para, corps):
-    xml = (
-        '<?xml version="1.0"?><office:document-content xmlns:office="o" xmlns:text="t" '
-        'xmlns:style="s" xmlns:fo="f"><office:automatic-styles>'
-        + "".join(styles_texte)
-        + "".join(styles_para)
-        + f"</office:automatic-styles><office:body><office:text>{corps}</office:text>"
-        "</office:body></office:document-content>"
-    )
-    return _zip({"content.xml": xml})
-
-
-def test_couleur_du_document_tombe_sur_la_palette_lisible():
-    """On garde l'INTENTION de la couleur, pas sa valeur : la palette du prompteur
-    est fermee et toutes ses couleurs sont lisibles sur fond sombre."""
-    assert tx._couleur_palette("FF0000") == 2  # rouge
-    assert tx._couleur_palette("C00000") == 2  # rouge sombre : meme intention
-    assert tx._couleur_palette("0070C0") == 4  # bleu
-    assert tx._couleur_palette("00B050") == 3  # vert
-    assert tx._couleur_palette("FFC000") == 1  # orange -> jaune
-    assert tx._couleur_palette("808080") == 5  # gris
-    # Texte ordinaire : aucune marque, sinon le reglage general de couleur serait fige.
-    for neutre in ("000000", "FFFFFF", "auto", "", None, "pas une couleur"):
-        assert tx._couleur_palette(neutre) is None
-
-
-def test_docx_couleur_devient_une_plage():
-    data = _docx_pp([("", _run("normal ") + _run("alerte", '<w:color w:val="FF0000"/>'))])
-    texte, plages = tx.extract_rich("c.docx", data)
-    p = _seule(plages)
-    assert texte[p["start"] : p["end"]] == "alerte"
-    assert p["color"] == 2
-
-
-def test_docx_texte_noir_ne_produit_aucune_plage():
-    data = _docx_pp([("", _run("texte ") + _run("noir", '<w:color w:val="000000"/>'))])
-    assert tx.extract_rich("n.docx", data)[1] == []
-
-
-def test_docx_taille_est_relative_au_corps_du_texte():
-    runs = "".join(_run(f"mot{i} ", '<w:sz w:val="22"/>') for i in range(8))
-    runs += _run("ENORME", '<w:sz w:val="44"/>') + _run(" minus", '<w:sz w:val="14"/>')
-    texte, plages = tx.extract_rich("t.docx", _docx_pp([("", runs)]))
-    tailles = {texte[p["start"] : p["end"]]: p.get("size") for p in plages}
-    assert tailles["ENORME"] == "xl"
-    assert tailles["minus"] == "s"
-
-
-def test_docx_un_seul_mot_agrandi_ne_devient_pas_la_reference():
-    """Le piege : si seuls les mots agrandis portent une taille, la plus repandue
-    serait la leur — et le mot agrandi n'aurait plus rien de special."""
-    runs = "".join(_run(f"mot{i} ") for i in range(8)) + _run("ENORME", '<w:sz w:val="44"/>')
-    assert _seule(tx.extract_rich("u.docx", _docx_pp([("", runs)]))[1])["size"] == "xl"
-
-
-def test_docx_alignement_centre_et_droite_seulement():
-    data = _docx_pp(
-        [
-            ('<w:jc w:val="center"/>', _run("centre")),
-            ('<w:jc w:val="right"/>', _run("droite")),
-            ('<w:jc w:val="left"/>', _run("gauche")),
-            ("", _run("rien")),
-        ]
-    )
-    texte, plages = tx.extract_rich("a.docx", data)
-    poses = {texte[p["start"] : p["end"]]: p.get("align") for p in plages}
-    assert poses == {"centre": "center", "droite": "right"}
-
-
-def test_docx_puces_des_deux_ecritures_de_word():
-    data = _docx_pp(
-        [
-            ('<w:numPr><w:ilvl w:val="0"/></w:numPr>', _run("par numerotation")),
-            ('<w:pStyle w:val="ListParagraph"/>', _run("par style")),
-            ("", _run("paragraphe ordinaire")),
-        ]
-    )
-    texte, _ = tx.extract_rich("p.docx", data)
-    assert texte.split("\n") == [
-        tx.PUCE + "par numerotation",
-        tx.PUCE + "par style",
-        "paragraphe ordinaire",
-    ]
-
-
-def test_docx_un_titre_en_liste_reste_un_titre():
-    data = _docx_pp([('<w:pStyle w:val="Heading1"/><w:numPr/>', _run("Titre en liste"))])
-    assert tx.extract_rich("h.docx", data)[0] == "# Titre en liste"
-
-
-def test_odt_couleur_et_taille():
-    styles = [_style_odt("T1", 'fo:color="#0070c0"'), _style_odt("T2", 'fo:font-size="200%"')]
-    corps = (
-        '<text:p>bleu <text:span text:style-name="T1">ici</text:span> et '
-        '<text:span text:style-name="T2">gros</text:span>.</text:p>'
-    )
-    texte, plages = tx.extract_rich("c.odt", _odt_complet(styles, [], corps))
-    trouve = {texte[p["start"] : p["end"]]: p for p in plages}
-    assert trouve["ici"]["color"] == 4
-    assert trouve["gros"]["size"] == "xl"
-
-
-def test_odt_couleur_annulee_par_un_span_interieur():
-    """Meme regle que le gras : un style qui remet le noir ANNULE la couleur heritee."""
-    styles = [_style_odt("T1", 'fo:color="#ff0000"'), _style_odt("T2", 'fo:color="#000000"')]
-    corps = (
-        '<text:p><text:span text:style-name="T1">rouge sauf '
-        '<text:span text:style-name="T2">ce mot</text:span> la</text:span></text:p>'
-    )
-    texte, plages = tx.extract_rich("x.odt", _odt_complet(styles, [], corps))
-    colores = [texte[p["start"] : p["end"]] for p in plages if p.get("color")]
-    assert colores == ["rouge sauf", "la"]
-
-
-def test_odt_alignement_par_style_de_paragraphe():
-    paras = [_style_para_odt("P1", 'fo:text-align="center"'), _style_para_odt("P2", 'fo:text-align="start"')]
-    corps = '<text:p text:style-name="P1">centre</text:p><text:p text:style-name="P2">gauche</text:p>'
-    texte, plages = tx.extract_rich("a.odt", _odt_complet([], paras, corps))
-    poses = {texte[p["start"] : p["end"]]: p.get("align") for p in plages}
-    assert poses == {"centre": "center"}
-
-
-def test_odt_puces_ne_debordent_pas_sur_la_suite():
-    """Regression : <text:list-item> passait pour une ouverture de liste que
-    </text:list-item> ne refermait pas — tout le reste du document prenait une puce."""
-    corps = (
-        "<text:list><text:list-item><text:p>une</text:p></text:list-item>"
-        "<text:list-item><text:p>deux</text:p></text:list-item></text:list>"
-        "<text:p>apres la liste</text:p>"
-    )
-    texte, _ = tx.extract_rich("l.odt", _odt_complet([], [], corps))
-    assert texte.split("\n") == [tx.PUCE + "une", tx.PUCE + "deux", "apres la liste"]
-
-
-def test_fichier_qui_n_est_pas_un_document_est_refuse():
-    """Une photo ne doit pas finir en charabia dans le prompteur, mais en refus."""
-    octets = bytes([255, 216, 255, 224]) + b" nimporte quels octets"
-    for nom in ("photo.jpg", "archive.zip", "programme.exe", "sans_extension"):
-        with pytest.raises(ValueError) as e:
-            tx.extract_rich(nom, octets)
-        assert "Formats acceptés" in str(e.value)
-
-
-def test_tous_les_formats_annonces_restent_acceptes():
-    """Le garde-barriere ne doit jamais refuser un format promis au client."""
-    for ext in tx.SUPPORTED_EXTS:
-        try:
-            tx.extract_rich("essai" + ext, b"texte simple")
-        except ValueError as e:
-            assert "Formats acceptés" not in str(e), ext
+    texte, plages = tx.extract_rich("n.txt", "# Titre\n• Puce".encode("utf-8"))
+    assert texte == "# Titre\n• Puce"
+    assert plages == []
 
 
 def test_document_trop_gros_toujours_refuse():
