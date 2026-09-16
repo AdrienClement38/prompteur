@@ -87,6 +87,46 @@ machine devient seulement inexplicablement lente, et on cherche du côté du mat
 **Parade :** les deux vont ensemble, toujours. Le script remplace l'ancien nom dans
 `/etc/hosts` dans la foulée.
 
+### 🔴 Deux machines derrière une box ne peuvent pas se joindre, quel que soit le logiciel
+La demande était légitime : « pas de serveur externe, tout doit tourner dans le
+Raspberry ». Elle se heurte à une contrainte de réseau, pas de logiciel. Une box refuse les
+connexions qui arrivent d'internet ; si le boîtier ET l'ordinateur de la personne qui aide
+sont chacun derrière la leur, aucun des deux ne peut appeler l'autre.
+**Parade :** le boîtier appelle un **relais** — une connexion sortante, que la box laisse
+passer comme une page web — et le relais met les deux en relation. Tous les outils de
+prise en main à distance fonctionnent ainsi, TeamViewer compris ; la seule question est
+**à qui appartient le relais**. Raspberry Pi Connect fournit le sien, officiel et gratuit.
+L'expliquer par l'image des deux téléphones qui ne savent qu'appeler a débloqué la
+discussion mieux qu'un schéma de réseau.
+
+### Une commande « évidente » absente de la documentation officielle
+`rpi-connect on` y figure ; `rpi-connect off` et `rpi-connect signout` n'y figurent pas, et
+la sortie de `rpi-connect status` n'y est décrite nulle part. Le script s'appuyait sur les
+trois, de mémoire. Rien ne permettait de les essayer : le boîtier est à distance, et
+l'outil ne tourne pas sur le poste de développement.
+**Parade :** vérifier chaque commande contre la documentation AVANT de l'écrire, et
+construire autour de ce qui est confirmé. Pour couper l'accès, le script lance aussi
+`vnc off` et `shell off`, documentées — écran et terminal sont fermés même si `off`
+n'existait pas. Et l'analyse de `status`, non garantie, ne sert plus qu'à éviter un lien
+superflu : **aucun message n'annonce un échec sur sa seule foi**, on montre l'état réel.
+
+### Un interrupteur d'accès à distance ne va pas dans la page web
+Le plus pratique aurait été un bouton « activer l'assistance » dans la télécommande. Mais
+cette page est ouverte à **tout téléphone connecté au WiFi du boîtier** : n'importe qui à
+portée, sur un plateau, pourrait ouvrir la vue de l'écran — texte du prompteur compris — à
+une personne extérieure.
+**Parade :** l'interrupteur est une **icône du bureau du boîtier**, donc exige d'être devant
+lui. Coupé par défaut, ouvert par le journaliste, refermé par lui. La commodité se paie en
+sécurité ; ici, elle ne valait pas ce prix.
+
+### Relancer le grand script pour obtenir une icône
+Le boîtier du journaliste venait d'être installé. Pour lui ajouter les icônes d'assistance,
+la voie naturelle était de relancer `setup.sh` — qui **recrée le WiFi**, avec le piège du
+mot de passe régénéré.
+**Parade :** chaque fonctionnalité doit pouvoir s'ajouter **seule**. Les icônes sont posées
+par `assistance.sh installer`, que `setup.sh` appelle aussi : une seule définition, et un
+boîtier déjà en service les obtient sans rien risquer.
+
 ### 🔴 « À distance » ne veut pas dire « depuis n'importe où »
 J'ai activé SSH et écrit, en tête de deux guides, « c'est la dernière fois que vous vous
 déplacez » et « les mises à jour suivantes se font de chez vous ». Le corps des mêmes

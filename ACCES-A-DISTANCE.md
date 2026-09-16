@@ -7,8 +7,8 @@ ordinateur, sans lui demander de toucher à un clavier.*
 > connecter depuis un ordinateur relié **à la même box** que le boîtier, ou au **WiFi du
 > boîtier lui-même**. **Depuis un autre endroit — de chez vous si le boîtier est chez le
 > journaliste — ça ne marche pas**, et ce n'est pas une panne : la box du journaliste bloque
-> les connexions qui viennent de l'extérieur, comme toutes les box. Voir la dernière partie,
-> « Depuis un autre endroit ».
+> les connexions qui viennent de l'extérieur, comme toutes les box. **Pour ce cas-là, voyez
+> `ASSISTANCE-A-DISTANCE.md`.**
 
 ---
 
@@ -129,20 +129,10 @@ sudo raspi-config
 
 ## Depuis un autre endroit
 
-**Avec ce qui est en place aujourd'hui : non.** Tout ce qui précède suppose d'être sur le même
-réseau que le boîtier. Depuis chez vous, alors que le boîtier est chez le journaliste, votre
-ordinateur ne le trouve pas : la box du journaliste refuse les connexions qui viennent
-d'internet. C'est son rôle, et c'est aussi ce qui protège le boîtier.
-
-Pour passer au travers, il faut une **étape de plus** — un service qui établit la liaison
-depuis le boîtier vers l'extérieur, là où la box laisse passer. Elle n'est pas en place :
-elle demande de créer un compte, et elle change une règle de départ du projet (un boîtier
-qui ne dépend de personne). C'est donc une décision à prendre, pas un réglage à faire en
-passant.
-
-> 💡 **En attendant**, il existe une solution qui ne demande rien : **demander au
-> journaliste de brancher le câble Ethernet et d'appeler**. Vous le guidez au téléphone pour
-> les deux lignes de mise à jour, ou vous passez en personne.
+Tout ce qui précède suppose d'être sur le même réseau que le boîtier : depuis un autre lieu,
+la box du journaliste refuse la connexion. **Pour y accéder de n'importe où, voyez
+`ASSISTANCE-A-DISTANCE.md`** — terminal et écran dans un navigateur, activés par le journaliste
+depuis le boîtier.
 
 ---
 

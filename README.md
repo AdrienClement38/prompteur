@@ -131,6 +131,10 @@ vérifier qu'il fonctionne. **Python 3** doit y être installé.
 > — SSH par le WiFi du boîtier ou par le câble Ethernet. Raspberry Pi OS livre SSH
 > **désactivé** : `install/setup.sh` l'active et pose le nom `prompteur.local`.
 
+> 🛟 **Assistance depuis n'importe où** : **[ASSISTANCE-A-DISTANCE.md](ASSISTANCE-A-DISTANCE.md)**
+> ([PDF](Assistance-A-Distance-Prompteur.pdf)) — terminal et écran dans un navigateur, par
+> Raspberry Pi Connect. **Coupée par défaut**, activée par le journaliste depuis le boîtier.
+
 1. **Préparez la carte SD** avec *Raspberry Pi Imager* → « Raspberry Pi OS
    (64-bit) », la version **avec bureau**. Notez le nom d'utilisateur et le mot de
    passe choisis.

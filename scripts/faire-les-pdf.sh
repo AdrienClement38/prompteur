@@ -19,6 +19,7 @@ MISE-EN-ROUTE.md|Mise-En-Route-Prompteur.pdf|Mise en route du Prompteur
 MODE-EMPLOI.md|Mode-Emploi-Prompteur.pdf|Mode d'emploi du Prompteur
 MISE-A-JOUR.md|Mise-A-Jour-Prompteur.pdf|Mettre le boitier a jour
 ACCES-A-DISTANCE.md|Acces-A-Distance-Prompteur.pdf|Acces a distance au boitier
+ASSISTANCE-A-DISTANCE.md|Assistance-A-Distance-Prompteur.pdf|Assistance a distance
 PROCEDURE-INSTALLATION.md|Procedure-Installation-Prompteur.pdf|Procedure d'installation
 SAUVEGARDE-ET-RESTAURATION.md|Sauvegarde-Restauration-Prompteur.pdf|Sauvegarde et restauration
 ECRAN-TACTILE.md|Ecran-Tactile-Prompteur.pdf|Le petit ecran tactile

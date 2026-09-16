@@ -235,6 +235,12 @@ else
 fi
 rm -f "$DESKTOP_ENTRY"
 
+# d) Assistance à distance : les deux icônes sont posées par assistance.sh
+#    lui-même. Une seule définition, et surtout un boîtier DÉJÀ installé peut
+#    les obtenir sans relancer ce script — qui recrée le WiFi.
+chmod +x "$PROJECT_DIR/install/assistance.sh" 2>/dev/null || true
+"$PROJECT_DIR/install/assistance.sh" installer || true
+
 echo
 echo "============================================================"
 echo " Installation terminée."
@@ -242,8 +248,9 @@ echo "  • Serveur     : http://localhost:$PORT/display (écran)"
 echo "  • Téléphone   : connecte-toi au WiFi « $WIFI_SSID »"
 echo "                  (mot de passe : $WIFI_PASS)"
 echo "                  puis ouvre http://10.42.0.1:$PORT"
-echo "  • À distance  : ssh $RUN_USER@$BOX_NAME.local   (boîtier relié en Ethernet)"
+echo "  • Sur place   : ssh $RUN_USER@$BOX_NAME.local   (même box que le boîtier)"
 echo "                  ssh $RUN_USER@10.42.0.1       (via le WiFi du boîtier)"
+echo "  • De partout  : icône « Assistance à distance — activer » sur le bureau"
 echo "  • Icône        : « Le Prompteur » sur le bureau (pour le relancer"
 echo "                   après l'avoir fermé, sans redémarrer)"
 echo "  • Redémarre le Raspberry Pi pour tout activer :  sudo reboot"
