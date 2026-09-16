@@ -5,8 +5,9 @@
 
 **30 minutes, une seule fois.** Quatre lignes à recopier, puis une liste à cocher.
 
-> 🎁 **Ce que vous y gagnez :** c'est la **dernière fois que vous vous déplacez**. Après
-> cette mise à jour, le boîtier devient joignable depuis votre ordinateur.
+> 🎁 **Ce que vous y gagnez :** le boîtier devient joignable depuis un ordinateur **relié à
+> la même box que lui**, sans toucher à son clavier. *(Depuis un autre endroit, il faut une
+> étape de plus : voir `ACCES-A-DISTANCE.md`.)*
 
 ---
 
@@ -179,8 +180,8 @@ ssh nom@prompteur.local
 
 ## Et ensuite
 
-**Les mises à jour suivantes se font de chez vous**, le boîtier simplement relié en
-Ethernet :
+**Les mises à jour suivantes se font sans toucher au boîtier**, depuis un ordinateur relié
+**à la même box que lui** :
 
 ```bash
 ssh nom@prompteur.local

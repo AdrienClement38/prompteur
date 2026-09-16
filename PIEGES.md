@@ -87,6 +87,19 @@ machine devient seulement inexplicablement lente, et on cherche du côté du mat
 **Parade :** les deux vont ensemble, toujours. Le script remplace l'ancien nom dans
 `/etc/hosts` dans la foulée.
 
+### 🔴 « À distance » ne veut pas dire « depuis n'importe où »
+J'ai activé SSH et écrit, en tête de deux guides, « c'est la dernière fois que vous vous
+déplacez » et « les mises à jour suivantes se font de chez vous ». Le corps des mêmes
+guides disait pourtant l'exact contraire : il faut être relié **à la même box** que le
+boîtier. Une box refuse les connexions qui viennent d'internet — c'est son rôle. Depuis un
+autre lieu, rien ne passe.
+La contradiction était dans les **phrases d'accroche**, c'est-à-dire précisément celles
+qu'on lit, et elle a été découverte au moment où la question devenait concrète : « la
+personne a réussi l'installation, je peux m'y connecter ? »
+**Parade :** une promesse en tête de document se vérifie contre la **condition la plus
+restrictive** écrite plus bas, pas contre le cas favorable qu'on avait en tête. Et
+« accessible » doit toujours préciser **depuis où**.
+
 ### Une adresse distribuée par une box n'est pas une adresse
 Documenter « connecte-toi à 192.168.1.42 » revient à documenter une valeur qui change au
 prochain rebranchement. L'utilisateur suit la procédure à la lettre, et elle ne marche

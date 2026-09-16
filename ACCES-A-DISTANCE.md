@@ -1,7 +1,14 @@
 # Se connecter au boîtier à distance
 
-*Pour vous, pas pour le journaliste. Objectif : pouvoir prendre la main sur le boîtier
-depuis votre ordinateur, sans vous déplacer et sans lui demander de toucher à un clavier.*
+*Pour vous, pas pour le journaliste. Objectif : prendre la main sur le boîtier depuis votre
+ordinateur, sans lui demander de toucher à un clavier.*
+
+> **📍 La condition à connaître avant tout : être sur le même réseau.** Ce guide permet de se
+> connecter depuis un ordinateur relié **à la même box** que le boîtier, ou au **WiFi du
+> boîtier lui-même**. **Depuis un autre endroit — de chez vous si le boîtier est chez le
+> journaliste — ça ne marche pas**, et ce n'est pas une panne : la box du journaliste bloque
+> les connexions qui viennent de l'extérieur, comme toutes les box. Voir la dernière partie,
+> « Depuis un autre endroit ».
 
 ---
 
@@ -117,6 +124,25 @@ sudo raspi-config
 >   cette box, c'est bon ; s'ils sont sur deux réseaux différents, rien ne passera.
 > - **Vous êtes resté connecté au WiFi `Prompteur`.** Ce réseau n'a pas internet et ne mène
 >   qu'au boîtier : `prompteur.local` n'y répond pas, mais `10.42.0.1` oui.
+
+---
+
+## Depuis un autre endroit
+
+**Avec ce qui est en place aujourd'hui : non.** Tout ce qui précède suppose d'être sur le même
+réseau que le boîtier. Depuis chez vous, alors que le boîtier est chez le journaliste, votre
+ordinateur ne le trouve pas : la box du journaliste refuse les connexions qui viennent
+d'internet. C'est son rôle, et c'est aussi ce qui protège le boîtier.
+
+Pour passer au travers, il faut une **étape de plus** — un service qui établit la liaison
+depuis le boîtier vers l'extérieur, là où la box laisse passer. Elle n'est pas en place :
+elle demande de créer un compte, et elle change une règle de départ du projet (un boîtier
+qui ne dépend de personne). C'est donc une décision à prendre, pas un réglage à faire en
+passant.
+
+> 💡 **En attendant**, il existe une solution qui ne demande rien : **demander au
+> journaliste de brancher le câble Ethernet et d'appeler**. Vous le guidez au téléphone pour
+> les deux lignes de mise à jour, ou vous passez en personne.
 
 ---
 
