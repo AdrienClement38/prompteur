@@ -512,6 +512,15 @@ le plus une fois le contenu mis en forme introduit.
 **Parade :** l'interdire dans la CI. Un oubli ne se voit pas à la relecture ; il se
 voit à la CI.
 
+### Un réglage de test qui reste en place
+Pour faire tenir une capture d'écran, la ligne de lecture a été coupée et le texte réduit
+par l'API. Ces réglages s'enregistrent dans `state.json`, que **tous les serveurs lancés
+depuis le dossier partagent** : l'utilisateur a rouvert le prompteur et cherché sa ligne
+rouge, disparue sans raison apparente.
+**Parade :** tout réglage modifié pour un essai est remis à sa valeur à la fin de l'essai,
+dans le même geste. `state.json` n'est pas versionné : le boîtier du journaliste, lui,
+n'était pas touché.
+
 ### 🔴 Un banc d'essai qui ment
 Le volet de prévisualisation interne **bloque l'API plein écran et supprime les
 fenêtres popup**. Trois fonctions correctes ont semblé cassées, et il a fallu un
