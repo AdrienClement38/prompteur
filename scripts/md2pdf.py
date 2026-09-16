@@ -16,9 +16,9 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     BaseDocTemplate,
+    CondPageBreak,
     Frame,
     HRFlowable,
-    PageBreak,
     PageTemplate,
     Paragraph,
     Spacer,
@@ -478,7 +478,12 @@ def render(lines, depth=0):
             # feuilleter.
             etape = key == "h2" and (text[:5].lower() in ("étape", "etape") or re.match(r"^\d+\.\s", text) is not None)
             if etape and any(not isinstance(f, Spacer) for f in out):
-                out.append(PageBreak())
+                # Saut CONDITIONNEL : une partie ne commence sur une page neuve
+                # que s'il ne reste pas la place d'en montrer le debut. Le saut
+                # systematique aerait bien les longs guides, mais gaspillait une
+                # page entiere par etape sur les courts — et c'est la longueur
+                # qu'on nous reproche, pas le manque d'air.
+                out.append(CondPageBreak(62 * mm))
             titre = Paragraph(inline(text), STYLES[key])
             if key in ("h1", "h2"):
                 # Retenu pour le rappel en haut de page ET pour le sommaire

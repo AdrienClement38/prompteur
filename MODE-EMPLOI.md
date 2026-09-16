@@ -441,6 +441,15 @@ simplifié — et le titre qui apparaît dans la liste « Mes textes enregistré
 > *(En revanche, un texte envoyé depuis un autre appareil n'écrase jamais votre saisie : le
 > message « Le texte a changé sur le boîtier » s'affiche à la place.)*
 
+> 💡 **Tout se met à jour tout seul, partout.** Un réglage changé sur le téléphone apparaît **en
+> moins de trois secondes** sur tous les autres appareils ouverts — l'écran du boîtier, la
+> tablette de la régie, un deuxième téléphone — **sans rien recharger**. C'est vrai aussi du
+> texte à l'écran et de la liste de vos textes enregistrés.
+>
+> **Une seule exception, et elle est volontaire : un texte que vous êtes en train d'écrire n'est
+> jamais écrasé.** Si quelqu'un envoie autre chose pendant ce temps, le message ci-dessus vous
+> prévient, mais votre saisie reste intacte.
+
 > ⚠️ **PIÈGE — les titres compliqués sont simplifiés.** Apostrophes, deux-points, barres obliques
 > et points d'interrogation sont retirés à l'enregistrement : `Interview d'Élise : partie 1/2`
 > devient `Interview dÉlise partie 12`, et le téléphone vous le dit — **« Enregistré sous
