@@ -73,6 +73,9 @@
   // --- Onglets --------------------------------------------------------------
   document.querySelectorAll(".tabbtns button").forEach((btn) => {
     btn.addEventListener("click", () => {
+      // Un apprentissage de pédale oublié en cours avalait toutes les touches,
+      // y compris la frappe dans la zone de texte.
+      if (capturing) capturing.cancel();
       document.querySelectorAll(".tabbtns button").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       ["texte", "controle", "reglages"].forEach((t) =>
@@ -377,10 +380,14 @@
         if (m.end > fin) morceaux.push({ ...m, start: fin });
         return morceaux;
       });
+    } else if (marks.length >= 500) {
+      // Même plafond que le boîtier, qui garde les 500 PREMIÈRES : ici, on
+      // supprimait au contraire les premières, en silence.
+      toast("Limite de 500 passages mis en forme atteinte");
+      return;
     } else {
       marks.push({ start: debut, end: fin, [cle]: valeur });
     }
-    if (marks.length > 500) marks = marks.slice(-500);
     textDirty = true;
     refreshUnsent();
     refreshFmtInfo();
@@ -392,33 +399,11 @@
     replacerSelection(debut, fin);
   }
 
-  // Le texte change : on recale les plages sur les parties intactes.
-  // On compare le préfixe et le suffixe communs — c'est exact pour une frappe ou
-  // un collage ordinaire, et une plage qui chevauche la zone modifiée est
-  // rognée plutôt que laissée à une position devenue fausse.
+  // Le texte change : on recale les plages sur les parties intactes
+  // (static/plages.js, vérifié par tests/banc_plages.js).
   function remapMarks(avant, apres) {
     if (!marks.length || avant === apres) return;
-    let p = 0;
-    while (p < avant.length && p < apres.length && avant[p] === apres[p]) p++;
-    let s = 0;
-    while (
-      s < avant.length - p &&
-      s < apres.length - p &&
-      avant[avant.length - 1 - s] === apres[apres.length - 1 - s]
-    ) {
-      s++;
-    }
-    const finAvant = avant.length - s;
-    const delta = apres.length - avant.length;
-    marks = marks
-      .map((m) => {
-        if (m.end <= p) return m; // entièrement avant la modification
-        if (m.start >= finAvant) return { ...m, start: m.start + delta, end: m.end + delta };
-        const start = Math.min(m.start, p);
-        const end = Math.max(p, Math.min(m.end, finAvant) + delta);
-        return end > start ? { ...m, start, end } : null;
-      })
-      .filter(Boolean);
+    marks = window.Plages.recaler(marks, avant, apres);
     refreshFmtInfo();
   }
 
@@ -588,6 +573,12 @@
       const row = document.createElement("div");
       row.className = "item";
       row.appendChild(el("span", "name", f.name));
+      if (f.tropGros) {
+        // Plus de 5 Mo : on le montre quand même, sinon on croit la clé illisible.
+        row.appendChild(el("span", "muted", "trop lourd (plus de 5 Mo)"));
+        box.appendChild(row);
+        return;
+      }
       const load = mkBtn("Charger", "primary");
       load.onclick = async () => {
         try {
@@ -831,7 +822,13 @@
 
   // Les pédales envoient leur touche à la page, pas à un champ précis : on écoute globalement,
   // et on ne réagit que pendant un apprentissage explicitement démarré.
-  window.addEventListener("keydown", (e) => { if (capturing) capturing.capture(e); });
+  window.addEventListener("keydown", (e) => {
+    if (!capturing) return;
+    // Une frappe dans un champ de saisie n'est pas une pédale.
+    const cible = e.target;
+    if (cible && (cible.isContentEditable || cible.tagName === "INPUT" || cible.tagName === "TEXTAREA")) return;
+    capturing.capture(e);
+  });
 
   bindKeyLearn("keyForward", ["keyBackward", "keyCenter"]);
   bindKeyLearn("keyBackward", ["keyForward", "keyCenter"]);

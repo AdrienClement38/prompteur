@@ -1294,3 +1294,132 @@ def test_un_telephone_ne_prend_pas_la_place_du_kiosque_sans_le_demander(client):
     client.post("/api/presenter/claim", json={"token": "kiosque"}, environ_base=DEPUIS_LE_BOITIER)
     r = client.post("/api/presenter/claim", json={"token": "telephone"}, environ_base=DEPUIS_UN_TELEPHONE)
     assert r.status_code == 409
+
+
+# ============================================================================
+# Solidité — défauts relevés par l'audit du 2026-09-16
+# ============================================================================
+
+
+def test_state_json_avec_un_octet_abime_ne_bloque_pas_le_demarrage(client, tmp_path):
+    """Une coupure de courant peut laisser un octet non UTF-8 : le service doit
+    démarrer quand même, sur l'état par défaut."""
+    fichier = tmp_path / "state.json"
+    fichier.write_bytes(b'{"text": "caf\xe9 \xff"}')
+    server.STATE_FILE = fichier
+    assert server.load_state()["settings"]["fontSize"] == 64
+
+
+def test_corps_json_qui_n_est_pas_un_objet(client):
+    for corps in ("[1, 2]", '"texte"', "42"):
+        r = client.post("/api/settings", data=corps, content_type="application/json")
+        assert r.status_code < 500, corps
+
+
+def test_envoi_sans_texte_ne_vide_pas_l_ecran(client):
+    client.post("/api/text", json={"text": "À l'antenne"})
+    assert client.post("/api/text", data="[1]", content_type="application/json").status_code == 400
+    assert client.post("/api/text", json={"title": "x"}).status_code == 400
+    assert client.get("/api/state").get_json()["text"] == "À l'antenne"
+
+
+@pytest.mark.parametrize(
+    "hote", ["10.42.0.1:5000", "prompteur.local:5000", "prompteur", "localhost:5000", "[::1]:5000"]
+)
+def test_noms_du_boitier_acceptes(client, hote):
+    r = client.post("/api/settings", json={"fontSize": 50}, headers={"Host": hote})
+    assert r.status_code == 200, hote
+
+
+def test_rebond_dns_refuse(client):
+    """Une page piégée qui fait pointer son propre nom vers le boîtier garde ce
+    nom dans l'en-tête Host : elle ne doit rien pouvoir modifier."""
+    hote = "piege.exemple.com:5000"
+    r = client.post("/api/text", json={"text": "piraté"}, headers={"Host": hote, "Origin": "http://" + hote})
+    assert r.status_code == 403
+    assert client.get("/api/state").get_json()["text"] != "piraté"
+
+
+def test_fichier_de_plus_de_5_mo_refuse_avec_un_message(client):
+    r = _upload(client, b"a" * (server.MAX_FILE_SIZE + 10), "gros.txt")
+    assert r.status_code == 400
+    assert "5 Mo" in r.get_json()["error"]
+
+
+def test_fichier_de_plus_de_6_mo_repond_en_json(client):
+    r = _upload(client, b"a" * (server.MAX_BODY + 10), "enorme.txt")
+    assert r.status_code == 413
+    assert "5 Mo" in r.get_json()["error"]
+
+
+def test_cle_usb_fantomes_ecartes_et_gros_fichiers_signales(client, tmp_path, monkeypatch):
+    cle = tmp_path / "cle"
+    cle.mkdir()
+    (cle / "Sujet.docx").write_bytes(b"x")
+    (cle / "._Sujet.docx").write_bytes(b"x")
+    (cle / "~$Sujet.docx").write_bytes(b"x")
+    (cle / "Photos.pdf").write_bytes(b"x" * (server.MAX_FILE_SIZE + 1))
+    monkeypatch.setattr(server, "_usb_bases", lambda: [cle])
+    server._usb_cache["files"] = None
+    fichiers = {f["name"]: f for f in client.get("/api/usb").get_json()}
+    assert set(fichiers) == {"Sujet.docx", "Photos.pdf"}
+    assert fichiers["Photos.pdf"]["tropGros"] is True and fichiers["Sujet.docx"]["tropGros"] is False
+    r = client.post("/api/usb/load", json={"path": fichiers["Photos.pdf"]["path"], "apply": False})
+    assert r.status_code == 400 and "5 Mo" in r.get_json()["error"]
+
+
+def _en_js(texte, plage):
+    """Le passage que désigne une plage, lue comme la lit JavaScript (UTF-16)."""
+    octets = texte.encode("utf-16-le")
+    return octets[2 * plage["start"] : 2 * plage["end"]].decode("utf-16-le")
+
+
+def test_emoji_avant_un_passage_importe(client):
+    """Un emoji compte double en JavaScript : sans conversion, la mise en forme
+    tombait une lettre trop tôt à l'écran."""
+    r = client.post(
+        "/api/upload",
+        data={"file": (io.BytesIO("😀 Voici **important** !".encode("utf-8")), "e.txt"), "apply": "false"},
+        content_type="multipart/form-data",
+        headers={server.CLIENT_HEADER: "1"},
+    )
+    corps = r.get_json()
+    assert _en_js(corps["text"], corps["marks"][0]) == "important"
+
+
+def test_emoji_ne_rogne_pas_la_derniere_plage(client):
+    texte = "😀 fin en gras"
+    debut = len("😀 fin en ".encode("utf-16-le")) // 2
+    fin = len(texte.encode("utf-16-le")) // 2
+    client.post("/api/text", json={"text": texte, "marks": [{"start": debut, "end": fin, "b": True}]})
+    plage = client.get("/api/state").get_json()["marks"][0]
+    assert _en_js(texte, plage) == "gras"
+
+
+def test_bibliotheque_refuse_ce_qu_elle_ne_pourrait_pas_recharger(client):
+    r = client.post("/api/library/save", json={"name": "trop", "text": "x" * (textextract.MAX_TEXT_CHARS + 1)})
+    assert r.status_code == 400
+
+
+def test_bibliotheque_lecture_ratee_ne_vide_pas_l_ecran(client, monkeypatch):
+    client.post("/api/text", json={"text": "À l'antenne"})
+    client.post("/api/library/save", json={"name": "sujet", "text": "Le sujet"})
+    monkeypatch.setattr(server, "read_text_file", lambda _p: "")
+    r = client.post("/api/library/load", json={"name": "sujet"})
+    assert r.status_code == 500
+    assert client.get("/api/state").get_json()["text"] == "À l'antenne"
+
+
+def test_position_partagee_porte_la_ligne_du_texte(client):
+    """La vue Spectateur suit la LIGNE lue, pas des pixels (écrans de tailles différentes)."""
+    client.post("/api/scroll", json={"pos": 400, "vel": 0, "ligne": 12, "frac": 0.25, "h": 100})
+    point = client.get("/api/scroll").get_json()
+    assert (point["ligne"], point["frac"], point["h"]) == (12, 0.25, 100)
+
+
+def test_position_partagee_sans_ligne_reste_acceptee(client):
+    """Un écran de la version précédente n'envoie que des pixels : ça reste valable."""
+    assert client.post("/api/scroll", json={"pos": 10, "vel": 5}).status_code == 200
+    assert client.get("/api/scroll").get_json()["ligne"] is None
+    assert client.post("/api/scroll", json={"pos": 10, "ligne": "douze"}).status_code == 200
+    assert client.get("/api/scroll").get_json()["ligne"] is None

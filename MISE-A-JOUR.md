@@ -22,12 +22,11 @@ procédure :
 
 | | Où le trouver |
 |---|---|
-| **Le mot de passe du WiFi `Prompteur`** | Sur la **fiche collée au dos du boîtier** |
+| **Le mot de passe du WiFi `Prompteur`** | Sur la **fiche collée au dos du boîtier** (pour l'essai final) |
 | **Le nom du compte du Raspberry** | Dans la fenêtre noire, écrit juste avant le `@` |
 
-> **🛑 Si la fiche du boîtier est vide.** Faites les étapes 1 et 2, puis tapez la ligne
-> ci-dessous et **notez la réponse sur la fiche** avant d'aller plus loin. Sans ce mot de
-> passe, l'étape 4 rendra le WiFi du boîtier inaccessible.
+> **Si la fiche du boîtier est vide**, profitez-en : après l'étape 1, cette ligne affiche
+> le mot de passe du WiFi. **Notez-le sur la fiche.**
 > ```bash
 > sudo nmcli -s -g 802-11-wireless-security.psk connection show Prompteur
 > ```
@@ -81,24 +80,22 @@ sudo systemctl restart prompteur
 
 ## Étape 4 — Installer les nouveautés du boîtier
 
-Cette ligne pose l'icône sur le bureau, renforce la sécurité et **ouvre l'accès à
-distance**.
-
-> **🛑 LE PIÈGE À NE PAS MANQUER.** Elle **recrée le réseau WiFi du boîtier**. Sans votre
-> mot de passe actuel dedans, le boîtier en **invente un nouveau au hasard** et plus aucun
-> téléphone ne s'y connecte.
-
-Recopiez en remplaçant `VotreMotDePasse`, **guillemets compris** :
+Cette ligne met à jour ce qui est installé sur le boîtier lui-même (service, WiFi,
+accès à distance, icônes). **Le mot de passe du WiFi est conservé.**
 
 ```bash
-WIFI_PASS="VotreMotDePasse" ./install/setup.sh
+./install/setup.sh
 ```
 
 **✅ Attendu :** deux à trois minutes de lignes qui défilent, puis un **cadre entouré de
-`=`** annonçant « Installation terminée ».
+`=`** annonçant « Installation terminée ». La ligne du mot de passe se termine par
+**« conservé (inchangé) »**.
 
-📸 **Dans ce cadre, vérifiez que le mot de passe WiFi est bien le vôtre**, et **notez les
-deux lignes commençant par `ssh`**.
+📸 **Notez les deux lignes commençant par `ssh`.**
+
+> **🛑 Si la ligne du mot de passe dit « NOUVEAU »** (le boîtier n'en avait pas) : c'est
+> celui-là qu'il faut maintenant pour le WiFi. **Recopiez-le sur la fiche** avant d'aller
+> plus loin.
 
 > **🆘 Si une ligne dit que SSH n'a pas démarré** — sans conséquence pour le prompteur.
 > Tapez `sudo raspi-config`, allez dans *Interface Options* → *SSH* → *Yes*, puis relancez
@@ -171,16 +168,17 @@ ssh nom@prompteur.local
 |---|---|
 | **Le prompteur ne revient pas** | Attendez **une minute complète**, puis rebranchez l'alimentation et recomptez une minute |
 | **L'écran affiche l'ancienne version** | L'étape 3 a été oubliée : `sudo systemctl restart prompteur` |
-| **Le téléphone ne trouve plus le WiFi** | Le mot de passe a été régénéré à l'étape 4. Retrouvez-le avec la commande de la page 1, et corrigez la fiche |
+| **Le téléphone refuse le mot de passe du WiFi** | Regardez la ligne du mot de passe dans le cadre de l'étape 4 ; ou retrouvez-le avec la commande de la page 1, et corrigez la fiche |
 | **`ssh` : « Connection refused »** | `sudo raspi-config` → *Interface Options* → *SSH* → *Yes* |
 | **`ssh` : « Could not resolve hostname »** | Votre ordinateur n'est pas sur le même réseau que le boîtier |
 | **Rien ne va plus** | Débranchez, 10 secondes, rebranchez, comptez une minute. Votre texte est conservé |
 
-> **🔙 Revenir à la version précédente :**
+> **🔙 Revenir à la version d'avant cette mise à jour :**
 > ```bash
-> cd ~/prompteur && git checkout HEAD~1 && sudo systemctl restart prompteur
+> cd ~/prompteur && git reset --hard ORIG_HEAD && sudo reboot
 > ```
-> Textes et réglages ne sont pas touchés.
+> Textes et réglages ne sont pas touchés, et la mise à jour suivante (`git pull`) se fera
+> normalement. **Une seule fois** : la relancer referait avancer le boîtier.
 
 ---
 
@@ -193,12 +191,15 @@ ssh nom@prompteur.local
 ssh nom@prompteur.local
 ```
 ```bash
-cd ~/prompteur && git pull && sudo systemctl restart prompteur
+cd ~/prompteur && git pull && sudo reboot
 ```
 
+*(La connexion se coupe au redémarrage : c'est normal. Une minute plus tard, le prompteur
+est revenu, à jour.)*
+
 **Ce qui a changé pour le journaliste** est expliqué dans **`MODE-EMPLOI.md`**, qui est à
-jour : mise en forme du texte, documents qui arrivent avec la leur, trois modes de pédales,
-sortie du prompteur par Échap, synchronisation entre appareils.
+jour : trois vues (Settings, Journaliste, Spectateur), veille, choix de ce qu'affiche le
+grand écran, blocs « Info », mise en forme du texte, trois modes de pédales.
 
 **Les autres documents :** `ACCES-A-DISTANCE.md` (prendre la main sur le boîtier),
 `SAUVEGARDE-ET-RESTAURATION.md` (revenir en arrière), `ECRAN-TACTILE.md` (le petit écran),

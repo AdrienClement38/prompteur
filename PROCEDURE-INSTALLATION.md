@@ -117,7 +117,8 @@ git clone https://github.com/AdrienClement38/prompteur.git
 cd prompteur
 ```
 
-> **Sans Internet sur le Pi ?** Copiez le dossier `prompteur` depuis une clé USB, puis `cd` dedans.
+> **Internet est indispensable pour l'installation** (câble Ethernet) : le script télécharge
+> Chromium, Flask et les autres paquets. Copier le dossier par clé USB ne suffit pas.
 
 ---
 
@@ -135,8 +136,8 @@ Le script (avec `sudo` en interne) réalise **tout** :
 - pose un **pare‑feu** (le service n'est joignable que via ce WiFi) ;
 - configure le **démarrage en mode kiosque** (Chromium plein écran).
 
-⚠️ **Notez le mot de passe WiFi affiché à la fin** — il est **généré aléatoirement** (unique par boîtier).
-Pour imposer le vôtre, relancez plutôt : `WIFI_PASS="votre_mot_de_passe" ./install/setup.sh`
+⚠️ **Notez le mot de passe WiFi affiché à la fin** — à la première installation, il est **généré aléatoirement** (unique par boîtier) ; relancer le script ensuite le **conserve**.
+Pour imposer le vôtre : `WIFI_PASS="votre_mot_de_passe" ./install/setup.sh` (8 à 63 caractères).
 
 Puis redémarrez :
 

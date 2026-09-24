@@ -30,12 +30,14 @@ Par défaut : http://0.0.0.0:5000  (waitress en production, serveur Flask si PRO
 """
 
 import copy
+import ipaddress
 import json
 import os
 import platform
 import socket
 import string
 import subprocess  # nosec B404 - script local du projet, arguments fixes, sans shell
+import sys
 import threading
 import time
 from pathlib import Path
@@ -153,6 +155,14 @@ SPEED_MIN, SPEED_MAX, SPEED_STEP = 10, 600, 10
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_BODY  # rejette (413) tout corps > 6 Mo avant bufferisation
+TROP_GROS = "Fichier trop volumineux : 5 Mo au maximum. Enregistrez-le en .docx, sans images."
+
+
+@app.errorhandler(413)
+def _trop_gros(_erreur):
+    """Au-delà de 6 Mo, Flask répondait une page HTML : le téléphone ne pouvait
+    afficher qu'« Import impossible ». On répond en JSON, avec la raison."""
+    return jsonify({"ok": False, "error": TROP_GROS}), 413
 
 
 # --------------------------------------------------------------------------
@@ -183,6 +193,39 @@ NON_JSON_ROUTES = frozenset({"/api/upload"})
 CLIENT_HEADER = "X-Prompteur-Client"
 
 
+def _corps():
+    """Corps JSON de la requête, TOUJOURS un dictionnaire.
+
+    « [1, 2] » ou « "texte" » sont du JSON valide : sans ce garde-fou, le premier
+    .get() levait une exception, et le client recevait une erreur 500 muette.
+    """
+    data = request.get_json(silent=True)
+    return data if isinstance(data, dict) else {}
+
+
+# Noms sous lesquels on joint le boîtier. Le rebond DNS (« DNS rebinding ») fait
+# pointer un nom de domaine d'Internet vers 10.42.0.1 : la page piégée devient alors
+# « de la même origine » que le boîtier, et la barrière Origin ne voit plus rien.
+# Ce nom-là, en revanche, reste dans l'en-tête Host. On n'accepte donc qu'une
+# adresse IP, un nom sans point (localhost, prompteur) ou un nom de réseau local.
+_SUFFIXES_LOCAUX = (".local", ".lan", ".home", ".home.arpa", ".internal")
+
+
+def _hote_de_confiance(host):
+    try:
+        nom = (urlsplit("//" + host).hostname or "").lower()
+    except ValueError:
+        return False
+    if not nom:
+        return False
+    try:
+        ipaddress.ip_address(nom)
+        return True
+    except ValueError:
+        pass
+    return "." not in nom or nom.endswith(_SUFFIXES_LOCAUX)
+
+
 def _cross_origin(value):
     """Vrai si l'en-tête fourni (Origin ou Referer) désigne une autre origine."""
     if not value:
@@ -198,6 +241,10 @@ def _cross_origin(value):
 def _guard_state_changing_requests():
     if request.method in SAFE_METHODS:
         return None
+
+    # 0. Le nom sous lequel on a joint le boîtier (voir _hote_de_confiance).
+    if not _hote_de_confiance(request.host):
+        return jsonify({"ok": False, "error": "adresse du boîtier inattendue"}), 403
 
     # 1. Origine de la requête. Referer en secours quand Origin est absent.
     if _cross_origin(request.headers.get("Origin")) or _cross_origin(request.headers.get("Referer")):
@@ -271,6 +318,30 @@ def sanitize_marks(marks, length):
     return clean
 
 
+def longueur_js(texte):
+    """Longueur du texte telle que la compte JavaScript (unités UTF-16).
+
+    Les plages sont des indices JAVASCRIPT : c'est l'éditeur du téléphone et
+    l'écran de lecture qui les posent et les appliquent. Un emoji y compte pour
+    deux, contre un seul en Python.
+    """
+    return len(texte) + sum(1 for c in texte if ord(c) > 0xFFFF)
+
+
+def plages_en_unites_js(texte, marques):
+    """Plages calculées en Python (import) -> plages en unités JavaScript.
+
+    Sans cette conversion, chaque emoji placé avant un passage décalait sa mise en
+    forme d'une lettre à l'écran.
+    """
+    if not marques or all(ord(c) <= 0xFFFF for c in texte):
+        return marques
+    cumul = [0] * (len(texte) + 1)
+    for i, c in enumerate(texte):
+        cumul[i + 1] = cumul[i] + (2 if ord(c) > 0xFFFF else 1)
+    return [{**m, "start": cumul[m["start"]], "end": cumul[m["end"]]} for m in marques]
+
+
 def _sanitize_settings(settings):
     """Répare un state.json corrompu : toute valeur invalide retombe au défaut."""
     clean = copy.deepcopy(DEFAULT_STATE["settings"])
@@ -317,9 +388,12 @@ def load_state():
             # tronque au chargement. Sans cela l'écran resterait figé À CHAQUE
             # DÉMARRAGE, et il faudrait un clavier et un terminal pour s'en sortir.
             merged["text"] = _truncate_text(merged.get("text", ""))
-            merged["marks"] = sanitize_marks(merged.get("marks"), len(merged["text"]))
+            merged["marks"] = sanitize_marks(merged.get("marks"), longueur_js(merged["text"]))
             return merged
-        except (json.JSONDecodeError, OSError, TypeError, AttributeError):
+        # ValueError couvre aussi un octet non UTF-8 (UnicodeDecodeError) : sans lui,
+        # une seule lettre abîmée par une coupure de courant empêchait le service
+        # de démarrer, et le boîtier restait noir à chaque allumage.
+        except (ValueError, OSError, TypeError, AttributeError):
             pass
     return copy.deepcopy(DEFAULT_STATE)
 
@@ -340,8 +414,10 @@ def _save_state_unlocked(state):
             f.flush()
             os.fsync(f.fileno())
         tmp.replace(STATE_FILE)
-    except OSError:
-        pass
+    except OSError as e:
+        # On ne bloque pas le direct pour autant (le texte reste en mémoire), mais
+        # l'échec doit laisser une trace : carte pleine ou en lecture seule.
+        print(f"Prompteur : impossible d'enregistrer {STATE_FILE.name} : {e}", file=sys.stderr, flush=True)
 
 
 def bump(state):
@@ -361,7 +437,7 @@ STATE = load_state()
 # (/view) qui la SUIVENT avec anticipation (ils connaissent la vitesse et prédisent
 # le mouvement entre deux lectures -> retard imperceptible). Mise à jour par POST,
 # lue par GET, sur /api/scroll.
-SCROLL = {"pos": 0.0, "vel": 0.0, "playing": False, "seq": 0}
+SCROLL = {"pos": 0.0, "vel": 0.0, "playing": False, "seq": 0, "ligne": None, "frac": 0.0, "h": 0.0}
 
 # Veille du système : tous les écrans passent au noir, le grand écran est éteint.
 # État TRANSITOIRE, jamais écrit sur la carte : un boîtier qu'on rallume doit
@@ -428,6 +504,11 @@ def find_usb_text_files():
                     return _dedupe(results)
                 if not fn.lower().endswith(USB_EXTS):
                     continue
+                # « ._Sujet.docx » (Mac) et « ~$Sujet.docx » (Word ouvert) ne sont
+                # pas des documents : ils s'affichaient à côté du vrai, et leur
+                # chargement échouait.
+                if fn.startswith((".", "~$")):
+                    continue
                 full = os.path.join(dirpath, fn)
                 if os.path.islink(full):
                     continue
@@ -437,9 +518,9 @@ def find_usb_text_files():
                     size = os.path.getsize(full)
                 except OSError:
                     continue
-                if size > MAX_FILE_SIZE:
-                    continue
-                results.append({"name": fn, "path": full, "size": size})
+                # Trop lourd : listé quand même, et signalé. Le faire disparaître en
+                # silence faisait croire que la clé n'était pas lue.
+                results.append({"name": fn, "path": full, "size": size, "tropGros": size > MAX_FILE_SIZE})
                 if len(results) >= USB_MAX_TXT:
                     return _dedupe(results)
     return _dedupe(results)
@@ -564,20 +645,35 @@ def api_version():
 @app.route("/api/scroll", methods=["GET", "POST"])
 def api_scroll():
     """Position de défilement du MENEUR.
-    GET  : lue très fréquemment par les spectateurs (/view) qui la suivent.
-    POST : le meneur (/display) y pousse sa position. pos en px, vel en px/s."""
+    GET  : lue très fréquemment par les spectateurs (/spectateur) qui la suivent.
+    POST : la vue Journaliste y pousse sa position. pos en px, vel en px/s.
+
+    ligne / frac / h : la même position, exprimée dans le TEXTE — la ligne qui
+    passe sous la ligne rouge, la fraction de cette ligne déjà passée, et sa
+    hauteur en pixels. C'est elle que suit la vue Spectateur : sur un écran d'une
+    autre taille, les lignes ne se coupent pas au même endroit, et une position
+    en pixels désignait un autre passage."""
     if request.method == "GET":
         with _lock:
             return jsonify(dict(SCROLL))
-    data = request.get_json(silent=True) or {}
+    data = _corps()
     try:
         pos = max(0.0, min(1e7, float(data.get("pos", 0) or 0)))
         vel = max(-5000.0, min(5000.0, float(data.get("vel", 0) or 0)))
-    except (TypeError, ValueError):
+        ligne = data.get("ligne")
+        ligne = (
+            max(0, min(10**6, int(ligne))) if isinstance(ligne, (int, float)) and not isinstance(ligne, bool) else None
+        )
+        frac = max(-1000.0, min(1000.0, float(data.get("frac", 0) or 0)))
+        hauteur = max(0.0, min(1e5, float(data.get("h", 0) or 0)))
+    except (TypeError, ValueError, OverflowError):
         return jsonify({"ok": False, "error": "valeurs invalides"}), 400
     with _lock:
         SCROLL["pos"] = pos
         SCROLL["vel"] = vel
+        SCROLL["ligne"] = ligne
+        SCROLL["frac"] = frac
+        SCROLL["h"] = hauteur
         SCROLL["playing"] = bool(data.get("playing"))
         SCROLL["seq"] += 1
         seq = SCROLL["seq"]
@@ -586,13 +682,16 @@ def api_scroll():
 
 @app.route("/api/text", methods=["POST"])
 def api_text():
-    data = request.get_json(silent=True) or {}
+    data = _corps()
+    if "text" not in data:
+        # Une requête sans texte ne doit JAMAIS vider l'écran à l'antenne.
+        return jsonify({"ok": False, "error": "texte manquant"}), 400
     try:
         text = textextract.check_size(str(data.get("text", "")))
     except ValueError as e:
         # Un texte demesure fige l'affichage, et le gel survit au redemarrage.
         return jsonify({"ok": False, "error": str(e)}), 400
-    marks = sanitize_marks(data.get("marks"), len(text))
+    marks = sanitize_marks(data.get("marks"), longueur_js(text))
     with _lock:
         STATE["text"] = text
         STATE["marks"] = marks
@@ -606,7 +705,7 @@ def api_text():
 
 @app.route("/api/settings", methods=["POST"])
 def api_settings():
-    data = request.get_json(silent=True) or {}
+    data = _corps()
     with _lock:
         changed = False
         refuses = []
@@ -635,7 +734,7 @@ def api_command():
     """Commande ponctuelle envoyée depuis le téléphone (play/pause/restart/...).
 
     L'état de pilotage est TRANSITOIRE : on ne l'écrit pas sur la carte SD (usure)."""
-    data = request.get_json(silent=True) or {}
+    data = _corps()
     cmd = data.get("cmd")
     allowed = {"play", "pause", "toggle", "restart", "top", "faster", "slower"}
     if cmd not in allowed:
@@ -702,10 +801,15 @@ def api_library():
 
 @app.route("/api/library/save", methods=["POST"])
 def api_library_save():
-    data = request.get_json(silent=True) or {}
+    data = _corps()
     raw = str(data.get("name") or STATE.get("title") or "sans-titre")
     name = safe_name(raw)
-    text = str(data.get("text", STATE.get("text", "")))
+    try:
+        # La même borne qu'au chargement : sinon on enregistrait un texte que
+        # « Charger » refusait ensuite.
+        text = textextract.check_size(str(data.get("text", STATE.get("text", ""))))
+    except ValueError as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
     overwrite = bool(data.get("overwrite"))
     path = _library_path(name)
     if path is None:
@@ -714,7 +818,7 @@ def api_library_save():
         # collision : on demande confirmation au lieu d'écraser en silence
         return jsonify({"ok": False, "error": "exists", "name": name, "sanitized": name != raw.strip()}), 409
     path.write_text(text, encoding="utf-8")
-    marques = sanitize_marks(data.get("marks"), len(text))
+    marques = sanitize_marks(data.get("marks"), longueur_js(text))
     chemin_marques = _library_marks_path(path)
     if marques:
         chemin_marques.write_text(json.dumps(marques), encoding="utf-8")
@@ -731,7 +835,7 @@ def api_library_load():
     # répondait en GET, une simple balise <img src=".../api/library/load?name=..."/>
     # posée sur une page tierce suffisait à changer le texte affiché en plein
     # tournage, sans que le pare-feu ni WPA2 puissent l'empêcher.
-    data = request.get_json(silent=True) or {}
+    data = _corps()
     path = _library_path(str(data.get("name", "")))
     if path is None or not path.exists():
         return jsonify({"ok": False, "error": "introuvable"}), 404
@@ -739,11 +843,15 @@ def api_library_load():
         text = textextract.check_size(read_text_file(path))
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
+    if not text and path.stat().st_size > 0:
+        # Lecture ratée (carte abîmée) : surtout ne pas mettre un écran VIDE à
+        # l'antenne en répondant « ok ».
+        return jsonify({"ok": False, "error": "lecture du texte impossible"}), 500
     marques = []
     chemin_marques = _library_marks_path(path)
     if chemin_marques.exists():
         try:
-            marques = sanitize_marks(json.loads(chemin_marques.read_text(encoding="utf-8")), len(text))
+            marques = sanitize_marks(json.loads(chemin_marques.read_text(encoding="utf-8")), longueur_js(text))
         except (OSError, ValueError):
             marques = []  # mise en forme abimee : on affiche le texte quand meme
     with _lock:
@@ -757,7 +865,7 @@ def api_library_load():
 
 @app.route("/api/library/delete", methods=["POST"])
 def api_library_delete():
-    data = request.get_json(silent=True) or {}
+    data = _corps()
     path = _library_path(str(data.get("name", "")))
     if path and path.exists():
         path.unlink()
@@ -821,8 +929,14 @@ def api_usb():
 
 @app.route("/api/usb/load", methods=["POST"])
 def api_usb_load():
-    data = request.get_json(silent=True) or {}
+    data = _corps()
     path = data.get("path", "")
+    try:
+        trop_gros = isinstance(path, str) and os.path.getsize(path) > MAX_FILE_SIZE
+    except (OSError, ValueError):
+        trop_gros = False
+    if trop_gros:
+        return jsonify({"ok": False, "error": TROP_GROS}), 400
     if not is_allowed_usb_file(path):
         return jsonify({"ok": False, "error": "fichier non autorisé"}), 400
     try:
@@ -830,7 +944,7 @@ def api_usb_load():
         text, marques = textextract.extract_rich(path, raw)
     except (OSError, ValueError) as e:
         return jsonify({"ok": False, "error": str(e)}), 400
-    marques = sanitize_marks(marques, len(text))
+    marques = plages_en_unites_js(text, sanitize_marks(marques, len(text)))
     title = Path(path).stem
     if not _wants_apply(data.get("apply")):
         # Le client remplira lui-même sa zone de texte : rien ne part à l'écran.
@@ -861,12 +975,16 @@ def api_upload():
     file = request.files.get("file")
     if not file:
         return jsonify({"ok": False, "error": "aucun fichier"}), 400
-    raw = file.read(MAX_FILE_SIZE)  # MAX_CONTENT_LENGTH a déjà borné le corps en amont
+    raw = file.read(MAX_FILE_SIZE + 1)
+    if len(raw) > MAX_FILE_SIZE:
+        # On lisait les 5 premiers Mo et l'on continuait : la fin du texte
+        # disparaissait sans un mot. Mieux vaut refuser en le disant.
+        return jsonify({"ok": False, "error": TROP_GROS}), 400
     try:
         text, marques = textextract.extract_rich(file.filename, raw)
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
-    marques = sanitize_marks(marques, len(text))
+    marques = plages_en_unites_js(text, sanitize_marks(marques, len(text)))
     title = Path(file.filename).stem or "Import"
     if not _wants_apply(request.form.get("apply")):
         # Le client remplira lui-meme sa zone de texte : rien ne part a l'ecran.
@@ -1016,7 +1134,7 @@ def api_presenter():
 
 @app.route("/api/presenter/claim", methods=["POST"])
 def api_presenter_claim():
-    data = request.get_json(silent=True) or {}
+    data = _corps()
     token = str(data.get("token") or "")[:64]
     if not token:
         return jsonify({"ok": False, "error": "jeton manquant"}), 400
@@ -1039,7 +1157,7 @@ def api_presenter_claim():
 def api_presenter_ping():
     """Battement de cœur du meneur. Renvoie ok=False s'il a perdu la place
     (quelqu'un a repris la main) : l'écran le saura et cessera de piloter."""
-    data = request.get_json(silent=True) or {}
+    data = _corps()
     token = str(data.get("token") or "")[:64]
     with _lock:
         holder = _presenter_holder()
@@ -1056,7 +1174,7 @@ def api_presenter_ping():
 
 @app.route("/api/presenter/release", methods=["POST"])
 def api_presenter_release():
-    data = request.get_json(silent=True) or {}
+    data = _corps()
     token = str(data.get("token") or "")[:64]
     with _lock:
         if _presenter["holder"] == token:
@@ -1153,6 +1271,29 @@ def _kiosk_launch(vue):
         return False
 
 
+def _kiosk_reprendre():
+    """Rouvre le grand écran s'il a été fermé par le redémarrage du service.
+
+    Un navigateur ouvert depuis Settings (« Vue du journaliste », Échap) est un
+    enfant du service : un redémarrage du service (mise à jour, plantage) le
+    fermait, et le grand écran retombait sur le bureau. kiosk.sh --reprendre le
+    rouvre sur la même vue — et ne fait rien s'il tourne encore, ou s'il avait été
+    fermé volontairement.
+    """
+    if not KIOSK_SCRIPT.exists():
+        return
+    try:
+        subprocess.Popen(  # nosec B603 - chemin fixe du projet, pas de shell
+            ["/bin/bash", str(KIOSK_SCRIPT), "--reprendre"],
+            env=_kiosk_env(),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except (OSError, subprocess.SubprocessError):
+        pass
+
+
 # Ce que le grand écran peut montrer. « bureau » n'est pas une page : c'est le
 # navigateur fermé, donc le bureau du Raspberry.
 VUES_GRAND_ECRAN = ("journaliste", "settings")
@@ -1201,7 +1342,7 @@ def api_kiosk_close():
 
 @app.route("/api/kiosk/launch", methods=["POST"])
 def api_kiosk_launch():
-    data = request.get_json(silent=True) or {}
+    data = _corps()
     vue = data.get("vue", "journaliste")
     if vue not in VUES_GRAND_ECRAN:
         return jsonify({"ok": False, "error": "vue inconnue"}), 400
@@ -1235,7 +1376,7 @@ _veille_lock = threading.Lock()
 
 @app.route("/api/veille", methods=["POST"])
 def api_veille():
-    data = request.get_json(silent=True) or {}
+    data = _corps()
     on = data.get("on")
     if not isinstance(on, bool):
         return jsonify({"ok": False, "error": "on doit valoir true ou false"}), 400
@@ -1334,6 +1475,7 @@ if __name__ == "__main__":
     # confine le port au WiFi du boîtier (wlan0). D'où le nosec B104.
     host = os.environ.get("PROMPTEUR_HOST", "0.0.0.0")  # nosec
     port = current_port()
+    _kiosk_reprendre()
     if os.environ.get("PROMPTEUR_DEBUG"):
         app.run(host=host, port=port, threaded=True, debug=True)  # nosec B201
     else:
@@ -1341,7 +1483,9 @@ if __name__ == "__main__":
             # serveur WSGI de production (robuste sur de longues sessions, multi-clients)
             from waitress import serve
 
-            serve(app, host=host, port=port, threads=16, channel_timeout=120)
+            # max_request_body_size : sans lui, waitress met en mémoire jusqu'à 1 Go
+            # avant que la borne de Flask ne s'applique.
+            serve(app, host=host, port=port, threads=16, channel_timeout=120, max_request_body_size=MAX_BODY)
         except ImportError:
             # waitress absent (ex. poste de test) : repli sur le serveur Flask
             app.run(host=host, port=port, threaded=True)

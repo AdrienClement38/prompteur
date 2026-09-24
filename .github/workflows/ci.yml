@@ -16,7 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
+        # 3.13 : la version de Raspberry Pi OS trixie, celle du boîtier.
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,7 +28,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install ruff bandit pip-audit pytest
+          # reportlab : sans lui, les tests d'import PDF étaient sautés (skip) et la
+          # CI restait verte sans jamais avoir lu un PDF.
+          pip install ruff bandit pip-audit pytest reportlab
       - name: Ruff — lint (propreté)
         run: ruff check .
       - name: Ruff — format (propreté)
@@ -56,8 +59,11 @@ jobs:
           node --check static/display.js
           node --check static/remote.js
           node --check static/commun.js
-      - name: Banc d'essai des pédales (logique de défilement)
-        run: node tests/banc_pedales.js
+          node --check static/plages.js
+      - name: Bancs d'essai (pédales, suivi, mise en forme pendant la frappe)
+        run: |
+          node tests/banc_pedales.js
+          node tests/banc_plages.js
       - name: ESLint — lint (propreté)
         run: npm run lint
 
@@ -70,7 +76,8 @@ jobs:
         uses: ludeeus/action-shellcheck@master
         with:
           severity: error
-          scandir: ./install
+          # Tout le dépôt : install/ ET scripts/ (le rejeu local les vérifiait déjà).
+          scandir: .
 
   secrets:
     name: Sécurité — scan de secrets (gitleaks)

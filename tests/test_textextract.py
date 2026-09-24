@@ -1093,3 +1093,54 @@ def test_les_plages_designent_toujours_les_caracteres_de_leur_classe(un_par_run)
         data = _odt_par_classes(tirage, un_par_run)
         texte, plages = tx.extract_rich("classes.odt", data)
         _controle_par_classes(texte, plages, f"odt graine={graine} un_par_run={un_par_run}")
+
+
+# ============================================================================
+# Défauts d'import relevés par l'audit du 2026-09-16
+# ============================================================================
+
+
+def test_odt_espace_ecrite_comme_une_balise():
+    """LibreOffice écrit certaines espaces <text:s/> : les mots ne doivent pas se coller."""
+    data = _odt_riche([], '<text:p>Bonjour<text:s/>le<text:s text:c="3"/>monde</text:p>')
+    texte, _ = tx.extract_rich("r.odt", data)
+    assert texte == "Bonjour le monde"
+
+
+def test_odt_espace_balise_ne_confond_pas_les_spans():
+    data = _odt_riche(
+        [_style_odt("T1", 'fo:font-weight="bold"')],
+        '<text:p>un<text:s/><text:span text:style-name="T1">mot</text:span></text:p>',
+    )
+    texte, plages = tx.extract_rich("r.odt", data)
+    assert texte == "un mot"
+    assert texte[_seule(plages)["start"] : _seule(plages)["end"]] == "mot"
+
+
+def test_txt_unicode_du_bloc_notes():
+    """« Unicode » dans le Bloc-notes de Windows = UTF-16, avec ou sans BOM."""
+    for donnees in ("Été : ça marche".encode("utf-16"), "Été : ça marche".encode("utf-16-le")):
+        texte, _ = tx.extract_rich("note.txt", donnees)
+        assert texte == "Été : ça marche"
+
+
+def test_txt_latin1_reste_lu_comme_avant():
+    texte, _ = tx.extract_rich("vieux.txt", "Déjà vu".encode("latin-1"))
+    assert texte == "Déjà vu"
+
+
+def test_rtf_destination_ignorable_ne_fuit_pas():
+    """Un groupe marqué « ignorable » (astérisque) est sauté en entier, même inconnu."""
+    rtf = (
+        r"{\rtf1\ansi{\*\listtable{\list{\listlevel{\leveltext\u8226 ;}}}}"
+        r"Avant {\*\bkmkstart repere}le texte "
+        r"{\field{\*\fldinst HYPERLINK \"http://exemple\"}{\fldrslt le lien}}\par}"
+    )
+    texte, _ = tx.extract_rich("d.rtf", rtf.encode())
+    assert texte == "Avant le texte le lien"
+
+
+def test_rtf_emoji_en_deux_moities():
+    rtf = r"{\rtf1\ansi\uc1 Bravo \u-10179?\u-8704? !\par}"
+    texte, _ = tx.extract_rich("d.rtf", rtf.encode())
+    assert texte == "Bravo \U0001f600 !"

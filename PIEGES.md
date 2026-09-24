@@ -243,6 +243,19 @@ Un écran qui s'ouvre découvre la dernière commande envoyée et l'applique : u
 « Lecture » de la veille faisait défiler le texte tout seul au démarrage du boîtier.
 **Parade :** à l'ouverture, on note le numéro de la dernière commande sans l'exécuter.
 
+### 🔴 Une lettre abîmée empêchait le boîtier de démarrer
+Le chargement de `state.json` rattrapait un JSON invalide, mais pas un octet non
+UTF-8 — ce qu'une coupure de courant peut laisser. Le service plantait au
+démarrage, redémarrait, replantait : écran noir à chaque allumage.
+**Parade :** rattraper `ValueError`, qui couvre les deux.
+
+### 🔴 Un navigateur lancé par le service meurt avec lui
+Ouvert depuis Settings (changement de vue, Échap), le navigateur du grand écran
+est un enfant du service : tout redémarrage du service le fermait, et le grand
+écran retombait sur le bureau.
+**Parade :** au démarrage, le serveur rouvre la vue qui était affichée
+(`kiosk.sh --reprendre`) — sauf si elle avait été fermée volontairement.
+
 ### 🔴 Un kiosque relancé trouve sa place prise par son propre fantôme
 Fermer puis rouvrir le navigateur du kiosque (changement de vue du grand écran)
 laissait la place de meneur à l'ancienne page pendant 12 s. La nouvelle affichait
@@ -311,6 +324,14 @@ Chacun pousse sa position : le texte saute d'un endroit à l'autre en pleine
 lecture.
 **Parade :** une seule vue Journaliste à la fois ; une seconde affiche un voile et
 propose la vue Spectateur ; la reprise en main reste possible.
+
+### 🔴 Suivre au pixel près désigne un autre passage sur un autre écran
+La vue Spectateur recopiait la position du meneur en pixels. Sur un écran d'une
+autre taille, les lignes ne se coupent pas au même endroit : la régie lisait
+une autre phrase que le journaliste.
+**Parade :** le meneur envoie la LIGNE du texte sous la ligne rouge et la
+fraction déjà passée ; chaque écran la replace dans sa propre mise en page. Le
+même repère garde la phrase quand on change la taille du texte en pleine lecture.
 
 ### Un raccourci d'écran d'accueil ouvre la page de son manifeste
 « Ajouter à l'écran d'accueil » n'enregistre pas la page affichée, mais l'adresse de
@@ -570,6 +591,11 @@ Remplacer un appel partout a réécrit l'intérieur de la fonction qui le
 remplaçait : **récursion infinie**.
 **Parade :** vérifier ce qu'on vient de remplacer, pas seulement que ça compile.
 
+### Une sauvegarde qui embarque des fichiers suivis par git
+`tar … scripts` emportait aussi les outils rangés dans `scripts/`. Restaurés
+par-dessus une version plus récente, ils bloquaient le `git pull` suivant.
+**Parade :** exclure `*.py` et `*.sh` à la sauvegarde comme à la restauration.
+
 ### 🔴 Une animation ne se teste pas dans une page masquée
 Le navigateur ralentit ou suspend `requestAnimationFrame` quand la page n'est pas
 visible. Volet de prévisualisation masqué : les pédales « ne faisaient plus rien »,
@@ -586,9 +612,13 @@ Généré au hasard à l'installation, il n'existe nulle part ailleurs.
 **Parade :** l'imposer soi-même à l'installation, et le noter sur la fiche du
 boîtier.
 
-### Relancer l'installation recrée le WiFi
-Sans redonner le mot de passe actuel, un nouveau est tiré au hasard et **plus
-aucun téléphone ne se connecte**.
+### 🔴 Relancer l'installation changeait le mot de passe WiFi
+Sans redonner le mot de passe actuel, un nouveau était tiré au hasard et **plus
+aucun téléphone ne se connectait** — alors que deux guides faisaient relancer
+l'installation sans lui. Le réseau était en plus supprimé puis recréé ouvert,
+le temps de quelques commandes.
+**Parade :** `setup.sh` reprend le mot de passe EN PLACE, vérifie sa longueur avant
+de toucher au réseau, et modifie le réseau existant en une seule fois.
 
 ### Pas d'internet une fois connecté au boîtier
 C'est voulu. Mais le script doit donc **déjà être sur le téléphone** : on ne peut

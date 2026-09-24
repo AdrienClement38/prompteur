@@ -42,10 +42,14 @@
   let lastTime = 0;
 
   // Suivi (spectateur) : dernier point connu du meneur (pos, vitesse, instant, n° de séquence)
-  const follow = { pos: 0, vel: 0, at: 0, seq: -1 };
+  const follow = { pos: 0, vel: 0, at: 0, seq: -1, repere: null };
 
   // --- Application des réglages reçus du serveur ----------------------------
   function applySettings(s, text, marks) {
+    // Même texte, présentation qui change (taille, interligne, marges) : on note
+    // la phrase sous la ligne rouge AVANT, pour y revenir APRÈS. Sans cela, la
+    // lecture sautait ailleurs, voire sur un écran vide.
+    const repereAvant = !isViewer && lastText !== null && text === lastText ? repereDepuisPosition(pos) : null;
     const vitesseAvant = settings ? Number(settings.speed) || 70 : null;
     settings = s;
     speed = Number(s.speed) || 70;
@@ -63,7 +67,8 @@
     scroller.style.lineHeight = String(Math.max(0.8, Math.min(4, Number(s.lineHeight) || 1.6)));
     scroller.style.textAlign = s.align === "center" ? "center" : "left";
 
-    const m = Math.max(0, Math.min(45, Number(s.margin) || 10));
+    // 0 % est une valeur voulue : « || 10 » la remplaçait par 10 %.
+    const m = Math.max(0, Math.min(45, Number.isFinite(Number(s.margin)) ? Number(s.margin) : 10));
     scroller.style.paddingLeft = m + "%";
     scroller.style.paddingRight = m + "%";
     scroller.style.paddingTop = "60vh";
@@ -94,6 +99,14 @@
         // Nouveau texte : on repart du haut, À L'ARRÊT, quel que soit le mode.
         pos = 0;
         arretTout();
+      }
+    }
+    if (repereAvant) {
+      const apres = positionDepuisRepere(repereAvant);
+      if (apres !== null && Math.abs(apres - pos) > 0.5) {
+        pos = Math.max(0, Math.min(maxScrollPos(), apres));
+        scroller.style.transform = `translateY(${-pos}px)`;
+        forceResync();
       }
     }
     emptyMsg.style.display = text && text.trim() ? "none" : "flex";
@@ -176,7 +189,9 @@
   // convertis a l'import seulement — un signe qui marche a un endroit et pas a
   // l'autre passe pour une panne.
   const RE_TITRE = /^(#{1,3})[ \t]+(.*)$/;
-  const RE_PUCE = /^[-*+•][ \t]+(.*)$/;
+  // « + » n'en fait pas partie : jamais documenté, il faisait disparaître le plus
+  // d'une ligne comme « + 3 degrés ».
+  const RE_PUCE = /^[-*•][ \t]+(.*)$/;
   const RE_ALIGNE = /^\[(centre|droite)\][ \t]*/i;
 
   function renderScript(text, marks) {
@@ -373,6 +388,41 @@
     return Math.max(0, scroller.scrollHeight - viewport.clientHeight);
   }
 
+  // --- Repère dans le TEXTE, et non en pixels --------------------------------
+  // Une position en pixels ne désigne le même passage que sur un écran de même
+  // taille : ailleurs, les lignes ne se coupent pas au même endroit. On repère
+  // donc la ligne du texte qui passe sous la ligne rouge, et la fraction de cette
+  // ligne déjà passée. Sert à la vue Spectateur (écran d'une autre taille) et au
+  // changement de taille du texte en pleine lecture (on reste sur la même phrase).
+  function hauteurRepere() {
+    const s = settings || {};
+    const pourcent = Number.isFinite(Number(s.guidePos)) ? Number(s.guidePos) : 42;
+    return viewport.clientHeight * Math.max(0, Math.min(100, pourcent)) / 100;
+  }
+
+  function repereDepuisPosition(p) {
+    const lignes = scroller.children;
+    if (!lignes.length) return null;
+    const y = p + hauteurRepere();
+    // Recherche dichotomique : un script peut compter des milliers de lignes.
+    let bas = 0;
+    let haut = lignes.length - 1;
+    while (bas < haut) {
+      const milieu = (bas + haut + 1) >> 1;
+      if (lignes[milieu].offsetTop <= y) bas = milieu;
+      else haut = milieu - 1;
+    }
+    const ligne = lignes[bas];
+    const h = Math.max(1, ligne.offsetHeight);
+    return { ligne: bas, frac: (y - ligne.offsetTop) / h, h };
+  }
+
+  function positionDepuisRepere(repere) {
+    const ligne = repere && scroller.children[repere.ligne];
+    if (!ligne) return null;
+    return ligne.offsetTop + repere.frac * Math.max(1, ligne.offsetHeight) - hauteurRepere();
+  }
+
   // --- Diffusion de la position (meneur -> serveur -> spectateurs) ----------
   let lastSentVel = null;
   let lastSentAt = 0;
@@ -380,18 +430,21 @@
     lastSentVel = null; // force l'envoi à la prochaine frame
   }
   function pushScroll(p, v) {
+    const repere = repereDepuisPosition(p) || {};
     fetch("/api/scroll", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       keepalive: true,
-      body: JSON.stringify({ pos: p, vel: v, playing: autoPlay || v > 0 }),
+      body: JSON.stringify({ pos: p, vel: v, playing: autoPlay || v > 0, ...repere }),
     }).catch(() => {});
   }
   function maybePush(now, v) {
     if (!isLeading) return; // pas le meneur : on n'impose sa position à personne
-    const KEYFRAME_MS = 250;
+    // En mouvement, un point toutes les 250 ms ; à l'arrêt, toutes les 2 s : une
+    // vue Spectateur ouverte (ou rechargée) après l'arrêt se cale quand même.
+    const KEYFRAME_MS = v !== 0 ? 250 : 2000;
     const changed = v !== lastSentVel;
-    const keyframe = v !== 0 && now - lastSentAt > KEYFRAME_MS;
+    const keyframe = now - lastSentAt > KEYFRAME_MS;
     if (changed || keyframe) {
       lastSentVel = v;
       lastSentAt = now;
@@ -456,8 +509,21 @@
   function frameViewer(now, dt) {
     // anticipation : on extrapole la position du meneur à partir de sa vitesse,
     // puis on rapproche doucement la position locale de cette cible (anti-saccade).
-    const elapsed = (now - follow.at) / 1000;
-    let target = follow.pos + follow.vel * elapsed;
+    // Une seconde au plus : le meneur envoie un point toutes les 250 ms quand il
+    // bouge. S'il se tait (fermé en plein défilement), on s'arrête au lieu de
+    // défiler seul jusqu'à la fin du texte.
+    const elapsed = Math.min(1, (now - follow.at) / 1000);
+    // Le repère dans le texte d'abord ; les pixels seulement à défaut (meneur
+    // d'une version antérieure, ou texte pas encore chargé ici).
+    const base = positionDepuisRepere(follow.repere);
+    let target;
+    if (base !== null) {
+      const ligne = scroller.children[follow.repere.ligne];
+      const echelle = follow.repere.h > 0 ? ligne.offsetHeight / follow.repere.h : 1;
+      target = base + follow.vel * echelle * elapsed;
+    } else {
+      target = follow.pos + follow.vel * elapsed;
+    }
     const maxPos = maxScrollPos();
     if (target < 0) target = 0;
     else if (target > maxPos) target = maxPos;
@@ -974,6 +1040,9 @@
         follow.seq = s.seq;
         follow.pos = Number(s.pos) || 0;
         follow.vel = Number(s.vel) || 0;
+        follow.repere = Number.isInteger(s.ligne)
+          ? { ligne: s.ligne, frac: Number(s.frac) || 0, h: Number(s.h) || 0 }
+          : null;
         follow.at = sent - (follow.vel ? SCROLL_LEAD_MS : 0);
       }
     } catch {
@@ -1012,12 +1081,19 @@
         document.createTextNode("connecte l'appareil au WiFi "),
         Object.assign(document.createElement("b"), { textContent: "Prompteur" })
       );
+      // Branché aussi à une box (câble Ethernet) : ses autres adresses, pour s'y
+      // connecter depuis un ordinateur de ce réseau-là (ACCES-A-DISTANCE.md).
+      const autres = addresses.slice(1);
+      const ligneAutres = autres.length
+        ? bloc("", "Autres adresses du boîtier : " + autres.join(" · "), "font-size:14px;opacity:.65;margin-top:6px")
+        : document.createTextNode("");
       netinfo.replaceChildren(
         document.createTextNode("Vue Journaliste (PC / tablette) :"),
         bloc("addr", main),
         ligneSpec,
         bloc("addr", spec, "color:#ffd400"),
-        ligneWifi
+        ligneWifi,
+        ligneAutres
       );
       const addrSpan = document.getElementById("emptyAddr");
       if (addrSpan) addrSpan.textContent = main;

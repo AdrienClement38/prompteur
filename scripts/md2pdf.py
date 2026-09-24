@@ -217,6 +217,9 @@ def inline(text):
 
     text = re.sub(r"`([^`]+)`", stash, text)
     text = emphasis(symfont(esc(text)))
+    # « <br> » dans une cellule de tableau : un saut de ligne voulu, que l'échappement
+    # faisait imprimer tel quel. Ceux d'un fragment de code, mis de côté, restent écrits.
+    text = re.sub(r"&lt;br\s*/?&gt;", "<br/>", text)
 
     def restore(match):
         return (

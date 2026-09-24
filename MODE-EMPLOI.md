@@ -574,10 +574,9 @@ LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 > - **PDF scanné** (une photo de page) : le message « Importé : » s'affiche… mais **la zone de
 >   texte reste vide**.
 > - **Document protégé par mot de passe** : l'import échoue avec un message technique en anglais.
-> - **Fichier trop lourd (plus de 5 Mo)** : soit un message d'échec, soit — le plus traître —
->   **un texte amputé de sa fin, sans aucun avertissement**. Un PDF plein de photos dépasse très
->   vite cette limite : **descendez toujours jusqu'à la dernière ligne dans la zone de saisie**
->   avant d'envoyer.
+> - **Fichier trop lourd (plus de 5 Mo)** : il est refusé avec le message **« Fichier trop
+>   volumineux »**. Un PDF plein de photos dépasse très vite cette limite : enregistrez le
+>   document en `.docx`, sans les images.
 > - **Format non reconnu** (`.pages` d'Apple, `.key`, `.jpg`, `.zip`…) : le boîtier **refuse
 >   le fichier** et affiche la liste des formats acceptés. Rien n'est abîmé ; rouvrez le
 >   document dans Word et enregistrez-le en `.docx`.
@@ -616,16 +615,11 @@ retirer la clé, le texte reste, même après extinction.
 > Sur une clé pleine de photos ou de rushes, la recherche s'arrête avant d'avoir trouvé votre
 > document.
 
-> ⚠️ **PIÈGE — les fichiers fantômes des Mac.** Une clé utilisée sur un Mac contient des doublons
-> invisibles dont le nom commence par un point ou par `._`. Ils apparaissent dans la liste et
-> leur chargement échoue. **Parade** : choisissez la ligne dont le nom **ne commence pas** par
-> un point.
-
 > 🆘 **Si le message « Aucun fichier détecté sur une clé USB » s'affiche** : retirez la clé,
 > rebranchez-la **sur le boîtier**, attendez 5 secondes et réappuyez sur « Clé USB ». Sinon, la
 > clé est dans un format inhabituel : utilisez-en une autre, plus ordinaire.
-> **Autre cause fréquente : un document de plus de 5 Mo** (un PDF plein de photos)
-> **n'apparaît pas du tout dans la liste, sans le moindre message.** Préférez un `.docx`.
+> **Un document de plus de 5 Mo** (un PDF plein de photos) apparaît dans la liste avec la
+> mention **« trop lourd »**, sans bouton « Charger » : préférez un `.docx`.
 
 ### Retrouver un texte déjà enregistré
 
@@ -869,9 +863,9 @@ celui dont le bouton est bleu.
 > **Conséquence : écrivez des phrases et des paragraphes courts**, et faites cet essai **la
 > veille**.
 
-> ⚠️ **PIÈGE — ne changez pas la taille en pleine prise.** Le texte ne repart pas du début, mais
-> comme les lignes changent de longueur, vous ne retombez pas sur la même phrase.
-> **Parade : réglez la taille et les marges AVANT le tournage, jamais pendant une prise.**
+> 💡 **Changer la taille pendant la lecture** garde la phrase lue sous la ligne rouge, mais
+> tout le texte se réorganise autour : **réglez-la plutôt avant le tournage, ou entre deux
+> prises.**
 
 ### Les couleurs
 
@@ -929,6 +923,8 @@ tablette de la régie, ou le petit écran du boîtier), pour que quelqu'un suive
 *Ce que vous devez voir : tout en haut, le mot **SPECTATEUR** en petit et les boutons
 **Settings · Spectateur · ⏻ Veille** ; en dessous, le texte qui défile en même temps que le vôtre.*
 
+**La vue Spectateur montre la même phrase que vous, même sur un écran d'une autre taille**
+(les lignes s'y coupent autrement : c'est la phrase qui est suivie, pas la position).
 **Plusieurs vues Spectateur peuvent être ouvertes en même temps, sans aucun risque** : elles ne
 font que regarder, elles ne pilotent rien et elles restent toujours à l'endroit, même si vous
 lisez en miroir. **Settings** et **Spectateur** passent de l'une à l'autre d'un seul appui :
@@ -1109,9 +1105,8 @@ toujours du tout début**.
 | **L'écran affiche « Aucun texte. »** | Trois cas. **Au premier allumage : c'est normal**, le boîtier fonctionne et attend votre texte. **Juste après un envoi** : la zone de saisie du téléphone était **vide** au moment de l'envoi — rechargez votre texte depuis « Mes textes enregistrés », ou recollez-le. **Après un import qui n'a rien rempli** : le document n'était pas lisible (typiquement un **PDF scanné**) — repartez du `.docx` ou copiez-collez. |
 | **Le texte est à l'envers, ou la tête en bas** | Onglet **Réglages**, carte **Affichage** : vérifiez **les DEUX interrupteurs**, « Miroir horizontal » et « Miroir vertical », et éteignez celui qui est allumé à tort. *(Si vous lisez dans une vitre sans tain, seul l'horizontal doit être allumé. Le miroir ne touche que la vue Journaliste : la vue Spectateur est toujours à l'endroit.)* |
 | **Le texte démarre trop bas sur l'écran** | C'est voulu : la première ligne est placée sous la ligne rouge, et le texte monte vers elle dès la première pression sur la pédale. |
-| **La clé USB n'est pas détectée, ou mon document n'apparaît pas dans la liste** | Retirez la clé, rebranchez-la **sur le boîtier**, attendez 5 secondes, réappuyez sur **« Clé USB »**. Si votre document n'est toujours pas listé, il est probablement **trop lourd** (plus de 5 Mo) : il est alors ignoré **sans aucun message**. Utilisez un `.docx` léger, posé **à la racine** d'une petite clé ordinaire. |
+| **La clé USB n'est pas détectée, ou mon document n'apparaît pas dans la liste** | Retirez la clé, rebranchez-la **sur le boîtier**, attendez 5 secondes, réappuyez sur **« Clé USB »**. Un document **marqué « trop lourd »** dépasse 5 Mo : utilisez un `.docx` léger. Sur une clé pleine de photos, posez vos documents **à la racine** d'une petite clé ordinaire. |
 | **Un import échoue, ou ne remplit rien** | Le document n'est pas lisible (PDF scanné, document protégé, fichier trop lourd) ; un format qui n'est pas un document texte, lui, est refusé avec un message. N'envoyez pas à l'écran : repartez du document Word d'origine, ou **copiez-collez le texte** dans la télécommande — cette voie marche toujours. |
-| **Le texte importé s'arrête au milieu** | Le fichier dépassait 5 Mo : il a été **coupé sans avertissement**. Après un import, descendez jusqu'à **la dernière ligne dans la zone de saisie** avant d'appuyer sur « Envoyer à l'écran », et repartez d'un `.docx` léger. |
 | **L'écran de la régie n'affiche pas le mot « SPECTATEUR » tout en haut** | Il a ouvert la vue Journaliste au lieu de la vue Spectateur. Refermez cette page et ouvrez `http://10.42.0.1:5000/spectateur`, ou le bouton **Spectateur** de la page Settings (chapitre 11). |
 | **Rien de tout cela ne marche** | **Éteignez** : débranchez l'alimentation du boîtier. Attendez **10 secondes**. **Rallumez** : écran d'abord, boîtier ensuite. Attendez **une minute complète** sans rien toucher. Si l'écran reste définitivement noir ou si le réseau « Prompteur » n'apparaît jamais : **passez à votre plan B** (votre texte imprimé en gros caractères, ou ouvert en très grand sur une tablette) pour que le tournage ait lieu quand même, **remplacez la carte mémoire par celle de secours** si l'installateur vous en a préparé une, et **appelez la personne qui a installé le boîtier** (coordonnées sur la fiche au dos). Ne démontez rien. |
 

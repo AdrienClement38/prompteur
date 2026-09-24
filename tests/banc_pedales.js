@@ -46,14 +46,31 @@ function banc(reglages, options = {}) {
   }
   const elements = {};
   const scroller = elt();
-  Object.defineProperty(scroller, "scrollHeight", { get: () => options.hauteur || 20000 });
+  const HAUT_ECRAN = options.hautEcran || 800;
+  // Hauteur d'une ligne : proportionnelle à la taille du texte, et à la largeur
+  // de l'écran (un écran plus étroit coupe les lignes plus souvent).
+  const hauteurLigne = () =>
+    (parseFloat(scroller.style.fontSize) || 64) * 1.5625 * (options.facteurLigne || 1);
+  const margeHaut = () => HAUT_ECRAN * 0.6; // paddingTop: 60vh
+  scroller.replaceChildren = (...c) => {
+    const lignes = c.length === 1 && c[0].childNodes ? c[0].childNodes : c;
+    lignes.forEach((ligne, i) => {
+      Object.defineProperty(ligne, "offsetTop", { get: () => margeHaut() + i * hauteurLigne() });
+      Object.defineProperty(ligne, "offsetHeight", { get: () => hauteurLigne() });
+    });
+    scroller.childNodes = lignes;
+  };
+  Object.defineProperty(scroller, "children", { get: () => scroller.childNodes });
+  Object.defineProperty(scroller, "scrollHeight", {
+    get: () => options.hauteur || margeHaut() + scroller.childNodes.length * hauteurLigne() + HAUT_ECRAN * 0.8,
+  });
   elements.scroller = scroller;
   const viewport = elt();
-  viewport.clientHeight = 800;
+  viewport.clientHeight = HAUT_ECRAN;
   elements.viewport = viewport;
 
   const document = {
-    currentScript: { dataset: { mode: "presenter" } },
+    currentScript: { dataset: { mode: options.spectateur ? "viewer" : "presenter" } },
     getElementById(id) { if (!elements[id]) elements[id] = elt(); return elements[id]; },
     createElement: () => elt(), createDocumentFragment: () => elt(), createTextNode: (t) => ({ t }),
     addEventListener() {}, fullscreenElement: null, hidden: false,
@@ -65,6 +82,11 @@ function banc(reglages, options = {}) {
     if (opts.method === "POST") envois.push([url, corps]);
     if (url.startsWith("/api/version")) return reponse({ version: etat.version, cmdSeq: etat.control.cmdSeq, veille: veille.on });
     if (url.startsWith("/api/state")) return reponse(JSON.parse(JSON.stringify(etat)));
+    if (url === "/api/scroll" && opts.method === "POST") {
+      etat.scroll = { ...corps, seq: (etat.scroll ? etat.scroll.seq : 0) + 1 };
+      return reponse({ ok: true });
+    }
+    if (url === "/api/scroll") return reponse(etat.scroll || { seq: 0, pos: 0, vel: 0 });
     if (url === "/api/settings") { Object.assign(etat.settings, corps); etat.version++; return reponse({ ok: true }); }
     if (url === "/api/command") {
       if (corps.cmd === "faster") { etat.settings.speed += 10; etat.version++; }
@@ -93,6 +115,7 @@ function banc(reglages, options = {}) {
   const api = {
     async demarrer() { for (let i = 0; i < 5; i++) await vider(); await api.sonder(); },
     async sonder() { await intervalles.find((f) => f.name === "pollState")(); for (let i = 0; i < 5; i++) await vider(); }, // pollState
+    async suivre() { await intervalles.find((f) => f.name === "pollScroll")(); for (let i = 0; i < 5; i++) await vider(); },
     avancer(ms) {
       const fin = maintenant + ms;
       while (maintenant < fin) {
@@ -111,6 +134,7 @@ function banc(reglages, options = {}) {
     pos: () => -parseFloat(String(scroller.style.transform || "translateY(0px)").replace("translateY(", "")),
     tag: () => elements.speedTag.textContent,
     lignes: () => scroller.childNodes,
+    hauteurLigne,
     etat, envois, veille,
   };
   return api;
@@ -222,6 +246,57 @@ async function appui(b, key, ms) {
     const ligne2 = b.lignes()[1];
     const gras = (ligne2.childNodes || []).find((n) => n.className === "mb");
     verifier("Gras juste après une ligne [centre]", gras && gras.textContent === "suite", gras && gras.textContent);
+  }
+
+  // --- Vue Spectateur sur un écran d'une autre taille -----------------------
+  // Elle doit montrer la MÊME ligne du texte sous sa ligne rouge, et non la même
+  // position en pixels, qui y désigne un autre passage.
+  {
+    const texte = "Ligne\n".repeat(400);
+    const meneur = banc({ mode: "hold", speed: 100 }, { texte });
+    await meneur.demarrer();
+    await meneur.commande("play");
+    meneur.avancer(4000); // quatre lignes environ
+    await meneur.commande("pause");
+    meneur.avancer(2100); // le meneur renvoie sa position à l'arrêt
+    const point = meneur.etat.scroll;
+    verifier("Le meneur envoie la ligne lue", point && Number.isInteger(point.ligne), JSON.stringify(point));
+
+    // Écran plus petit, lignes coupées autrement (plus hautes d'un tiers).
+    const spectateur = banc({ mode: "hold" }, { texte, spectateur: true, hautEcran: 480, facteurLigne: 4 / 3 });
+    spectateur.etat.scroll = point;
+    await spectateur.demarrer();
+    await spectateur.suivre();
+    spectateur.avancer(1500);
+    const hLigne = spectateur.hauteurLigne();
+    const lue = (spectateur.pos() + 480 * 0.42 - 480 * 0.6) / hLigne; // ligne sous le repère
+    const attendue = point.ligne + point.frac;
+    verifier(
+      "Spectateur d'une autre taille : même ligne sous le repère",
+      Math.abs(lue - attendue) < 0.02,
+      `ligne ${lue.toFixed(2)} pour ${attendue.toFixed(2)}`
+    );
+  }
+
+  // --- Changer la taille du texte en pleine lecture ----------------------------
+  {
+    const texte = "Ligne\n".repeat(400);
+    const b = banc({ mode: "hold", speed: 100, fontSize: 64 }, { texte });
+    await b.demarrer();
+    await b.commande("play");
+    b.avancer(5000);
+    await b.commande("pause");
+    const hAvant = b.hauteurLigne();
+    const ligneAvant = (b.pos() + 800 * 0.42 - 800 * 0.6) / hAvant;
+    b.etat.settings.fontSize = 128;
+    b.etat.version++;
+    await b.sonder();
+    const ligneApres = (b.pos() + 800 * 0.42 - 800 * 0.6) / b.hauteurLigne();
+    verifier(
+      "Taille changée en pleine lecture : même phrase sous le repère",
+      Math.abs(ligneApres - ligneAvant) < 0.01,
+      `ligne ${ligneAvant.toFixed(2)} -> ${ligneApres.toFixed(2)}`
+    );
   }
 
   // --- Sans commun.js, l'écran de lecture tourne quand même ---------------

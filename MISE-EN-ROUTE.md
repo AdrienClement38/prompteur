@@ -1224,14 +1224,9 @@ clavier, une souris, un écran, un câble Ethernet et Internet.
 
 ## Étape N — Mettre à jour ou réinstaller plus tard
 
-> **⚠️ LE PIÈGE DE LA MISE À JOUR — à lire avant tout.**
-> Si vous relancez le programme d'installation (`./install/setup.sh`) **sans
-> remettre votre mot de passe WiFi entre guillemets**, il en **fabrique un
-> nouveau au hasard** : l'ancien cesse de fonctionner, et le téléphone du
-> journaliste ne se connectera plus — panne incompréhensible, découverte le jour
-> du tournage suivant.
-> **Reprenez toujours EXACTEMENT le même mot de passe qu'à l'origine** (celui de
-> votre fiche). Cet avertissement vaut partout où cette ligne est relancée.
+> **ℹ️ Relancer le programme d'installation (`./install/setup.sh`) conserve le mot
+> de passe WiFi en place** : le cadre final l'indique (« conservé (inchangé) »). Pour
+> en changer, voir l'encadré en fin d'étape.
 
 **Deux cas, et un seul est fréquent.** Une simple mise à jour du logiciel
 (N1 à N5) suffit dans la quasi-totalité des cas ; le programme d'installation ne
@@ -1265,10 +1260,10 @@ sudo systemctl restart prompteur
 à jour s'arrête ici** : faites revenir l'écran en double-cliquant sur l'icône
 **« Le Prompteur »** du bureau, puis passez directement à N7.*
 
-- [ ] **N6.** **Seulement si on vous a demandé de relancer l'installation** (nouvelle dépendance, changement dans le démarrage automatique ou dans le WiFi) : tapez cette ligne, **avec le même mot de passe WiFi qu'à l'origine**, sans `sudo` :
+- [ ] **N6.** **Seulement si on vous a demandé de relancer l'installation** (nouvelle dépendance, changement dans le démarrage automatique ou dans le WiFi) : tapez cette ligne, sans `sudo` — le mot de passe WiFi est conservé :
 
 ```
-WIFI_PASS="votremotdepasse" ./install/setup.sh
+./install/setup.sh
 ```
 
 Puis, une fois le cadre **« Installation terminée »** affiché, redémarrez :

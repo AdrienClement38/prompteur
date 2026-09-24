@@ -47,8 +47,11 @@ Le boîtier démarre directement sur le prompteur, en plein écran. Pour taper d
 Cette commande rassemble tout ce qui est irremplaçable dans un seul fichier, daté du jour :
 
 ```bash
-cd ~/prompteur && tar czf ~/prompteur-sauvegarde-$(date +%F).tar.gz scripts state.json
+cd ~/prompteur && tar czf ~/prompteur-sauvegarde-$(date +%F).tar.gz --exclude='*.py' --exclude='*.sh' scripts state.json
 ```
+
+*(Les deux `--exclude` laissent de côté les outils du logiciel rangés dans le même dossier :
+restaurés par-dessus une version plus récente, ils bloqueraient la mise à jour suivante.)*
 
 **Ce que vous devez voir :** rien du tout. Aucune réponse = réussi.
 
@@ -149,10 +152,10 @@ La sauvegarde est un fichier `.tar.gz`. Sur un boîtier fraîchement réinstall�
 cp /media/$USER/NOM_DE_LA_CLE/prompteur-sauvegarde-*.tar.gz ~/
 ```
 
-- [ ] **3.** Remettez le contenu en place :
+- [ ] **3.** Remettez en place **la plus récente** des sauvegardes :
 
 ```bash
-cd ~/prompteur && tar xzf ~/prompteur-sauvegarde-*.tar.gz
+cd ~/prompteur && tar xzf "$(ls -t ~/prompteur-sauvegarde-*.tar.gz | head -1)" --exclude='*.py' --exclude='*.sh'
 ```
 
 - [ ] **4.** Redémarrez le logiciel pour qu'il relise l'état restauré :
@@ -207,7 +210,7 @@ fiche collée sur le boîtier reste valable — et à restaurer les textes (§ 4
 Le boîtier doit être connecté temporairement à Internet (câble Ethernet).
 
 ```bash
-cd ~/prompteur && git pull && sudo systemctl restart prompteur
+cd ~/prompteur && git pull && sudo reboot
 ```
 
 Les textes et les réglages **ne sont pas touchés** : `scripts/` et `state.json` sont exclus

@@ -22,8 +22,23 @@
 #      kiosk.sh --reveil          les rallume
 #      kiosk.sh --menu            ouvre la vue Settings sur le PETIT écran
 #      kiosk.sh --menu-stop       la ferme
+#      kiosk.sh --reprendre       rouvre la vue qu'un redémarrage du serveur a
+#                                 fermée (appelé par le serveur à son démarrage)
+#
+#  Utilisable aussi depuis une session SSH : l'écran du boîtier est désigné
+#  d'office, et le navigateur est détaché de la session, pour ne pas se fermer
+#  quand on se déconnecte.
 # =============================================================================
 set -u
+ARGS=("$@")
+
+# Lancé depuis SSH, aucun écran n'est désigné : celui du boîtier est « :0 ».
+if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+  export DISPLAY=:0
+  if [ -z "${XAUTHORITY:-}" ] && [ -f "$HOME/.Xauthority" ]; then
+    export XAUTHORITY="$HOME/.Xauthority"
+  fi
+fi
 
 PORT="${PROMPTEUR_PORT:-5000}"
 # Chemins VOLONTAIREMENT indépendants de l'environnement : le prompteur est lancé
@@ -170,12 +185,12 @@ while [ $# -gt 0 ]; do
       esac
       shift 2
       ;;
-    --restart | --stop | --status | --veille | --reveil | --menu | --menu-stop)
+    --restart | --stop | --status | --veille | --reveil | --menu | --menu-stop | --reprendre)
       ACTION="$1"
       shift
       ;;
     *)
-      echo "Usage : $(basename "$0") [--vue journaliste|settings] [--restart|--stop|--status|--veille|--reveil|--menu|--menu-stop]" >&2
+      echo "Usage : $(basename "$0") [--vue journaliste|settings] [--restart|--stop|--status|--veille|--reveil|--menu|--menu-stop|--reprendre]" >&2
       exit 2
       ;;
   esac
@@ -234,7 +249,29 @@ case "$ACTION" in
     echo "Prompteur fermé."
     exit 0
     ;;
+  --reprendre)
+    # Le navigateur a disparu SANS avoir été fermé volontairement : --stop
+    # efface le fichier de vue, un arrêt brutal (redémarrage du service, dont il
+    # était l'enfant) le laisse. On ne fait rien non plus tant que la session
+    # graphique n'est pas prête : au démarrage du boîtier, c'est le lancement
+    # automatique de la session qui s'en charge.
+    if kiosk_pid >/dev/null || [ ! -f "$VUEFILE" ]; then
+      exit 0
+    fi
+    if ! xset q >/dev/null 2>&1 && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+      exit 0
+    fi
+    VUE="$(kiosk_vue)"
+    ;;
 esac
+
+# Depuis SSH : on se détache de la session, sinon le navigateur se fermerait à
+# la déconnexion. La copie détachée refait exactement la même demande.
+if [ -n "${SSH_CONNECTION:-}" ] && [ -z "${PROMPTEUR_DETACHE:-}" ] && command -v setsid >/dev/null 2>&1; then
+  PROMPTEUR_DETACHE=1 setsid -f /bin/bash "$0" ${ARGS[@]+"${ARGS[@]}"} </dev/null >/dev/null 2>&1
+  echo "Prompteur relancé sur l'écran du boîtier."
+  exit 0
+fi
 
 # --- Lancement (avec ou sans --restart) --------------------------------------
 # Verrou : deux lancements simultanés (démarrage automatique inscrit à deux

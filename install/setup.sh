@@ -16,9 +16,27 @@ set -e
 
 # --- Paramètres (modifiables) ------------------------------------------------
 WIFI_SSID="Prompteur"
-# Mot de passe UNIQUE par appareil s'il n'est pas fourni (ex: WIFI_PASS=monsecret ./setup.sh).
-# On évite ainsi un secret par défaut partagé : le WPA2 est la seule barrière de l'API.
-WIFI_PASS="${WIFI_PASS:-$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 16)}"
+# Mot de passe du WiFi, dans cet ordre :
+#   1. celui qu'on impose (WIFI_PASS=monsecret ./install/setup.sh) ;
+#   2. sinon CELUI DÉJÀ EN PLACE sur le boîtier — relancer l'installation (mise à
+#      jour, réparation) ne doit jamais changer le mot de passe collé au dos ;
+#   3. sinon, première installation : un mot de passe UNIQUE, tiré au hasard. On
+#      évite ainsi un secret par défaut partagé : le WPA2 est la seule barrière de l'API.
+WIFI_PASS_SOURCE="imposé"
+if [ -z "${WIFI_PASS:-}" ] && command -v nmcli >/dev/null 2>&1; then
+  WIFI_PASS="$(sudo nmcli --escape no -s -g 802-11-wireless-security.psk connection show Prompteur 2>/dev/null || true)"
+  WIFI_PASS_SOURCE="conservé (inchangé)"
+fi
+if [ -z "${WIFI_PASS:-}" ]; then
+  WIFI_PASS="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 16)"
+  WIFI_PASS_SOURCE="NOUVEAU, tiré au hasard — À NOTER SUR LA FICHE"
+fi
+# WPA2 exige 8 à 63 caractères. Vérifié AVANT de toucher au réseau : nmcli
+# refuserait plus loin, et le boîtier resterait sans WiFi du tout.
+if [ "${#WIFI_PASS}" -lt 8 ] || [ "${#WIFI_PASS}" -gt 63 ]; then
+  echo "/!\\ Le mot de passe WiFi doit faire entre 8 et 63 caractères. Rien n'a été modifié." >&2
+  exit 1
+fi
 PORT="5000"
 # Nom du boitier sur le reseau local : « prompteur.local » depuis un PC relie
 # a la meme box. Modifiable : BOX_NAME=autre ./install/setup.sh
@@ -99,12 +117,21 @@ echo "    Serveur actif sur le port $PORT."
 echo "==> Configuration du WiFi du boîtier (point d'accès '$WIFI_SSID')…"
 # NetworkManager (Raspberry Pi OS Bookworm et +)
 if command -v nmcli >/dev/null 2>&1; then
-  sudo nmcli connection delete Prompteur 2>/dev/null || true
-  sudo nmcli connection add type wifi ifname wlan0 mode ap con-name Prompteur ssid "$WIFI_SSID"
-  sudo nmcli connection modify Prompteur 802-11-wireless.band bg 802-11-wireless.channel 6
-  sudo nmcli connection modify Prompteur wifi-sec.key-mgmt wpa-psk wifi-sec.psk "$WIFI_PASS"
-  sudo nmcli connection modify Prompteur ipv4.method shared ipv6.method disabled
-  sudo nmcli connection modify Prompteur connection.autoconnect yes
+  # Réglages appliqués EN UNE SEULE FOIS, sécurité comprise : l'ancienne méthode
+  # supprimait le réseau puis le recréait ouvert, sans mot de passe, le temps de
+  # quelques commandes. On modifie désormais le réseau existant en place.
+  WIFI_REGLAGES=(
+    802-11-wireless.ssid "$WIFI_SSID"
+    802-11-wireless.band bg 802-11-wireless.channel 6
+    wifi-sec.key-mgmt wpa-psk wifi-sec.psk "$WIFI_PASS"
+    ipv4.method shared ipv6.method disabled
+    connection.autoconnect yes
+  )
+  if nmcli -t -f NAME connection show 2>/dev/null | grep -qx Prompteur; then
+    sudo nmcli connection modify Prompteur "${WIFI_REGLAGES[@]}"
+  else
+    sudo nmcli connection add type wifi ifname wlan0 mode ap con-name Prompteur "${WIFI_REGLAGES[@]}"
+  fi
   sudo nmcli connection up Prompteur || true
   echo "    Réseau '$WIFI_SSID' créé. Le boîtier sera joignable sur http://10.42.0.1:$PORT"
 else
@@ -246,7 +273,7 @@ echo "============================================================"
 echo " Installation terminée."
 echo "  • Serveur     : http://localhost:$PORT/journaliste (écran)"
 echo "  • Téléphone   : connecte-toi au WiFi « $WIFI_SSID »"
-echo "                  (mot de passe : $WIFI_PASS)"
+echo "                  (mot de passe : $WIFI_PASS — $WIFI_PASS_SOURCE)"
 echo "                  puis ouvre http://10.42.0.1:$PORT"
 echo "  • Sur place   : ssh $RUN_USER@$BOX_NAME.local   (même box que le boîtier)"
 echo "                  ssh $RUN_USER@10.42.0.1       (via le WiFi du boîtier)"

@@ -267,7 +267,30 @@ def clean_text(s):
 # --------------------------------------------------------------------------
 # Décodage texte brut
 # --------------------------------------------------------------------------
+def _utf16_probable(data):
+    """Vrai pour un texte UTF-16 : « Unicode » dans le Bloc-notes de Windows.
+
+    Avec sa marque d'ordre des octets (BOM), c'est certain. Sans elle, un texte
+    UTF-16 en alphabet latin a un octet nul sur deux — ce qu'aucun texte en UTF-8
+    ou en Latin-1 ne contient jamais.
+    """
+    if data[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        return "utf-16"
+    if len(data) >= 4 and data.count(b"\x00") * 3 >= len(data):
+        return "utf-16-le" if data[1:2] == b"\x00" else "utf-16-be"
+    return None
+
+
 def _decode(data):
+    # UTF-16 d'abord : Latin-1 accepte TOUS les octets, et décodait donc sans erreur
+    # un texte « Unicode » en charabia parsemé de caractères nuls.
+    if isinstance(data, bytes):
+        utf16 = _utf16_probable(data)
+        if utf16:
+            try:
+                return data.decode(utf16).replace("\x00", "")
+            except UnicodeDecodeError:
+                pass
     for enc in ("utf-8", "utf-8-sig", "latin-1", "cp1252"):
         try:
             return data.decode(enc)
@@ -359,6 +382,8 @@ def _blocs(xml, re_ouvre, ferme, auto_fermant=True):
 # tombent exactement là où _para_body() reconnaît une balise, donc appliquer
 # _para_body() morceau par morceau donne la même chaîne qu'en une seule fois.
 _RE_JETON = re.compile(r"<[^>]+>|[^<]+|<", re.S)
+# « (?=[\s/>]) » : ne pas confondre <text:s/> avec <text:span>.
+_RE_ESPACE_ODT = re.compile(r'<text:s(?=[\s/>])[^>]*?(?:\btext:c="(\d+)")?[^>]*/?>')
 _VALEURS_OFF = ("0", "false", "off", "none")
 
 
@@ -367,6 +392,10 @@ def _para_body(p_xml):
     toutes les autres balises (mise en forme) retirées."""
     p_xml = re.sub(r"<w:br\b[^>]*/?>|<w:cr\b[^>]*/?>|<text:line-break\b[^>]*/?>", "\n", p_xml)
     p_xml = re.sub(r"<w:tab\b[^>]*/?>|<text:tab\b[^>]*/?>", " ", p_xml)
+    # LibreOffice écrit certaines espaces comme une BALISE : <text:s/>, ou
+    # <text:s text:c="3"/> pour trois d'affilée. Retirée comme les autres
+    # balises, elle collait les mots entre eux.
+    p_xml = _RE_ESPACE_ODT.sub(lambda m: " " * max(1, min(100, int(m.group(1) or 1))), p_xml)
     return html.unescape(re.sub(r"<[^>]+>", "", p_xml))
 
 
@@ -1036,6 +1065,7 @@ def _rtf_analyse(source):
     saut = None  # profondeur du groupe ignoré, le cas échéant
     uc = 1  # nombre de caractères de repli à sauter après un \u
     a_sauter = 0
+    haut = None  # première moitié d'un caractère hors BMP, en attente de la seconde
 
     bruts = []  # (texte, etat fige) du paragraphe courant
     paragraphes = []  # listes de bruts
@@ -1074,6 +1104,12 @@ def _rtf_analyse(source):
         if hexa:
             ajouter(bytes([int(hexa, 16)]).decode("cp1252", "replace"))
             continue
+        if echappe == "*":
+            # « {\\*\\motcle …} » : destination IGNORABLE. Un lecteur qui ne connaît
+            # pas le mot-clé doit sauter tout le groupe — c'est la règle du format.
+            # Sans cela, numérotation, champs et tables de Word fuyaient à l'écran.
+            saut = profondeur
+            continue
         if echappe:
             ajouter({"\\": "\\", "{": "{", "}": "}", "~": "\u00a0", "-": "", "_": "-"}.get(echappe, ""))
             continue
@@ -1089,7 +1125,17 @@ def _rtf_analyse(source):
             puce = True
             saut = profondeur
         elif mot == "u" and valeur is not None:
-            ajouter(chr(valeur if valeur >= 0 else valeur + 65536))
+            code = valeur % 65536
+            if 0xD800 <= code < 0xDC00:
+                # Première moitié d'un emoji : Word l'écrit en DEUX \\u. On attend
+                # la seconde pour les réunir, au lieu de les perdre toutes les deux.
+                haut = code
+            elif 0xDC00 <= code < 0xE000 and haut is not None:
+                ajouter(chr(0x10000 + ((haut - 0xD800) << 10) + (code - 0xDC00)))
+                haut = None
+            else:
+                haut = None
+                ajouter(chr(code))
             a_sauter = uc
         elif mot == "uc" and valeur is not None:
             uc = max(0, valeur)
@@ -1558,13 +1604,24 @@ def _from_doc(data):
         with tempfile.NamedTemporaryFile(suffix=".doc", delete=False) as tf:
             tf.write(data)
             tmp = tf.name
-        for tool in ("antiword", "catdoc"):
+        # Options explicites : sans elles, antiword coupe chaque paragraphe en
+        # lignes de 78 colonnes (des lignes hachées à l'écran), et écrit dans le
+        # jeu de caractères de la session — celle du service systemd n'en a pas,
+        # et les accents se perdaient.
+        outils = (
+            ("antiword", ["-w", "0", "-m", "UTF-8.txt"]),
+            ("catdoc", ["-w", "-d", "utf-8"]),
+        )
+        for tool, options in outils:
             try:
                 out = subprocess.run(  # nosec B603 - binaire fixe, sans shell, chemin contrôlé
-                    [tool, tmp], capture_output=True, timeout=20, check=False
+                    [tool, *options, tmp], capture_output=True, timeout=20, check=False
                 )
                 if out.returncode == 0 and out.stdout.strip():
-                    return out.stdout.decode("utf-8", "replace")
+                    try:
+                        return out.stdout.decode("utf-8")
+                    except UnicodeDecodeError:
+                        return out.stdout.decode("latin-1")
             except (FileNotFoundError, subprocess.SubprocessError):
                 continue
     finally:

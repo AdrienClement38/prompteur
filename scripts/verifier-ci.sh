@@ -43,9 +43,11 @@ etape "Node — vérification de syntaxe"
 node --check static/display.js
 node --check static/remote.js
 node --check static/commun.js
+node --check static/plages.js
 
-etape "Banc d'essai des pédales"
+etape "Bancs d'essai (pédales, suivi, frappe)"
 node tests/banc_pedales.js
+node tests/banc_plages.js
 
 etape "ESLint"
 npx --no-install eslint static

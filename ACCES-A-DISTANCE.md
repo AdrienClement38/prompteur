@@ -55,8 +55,8 @@ macOS et Linux** sans rien installer.
 
 > 🆘 **Si `prompteur.local` est introuvable**, c'est que le nom réseau n'est pas encore en
 > place — le boîtier n'a pas encore rejoué `setup.sh`. Utilisez alors le chemin n° 1, ou
-> l'adresse numérique : sur l'écran du prompteur, la touche **i** affiche l'adresse du
-> boîtier.
+> l'adresse numérique : sur l'écran du prompteur, la touche **i** affiche les adresses du
+> boîtier (ligne « Autres adresses du boîtier » pour celle de la box).
 
 ---
 
@@ -84,7 +84,7 @@ Pour en sortir : `exit`.
 
 | Ce que vous voulez | La ligne à taper |
 |---|---|
-| Installer une mise à jour | `cd ~/prompteur && git pull && sudo systemctl restart prompteur` |
+| Installer une mise à jour | `cd ~/prompteur && git pull && sudo reboot` |
 | Voir si le serveur tourne | `systemctl status prompteur` |
 | Lire les dernières erreurs | `journalctl -u prompteur -n 50 --no-pager` |
 | Retrouver le mot de passe WiFi | `sudo nmcli -s -g 802-11-wireless-security.psk connection show Prompteur` |
@@ -92,10 +92,12 @@ Pour en sortir : `exit`.
 | Redémarrer le boîtier | `sudo reboot` |
 
 > ⚠️ **Ce que SSH ne fait pas : voir l'écran.** Vous pilotez le système, pas l'affichage. Pour
-> relancer le prompteur à l'écran depuis SSH, il faut passer par son script :
+> relancer le prompteur sur l'écran du boîtier depuis SSH :
 > ```bash
 > ~/prompteur/install/kiosk.sh --restart
 > ```
+> **✅ Attendu :** « Prompteur relancé sur l'écran du boîtier. » Il y reste après votre
+> déconnexion.
 
 ---
 
