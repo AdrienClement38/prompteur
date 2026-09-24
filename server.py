@@ -3,13 +3,17 @@
 """
 Prompteur — serveur du boîtier téléprompteur (Raspberry Pi).
 
-Rôle :
-  * Sert l'affichage du téléprompteur  ->  /display  (écran meneur, mode kiosque)
-  * Sert l'affichage spectateur        ->  /view     (régie… suit le meneur en direct)
-  * Sert la télécommande / import       ->  /        (ton téléphone, via le WiFi du boîtier)
+Rôle — trois vues, nommées d'après la personne qui les regarde :
+  * Journaliste  ->  /journaliste  (écran meneur, piloté aux pédales, mode kiosque)
+  * Spectateur   ->  /spectateur   (régie… suit le meneur en direct, lecture seule)
+  * Settings     ->  /settings     (texte, réglages, commandes : téléphone, petit écran, PC)
+  (les anciennes adresses /, /display, /view et /menu redirigent vers celles-ci)
+
+Et aussi :
   * Stocke le texte courant + les réglages dans state.json
   * Importe du texte (.txt/.md/.doc/.docx/.odt/.rtf/.pdf) depuis un fichier ou une clé USB
   * Partage en temps réel la position de défilement (meneur -> écrans spectateurs)
+  * Commande le grand écran du boîtier (vue affichée, veille)
 
 Aucune connexion internet n'est nécessaire : tout est local au boîtier.
 
@@ -29,7 +33,6 @@ import copy
 import json
 import os
 import platform
-import re
 import socket
 import string
 import subprocess  # nosec B404 - script local du projet, arguments fixes, sans shell
@@ -38,7 +41,7 @@ import time
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, redirect, render_template, request
 
 import textextract
 
@@ -86,8 +89,9 @@ DEFAULT_STATE = {
         "fontSize": 64,  # taille du texte en px
         "lineHeight": 1.6,  # interligne
         "speed": 70,  # vitesse de lecture en px/seconde
-        "textColor": "#ffffff",
-        "bgColor": "#000000",
+        # Plus de couleur de texte ni de fond : c'est TOUJOURS blanc sur noir, et
+        # la couleur d'un passage se pose avec l'éditeur (plages « color »). Un
+        # state.json portant encore textColor/bgColor est nettoyé au chargement.
         "margin": 10,  # marge latérale en % de la largeur
         "mirrorH": False,  # miroir horizontal (vitre sans tain face caméra)
         "mirrorV": False,  # miroir vertical
@@ -113,12 +117,10 @@ DEFAULT_STATE = {
     },
 }
 
+
 # --------------------------------------------------------------------------
 # Validation des réglages (le serveur fait autorité — ne pas se fier au client)
 # --------------------------------------------------------------------------
-_HEX6 = re.compile(r"^#[0-9a-fA-F]{6}$")
-
-
 def _num(lo, hi):
     def check(v):
         # on rejette explicitement les booléens (isinstance(True, int) est vrai en Python)
@@ -133,8 +135,6 @@ SETTING_VALIDATORS = {
     "speed": _num(10, 600),
     "margin": _num(0, 45),
     "guidePos": _num(0, 100),
-    "textColor": lambda v: isinstance(v, str) and bool(_HEX6.match(v)),
-    "bgColor": lambda v: isinstance(v, str) and bool(_HEX6.match(v)),
     "mirrorH": lambda v: isinstance(v, bool),
     "mirrorV": lambda v: isinstance(v, bool),
     "guide": lambda v: isinstance(v, bool),
@@ -363,6 +363,11 @@ STATE = load_state()
 # lue par GET, sur /api/scroll.
 SCROLL = {"pos": 0.0, "vel": 0.0, "playing": False, "seq": 0}
 
+# Veille du système : tous les écrans passent au noir, le grand écran est éteint.
+# État TRANSITOIRE, jamais écrit sur la carte : un boîtier qu'on rallume doit
+# toujours se réveiller allumé, jamais noir sans raison apparente.
+VEILLE = {"on": False}
+
 
 # --------------------------------------------------------------------------
 # Détection des clés USB (import de texte hors-ligne)
@@ -485,34 +490,44 @@ def read_text_file(path):
 # --------------------------------------------------------------------------
 # Pages
 # --------------------------------------------------------------------------
-@app.route("/")
-def index():
-    """Télécommande + import (ouverte depuis le téléphone)."""
+@app.route("/settings")
+def settings_page():
+    """Settings : texte, réglages et commandes (téléphone, petit écran, PC de régie)."""
     return render_template("remote.html")
 
 
-@app.route("/menu")
-def menu():
-    """Tableau de bord du boîtier, taillé pour le petit écran tactile.
-
-    Ce n'est PAS la page de démarrage : brancher le boîtier doit continuer à
-    afficher le prompteur sans le moindre geste. Le menu s'ouvre en plus, sur le
-    second écran quand il y en a un, ou à la demande depuis n'importe quel
-    appareil.
-    """
-    return render_template("menu.html")
-
-
-@app.route("/display")
-def display():
-    """Écran MENEUR (boîtier, kiosque) : piloté aux pédales, diffuse sa position."""
+@app.route("/journaliste")
+def journaliste():
+    """Vue JOURNALISTE (grand écran, kiosque) : pilotée aux pédales, diffuse sa position."""
     return render_template("display.html", mode="presenter")
 
 
-@app.route("/view")
-def view():
-    """Écran SPECTATEUR (régie…) : suit le meneur en temps réel, en lecture seule."""
+@app.route("/spectateur")
+def spectateur():
+    """Vue SPECTATEUR (régie…) : suit le journaliste en temps réel, en lecture seule."""
     return render_template("display.html", mode="viewer")
+
+
+# Anciennes adresses : elles restent valables. Un favori, une adresse notée sur
+# une fiche, ou un kiosque lancé avant la mise à jour ne doivent jamais tomber
+# sur une erreur. Redirection TEMPORAIRE (302) : un navigateur ne la mémorise
+# pas, on reste libre de changer d'avis. La chaîne de requête suit.
+ANCIENNES_ADRESSES = {
+    "/": "/settings",
+    "/menu": "/settings",  # l'ancien « tableau de bord », remplacé par Settings
+    "/display": "/journaliste",
+    "/view": "/spectateur",
+}
+
+
+def _ancienne_adresse():
+    cible = ANCIENNES_ADRESSES[request.path]
+    requete = request.query_string.decode("utf-8", "replace")
+    return redirect(cible + ("?" + requete if requete else ""), code=302)
+
+
+for _chemin in ANCIENNES_ADRESSES:
+    app.add_url_rule(_chemin, "ancienne" + _chemin.replace("/", "_"), _ancienne_adresse)
 
 
 # --------------------------------------------------------------------------
@@ -541,6 +556,7 @@ def api_version():
                 "version": STATE["version"],
                 "cmdSeq": STATE["control"]["cmdSeq"],
                 "libSeq": LIBRARY["seq"],
+                "veille": VEILLE["on"],
             }
         )
 
@@ -640,7 +656,11 @@ def api_command():
         # sur Lecture ou Pause — plusieurs mégaoctets sur le WiFi du boîtier, pour
         # rien, au moment précis où l'on a besoin de réactivité.
         if cmd in ("faster", "slower"):
-            bump(STATE)  # en mémoire seulement, pas d'écriture disque
+            # La vitesse est un réglage comme les autres : elle doit survivre à
+            # l'extinction, comme celle posée au curseur ou au pied. Un appui
+            # de temps en temps, ce n'est pas ce qui use une carte mémoire.
+            bump(STATE)
+            _save_state_unlocked(STATE)
         seq = STATE["control"]["cmdSeq"]
         speed = STATE["settings"]["speed"]
     return jsonify({"ok": True, "cmdSeq": seq, "speed": speed})
@@ -945,7 +965,33 @@ PRESENTER_TTL = 12.0  # secondes sans battement avant de considérer la place li
 # token/password/secret comme un mot de passe en dur, et il sort en erreur des la
 # moindre alerte, meme de severite faible. Renommer supprime le faux positif a la
 # source, ce qui vaut mieux que de museler le controle.
-_presenter = {"holder": None, "seen": 0.0}
+_presenter = {"holder": None, "seen": 0.0, "kiosk": False}
+
+
+def _depuis_le_boitier():
+    """Vrai si la requête vient du boîtier lui-même (kiosque, petit écran)."""
+    return request.remote_addr in ("127.0.0.1", "::1")
+
+
+def _prendre_la_place(token):
+    """Donne la place de meneur à ce jeton. Verrou requis.
+
+    On retient si le meneur est le kiosque du boîtier : c'est le seul que le
+    serveur ferme lui-même (changement de vue du grand écran), et il doit alors
+    rendre la place aussitôt. Sinon le kiosque relancé trouverait la place prise
+    par son propre fantôme, et afficherait « écran déjà en cours » à sa place.
+    """
+    _presenter["holder"] = token
+    _presenter["seen"] = time.monotonic()
+    _presenter["kiosk"] = _depuis_le_boitier()
+
+
+def _liberer_la_place_du_kiosque():
+    """Rend la place si c'est le kiosque qui la tient. Verrou requis."""
+    if _presenter["kiosk"]:
+        _presenter["holder"] = None
+        _presenter["seen"] = 0.0
+        _presenter["kiosk"] = False
 
 
 def _presenter_holder():
@@ -977,10 +1023,15 @@ def api_presenter_claim():
     force = bool(data.get("force"))
     with _lock:
         holder = _presenter_holder()
-        if holder and holder != token and not force:
+        # Le boîtier n'a qu'un kiosque : quand la place est tenue depuis le
+        # boîtier et qu'une demande arrive du boîtier, c'est le kiosque relancé
+        # qui remplace son ancien navigateur, pas un second meneur. Sans cette
+        # règle, l'ancienne page, pas encore tout à fait fermée, pouvait reprendre
+        # la place au dernier battement et la garder 12 secondes.
+        remplace_son_fantome = _presenter["kiosk"] and _depuis_le_boitier()
+        if holder and holder != token and not force and not remplace_son_fantome:
             return jsonify({"ok": False, "taken": True}), 409
-        _presenter["holder"] = token
-        _presenter["seen"] = time.monotonic()
+        _prendre_la_place(token)
     return jsonify({"ok": True, "taken": False, "mine": True})
 
 
@@ -995,10 +1046,10 @@ def api_presenter_ping():
         if holder and holder == token:
             _presenter["seen"] = time.monotonic()
             return jsonify({"ok": True})
-        if holder is None:
-            # Place libérée entre-temps : on la reprend sans discuter.
-            _presenter["holder"] = token
-            _presenter["seen"] = time.monotonic()
+        if holder is None and token:
+            # Place libérée entre-temps : on la reprend sans discuter. L'écran
+            # apprend ainsi qu'il pilote de nouveau et retire son voile.
+            _prendre_la_place(token)
             return jsonify({"ok": True})
     return jsonify({"ok": False, "taken": True})
 
@@ -1011,16 +1062,16 @@ def api_presenter_release():
         if _presenter["holder"] == token:
             _presenter["holder"] = None
             _presenter["seen"] = 0.0
+            _presenter["kiosk"] = False
     return jsonify({"ok": True})
 
 
 # --------------------------------------------------------------------------
-# API — ouverture et fermeture de l'écran du prompteur
+# API — ce que montre le grand écran du boîtier (section « Vue du journaliste »)
 # --------------------------------------------------------------------------
-# Le prompteur devient une application qu'on ouvre et qu'on ferme, au lieu d'un
-# mode dans lequel la machine démarre : plus besoin de « sudo reboot » pour y
-# revenir. install/kiosk.sh reste la source unique (démarrage automatique, icône
-# de bureau, et ces routes).
+# Trois choix : la vue Journaliste (le prompteur), la vue Settings, ou le bureau
+# (navigateur fermé). install/kiosk.sh reste la source unique (démarrage
+# automatique, icône de bureau, et ces routes).
 #
 # AUCUN privilège n'est nécessaire : le serveur et le navigateur du kiosque
 # tournent sous le même utilisateur. Rien à voir avec l'extinction de la machine,
@@ -1029,9 +1080,9 @@ def api_presenter_release():
 # Joignables depuis TOUS les appareils du WiFi du boîtier, téléphone compris :
 # c'est le choix assumé, pour pouvoir refermer ou relancer l'écran sans avoir à
 # aller toucher le boîtier. Les garde-fous restent le pare-feu (port limité au
-# wlan0) et la protection anti-CSRF ci-dessus. Côté interface, la barre est
-# repliée par défaut et « Fermer » demande confirmation : depuis un téléphone, un
-# appui involontaire couperait l'écran en pleine prise.
+# wlan0) et la protection anti-CSRF ci-dessus. Côté interface, quitter la vue
+# Journaliste demande confirmation : depuis un téléphone, un appui involontaire
+# couperait l'écran en pleine prise.
 
 
 def _kiosk_env():
@@ -1063,9 +1114,12 @@ def _kiosk_env():
 
 
 def _kiosk(*args):
-    """Appelle install/kiosk.sh. Renvoie (ok, code de retour)."""
+    """Appelle install/kiosk.sh. Renvoie (ok, code de retour, sortie).
+
+    ok est faux quand le script n'a pas pu être exécuté du tout (poste de
+    développement, bash absent) : l'état est alors inconnu, pas « arrêté »."""
     if not KIOSK_SCRIPT.exists():
-        return False, None
+        return False, None, ""
     env = _kiosk_env()
     try:
         proc = subprocess.run(  # nosec B603 - chemin fixe du projet, pas de shell
@@ -1075,12 +1129,12 @@ def _kiosk(*args):
             timeout=20,
             check=False,
         )
-        return True, proc.returncode
+        return True, proc.returncode, proc.stdout.decode("utf-8", "replace")
     except (OSError, subprocess.SubprocessError):
-        return False, None
+        return False, None, ""
 
 
-def _kiosk_launch():
+def _kiosk_launch(vue):
     """Lance le prompteur sans attendre : le script patiente jusqu'à ce que le
     serveur réponde, ce qui bloquerait la requête en cours."""
     if not KIOSK_SCRIPT.exists():
@@ -1088,7 +1142,7 @@ def _kiosk_launch():
     env = _kiosk_env()
     try:
         subprocess.Popen(  # nosec B603 - chemin fixe du projet, pas de shell
-            ["/bin/bash", str(KIOSK_SCRIPT)],
+            ["/bin/bash", str(KIOSK_SCRIPT), "--vue", vue],
             env=env,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -1099,32 +1153,100 @@ def _kiosk_launch():
         return False
 
 
+# Ce que le grand écran peut montrer. « bureau » n'est pas une page : c'est le
+# navigateur fermé, donc le bureau du Raspberry.
+VUES_GRAND_ECRAN = ("journaliste", "settings")
+
+
+def _etat_grand_ecran():
+    """(affiché ?, vue) — affiché vaut None quand l'état n'a pas pu être lu."""
+    ok, code, sortie = _kiosk("--status")
+    if not ok:
+        return None, None
+    if code != 0:
+        return False, None
+    mots = sortie.split()
+    vue = mots[1] if len(mots) > 1 and mots[1] in VUES_GRAND_ECRAN else "journaliste"
+    return True, vue
+
+
 @app.route("/api/kiosk")
 def api_kiosk():
-    """État de l'écran du prompteur. « available » dit à la télécommande s'il
-    faut afficher les boutons : inutile de les montrer sur un téléphone."""
+    """Ce que montre le grand écran du boîtier : la vue Journaliste, la vue
+    Settings, ou le bureau (navigateur fermé)."""
     if not KIOSK_SCRIPT.exists():
         return jsonify({"available": False})
-    ok, code = _kiosk("--status")
+    affiche, vue = _etat_grand_ecran()
     # running = None quand l'etat n'a PAS pu etre determine (script non executable
-    # ici, poste de developpement...). On affiche quand meme la barre : cacher la
+    # ici, poste de developpement...). On affiche quand meme la section : cacher la
     # fonction en silence ferait disparaitre un bouton cense exister, sans indice.
-    return jsonify({"available": True, "running": (code == 0) if ok else None})
+    return jsonify({"available": True, "running": affiche, "vue": vue})
+
+
+# Un seul changement de vue à la fois : deux appuis rapprochés (ou deux appareils)
+# lanceraient sinon deux navigateurs l'un par-dessus l'autre.
+_kiosk_lock = threading.Lock()
 
 
 @app.route("/api/kiosk/close", methods=["POST"])
 def api_kiosk_close():
-    ok, _ = _kiosk("--stop")
-    if not ok:
-        return jsonify({"ok": False, "error": "script du kiosque introuvable"}), 500
+    with _kiosk_lock:
+        ok, _, _ = _kiosk("--stop")
+        if not ok:
+            return jsonify({"ok": False, "error": "script du kiosque introuvable"}), 500
+        with _lock:
+            _liberer_la_place_du_kiosque()
     return jsonify({"ok": True, "running": False})
 
 
 @app.route("/api/kiosk/launch", methods=["POST"])
 def api_kiosk_launch():
-    if not _kiosk_launch():
-        return jsonify({"ok": False, "error": "script du kiosque introuvable"}), 500
-    return jsonify({"ok": True})
+    data = request.get_json(silent=True) or {}
+    vue = data.get("vue", "journaliste")
+    if vue not in VUES_GRAND_ECRAN:
+        return jsonify({"ok": False, "error": "vue inconnue"}), 400
+    with _kiosk_lock:
+        affiche, vue_actuelle = _etat_grand_ecran()
+        if affiche and vue_actuelle == vue:
+            return jsonify({"ok": True, "vue": vue})  # déjà affichée : rien à faire
+        # Le navigateur du kiosque va être fermé (ou l'était déjà) : sa place de
+        # meneur doit être rendue tout de suite, sans attendre qu'elle expire.
+        with _lock:
+            _liberer_la_place_du_kiosque()
+        if not _kiosk_launch(vue):
+            return jsonify({"ok": False, "error": "script du kiosque introuvable"}), 500
+    return jsonify({"ok": True, "vue": vue})
+
+
+# --------------------------------------------------------------------------
+# API — veille du système
+# --------------------------------------------------------------------------
+# Veille = le grand écran s'éteint (plus de signal HDMI : le moniteur se met en
+# veille de lui-même), le petit écran aussi, et toutes les pages affichent un
+# fond noir avec un bouton « Rallumer ». Le texte, la position et les réglages
+# ne bougent pas.
+#
+# L'extinction réelle passe par install/kiosk.sh (--veille / --reveil). Si elle
+# échoue — poste de développement, session graphique inattendue —, les pages
+# restent noires : la veille marche quand même, l'écran reste simplement allumé.
+# La réponse le dit, pour que cela ne passe pas inaperçu.
+_veille_lock = threading.Lock()
+
+
+@app.route("/api/veille", methods=["POST"])
+def api_veille():
+    data = request.get_json(silent=True) or {}
+    on = data.get("on")
+    if not isinstance(on, bool):
+        return jsonify({"ok": False, "error": "on doit valoir true ou false"}), 400
+    # Sérialisé : une mise en veille et un réveil croisés pourraient sinon
+    # éteindre l'écran APRÈS le réveil, et le laisser noir alors que tout
+    # annonce un système allumé.
+    with _veille_lock:
+        with _lock:
+            VEILLE["on"] = on
+        ok, code, _ = _kiosk("--veille" if on else "--reveil")
+    return jsonify({"ok": True, "veille": on, "ecran": bool(ok and code == 0)})
 
 
 @app.route("/api/info")
@@ -1153,30 +1275,45 @@ def security_headers(resp):
     return resp
 
 
+# Un manifeste par vue : c'est lui qui décide de la page qu'ouvre le raccourci
+# posé sur l'écran d'accueil. Avec un seul manifeste, le raccourci de la page
+# Settings du téléphone ouvrait la vue Journaliste — et tombait sur « déjà
+# ouverte ailleurs », puisque c'est le boîtier qui la tient.
+#          nom complet, nom court, affichage, orientation
+MANIFESTES = {
+    "journaliste": ("Le Prompteur", "Prompteur", "fullscreen", "landscape"),
+    "spectateur": ("Prompteur — Spectateur", "Spectateur", "fullscreen", "landscape"),
+    "settings": ("Prompteur — Settings", "Settings", "standalone", "any"),
+}
+
+
 @app.route("/manifest.webmanifest")
 def api_manifest():
-    """Manifeste d'application web.
+    """Manifeste d'application web de la vue demandée (?vue=…, Journaliste par défaut).
 
-    C'est le SEUL moyen, sur un appareil quelconque, d'obtenir un écran de lecture
-    sans barre d'adresse ni onglets : une fois la page « installée »
-    (« Installer l'application » sur ordinateur, « Ajouter à l'écran d'accueil »
-    sur téléphone ou tablette), le navigateur l'ouvre en plein écran, sans le
-    moindre mobilier. Sur le boîtier la question ne se pose pas : le kiosque
-    Chromium tourne déjà ainsi.
+    C'est le SEUL moyen, sur un appareil quelconque, d'obtenir un écran sans barre
+    d'adresse ni onglets : une fois la page « installée » (« Installer
+    l'application » sur ordinateur, « Ajouter à l'écran d'accueil » sur téléphone
+    ou tablette), le navigateur l'ouvre sans le moindre mobilier. Sur le boîtier la
+    question ne se pose pas : le kiosque Chromium tourne déjà ainsi.
 
-    display=fullscreen : pas de barre, pas de bouton retour. On en sort par Échap,
-    comme annoncé dans le bandeau d'aide de l'écran.
+    Journaliste et Spectateur : display=fullscreen, on en sort par Échap. Settings :
+    standalone, la barre d'état du téléphone reste visible.
     """
+    vue = request.args.get("vue", "journaliste")
+    if vue not in MANIFESTES:
+        vue = "journaliste"
+    nom, court, affichage, orientation = MANIFESTES[vue]
     return jsonify(
         {
-            "name": "Le Prompteur",
-            "short_name": "Prompteur",
+            "name": nom,
+            "short_name": court,
             "description": "Téléprompteur à pédales du boîtier, hors-ligne.",
-            "start_url": "/display",
+            "start_url": "/" + vue,
             "scope": "/",
-            "display": "fullscreen",
-            "display_override": ["fullscreen", "standalone"],
-            "orientation": "landscape",
+            "display": affichage,
+            "display_override": [affichage, "standalone"],
+            "orientation": orientation,
             "background_color": "#000000",
             "theme_color": "#000000",
             "lang": "fr",

@@ -50,29 +50,29 @@ support, ~50 à 150 € (voir § 10).
 
 ## 2. Les touches de l'écran de lecture
 
-**Sur l'écran principal, les touches suivantes répondent :**
+**Sur la vue Journaliste (l'écran de lecture), les touches suivantes répondent :**
 
 | Touche | Effet |
 |---|---|
 | **Flèche bas** = pédale droite | avancer |
 | **Flèche haut** = pédale gauche | reculer |
 | **Flèche droite** = pédale centrale | lecture / pause *(mode Dynamique uniquement)* |
-| **Espace** | lance ou arrête le défilement tout seul, à la vitesse réglée, sans toucher aux pédales *(mode Maintien uniquement)* |
-| **+ / −** | plus vite / moins vite |
-| **R** | retour au début |
+| **Espace** | lecture / pause, dans les trois modes, sans toucher aux pédales |
+| **+ / −** | plus vite / moins vite (enregistré, comme sur le téléphone) |
+| **R** | retour au début, à l'arrêt |
 | **M** | miroir |
 | **H** | masquer ou réafficher le bandeau d'aide |
-| **i** | affiche les adresses des deux écrans de lecture (§ 9) |
+| **i** | affiche les adresses des vues Journaliste et Spectateur (§ 9) |
 | **F** | plein écran |
-| **Échap** | revenir à la page d'accueil (avec confirmation) |
+| **Échap** | quitter la vue Journaliste (avec confirmation) |
 
 - L'effet exact des flèches dépend du **mode de pédalier** choisi (§ 6) ; à la
   livraison, c'est le mode **Maintien**.
-- **+ / −** et **M** n'agissent que sur l'écran où l'on appuie et **ne sont pas
-  enregistrés** : le prochain réglage envoyé depuis le téléphone les annulera.
-  Pour un réglage durable, passez par le téléphone (§ 7).
-- **Sur l'écran secondaire, seule F (plein écran) répond** : cet écran ne se
-  pilote pas, il suit. Pour le fermer, fermez simplement sa fenêtre.
+- **M** n'agit que sur l'écran où l'on appuie et **n'est pas enregistré** : le
+  prochain réglage envoyé depuis le téléphone l'annulera. Pour un miroir durable,
+  passez par le téléphone (§ 7).
+- **Sur la vue Spectateur, seule F (plein écran) répond** : elle ne se pilote pas,
+  elle suit. Pour la fermer, fermez simplement sa fenêtre.
 
 ### Essai sur un ordinateur (réservé à un technicien)
 
@@ -91,17 +91,17 @@ vérifier qu'il fonctionne. **Python 3** doit y être installé.
    type `Serving on http://0.0.0.0:5000`. **Laissez cette fenêtre ouverte** :
    c'est le serveur, il s'arrête si vous la fermez. Pour l'arrêter volontairement,
    revenez-y et faites **Ctrl + C**.
-2. Dans un navigateur, ouvrez **http://localhost:5000**. C'est la **page
-   d'accueil** : elle sert de télécommande et propose en haut deux gros boutons,
-   **« Écran principal »** et **« Écran secondaire »**.
-3. Cliquez sur **« Écran principal »**. *Ce que vous devez voir* : une fenêtre
-   noire s'ouvre en plein écran et recouvre tout l'ordinateur. Tant que rien n'a
-   été envoyé, elle affiche « Aucun texte. Envoie ton texte depuis le téléphone
+2. Dans un navigateur, ouvrez **http://localhost:5000**. C'est la vue
+   **Settings** : en haut, le mot SETTINGS et les boutons Settings · Spectateur ·
+   ⏻ Veille ; dessous, la section « Vue du journaliste » (état inconnu sur un
+   ordinateur : c'est normal) et les onglets Texte / Contrôle / Réglages.
+3. Ouvrez **http://localhost:5000/journaliste** dans une seconde fenêtre.
+   *Ce que vous devez voir* : l'écran de lecture, noir. Tant que rien n'a été
+   envoyé, il affiche « Aucun texte. Envoie ton texte depuis le téléphone
    (WiFi « Prompteur ») ou par clé USB. » — c'est normal, et ce WiFi n'existe pas
    sur un ordinateur d'essai.
-4. **Pour sortir de cette fenêtre : Échap, puis Échap une seconde fois** pour
-   confirmer. Vous revenez à la page d'accueil. En gardant les deux côte à côte,
-   ce que vous envoyez depuis l'accueil apparaît aussitôt sur l'écran.
+4. En gardant les deux fenêtres côte à côte, ce que vous envoyez depuis Settings
+   apparaît aussitôt sur la vue Journaliste. **Échap, puis Échap** la quitte.
 
 ---
 
@@ -162,7 +162,7 @@ vérifier qu'il fonctionne. **Python 3** doit y être installé.
    ```
    ============================================================
     Installation terminée.
-     • Serveur     : http://localhost:5000/display (écran)
+     • Serveur     : http://localhost:5000/journaliste (écran)
      • Téléphone   : connecte-toi au WiFi « Prompteur »
                      (mot de passe : ...)
    ```
@@ -192,75 +192,81 @@ Brancher le boîtier suffit toujours à afficher le texte : le démarrage
 automatique est conservé. Mais l'écran de lecture n'est plus une impasse — on en
 sort et on y revient sans redémarrer la machine.
 
-### La page d'accueil
+### Trois vues, nommées d'après celui qui les regarde
 
-C'est ce que l'on ouvre sur le téléphone ou sur un ordinateur :
-**http://10.42.0.1:5000**. Elle sert de télécommande (onglets **Texte**,
-**Contrôle**, **Réglages**) et propose en haut **deux boutons** :
+| Vue | Adresse | Pour qui, pour quoi |
+|---|---|---|
+| **Settings** | `http://10.42.0.1:5000/settings` | Le téléphone, le petit écran du boîtier, le PC de la régie : texte, import, réglages, commandes, veille, et ce qu'affiche le grand écran |
+| **Journaliste** | `http://10.42.0.1:5000/journaliste` | Le grand écran, piloté aux pédales. Le boîtier l'affiche tout seul à l'allumage. **Une seule à la fois** |
+| **Spectateur** | `http://10.42.0.1:5000/spectateur` | Le retour de la régie : suit la vue Journaliste en direct, en lecture seule (§ 8) |
 
-- **« Écran principal »** — *celui qu'on pilote aux pédales*. Sur un ordinateur, il
-  s'ouvre **dans sa propre fenêtre**, sans barre d'adresse ni onglets ; sur un
-  téléphone, c'est un onglet ordinaire.
-- **« Écran secondaire »** — *régie, retour plateau, en lecture seule* (§ 8).
+Les anciennes adresses (`/`, `/display`, `/view`, `/menu`) restent valables : elles
+redirigent vers les nouvelles. `http://10.42.0.1:5000` tout court ouvre donc Settings.
 
-### Un seul écran principal à la fois
+En haut de **Settings** et de **Spectateur**, en permanence : le nom de la vue en petit,
+puis **Settings · Spectateur · ⏻ Veille**. On passe de l'une à l'autre d'un appui. Les
+explications ne sont plus affichées en permanence : chaque bloc a son bouton **Info**.
 
-Le bouton **« Écran principal »** se grise et annonce **« déjà utilisé par un autre
-appareil »** dès qu'un écran principal est ouvert **quelque part** — y compris
-celui que vous venez d'ouvrir depuis cet appareil et qui est resté dans une autre
-fenêtre.
+### Une seule vue Journaliste à la fois
 
-**En fonctionnement normal, c'est l'écran du boîtier qui occupe la place : le
-bouton grisé sur le téléphone est le signe que tout va bien.**
+Deux vues Journaliste pousseraient chacune leur position de défilement, et le texte
+sauterait en pleine lecture. Une seconde vue Journaliste ouverte ailleurs affiche donc
+**« La vue Journaliste est déjà ouverte ailleurs. »** et propose **« Ouvrir la vue
+Spectateur »** ou **« Prendre la main quand même »**. Ne prenez la main que si
+l'appareil qui lit est réellement inaccessible : l'écran du boîtier cesserait de piloter.
 
-On peut malgré tout passer outre : l'écran affiche alors **« Un autre écran
-principal est déjà en cours. »** et propose **« Ouvrir en écran secondaire »** ou
-**« Prendre la main quand même »**. Ne prenez la main que si l'appareil qui lit est
-réellement inaccessible : l'écran du boîtier cesserait de piloter.
-
-Si quelqu'un prend la main, l'écran qui pilotait affiche **« Un autre appareil a
-pris la main. »** Le texte reste affiché, mais les pédales de cet écran ne font
-plus rien.
+Si quelqu'un prend la main, l'écran qui pilotait affiche **« Un autre appareil a pris
+la main. »** Le texte reste affiché, mais ses pédales ne font plus rien.
 
 Si l'appareil qui tenait la place disparaît (fenêtre fermée, WiFi coupé, boîtier
 redémarré), la place **se libère seule** au bout d'**une douzaine de secondes
-(12 s)**.
+(12 s)**, et l'écran qui attendait **la reprend tout seul** : son voile disparaît.
 
-### Revenir à l'accueil : la touche Échap
+### Quitter la vue Journaliste : la touche Échap
 
-Depuis l'écran principal, **Échap** demande **« Revenir à la page d'accueil ? »**.
-**Échap** une seconde fois confirme ; **n'importe quelle autre touche** annule et
-l'on reste en lecture.
+**Échap** demande **« Quitter la vue Journaliste ? »**. **Échap** une seconde fois
+confirme ; **n'importe quelle autre touche** annule et l'on reste en lecture.
+
+- **Sur le boîtier**, le grand écran passe sur la vue **Settings** ; « Vue du
+  journaliste » → **Journaliste** y remet le texte.
+- Une vue Journaliste ouverte **depuis Settings** (bouton de l'Info « Vue du
+  journaliste ») referme simplement sa fenêtre : Settings est déjà derrière.
 
 **Le texte, le titre et les réglages sont conservés ; la lecture, elle, repart du
-début du texte.**
+début du texte.** **Échap refuse de partir tant que le bandeau rouge « Liaison avec le
+boîtier perdue » est affiché**, et l'explique (« Impossible de quitter la vue
+Journaliste. ») : sans serveur, la page suivante serait une impasse.
 
-Sur **l'écran du boîtier** — celui qui s'ouvre tout seul, sans barre d'adresse ni
-fenêtre parente — **Échap refuse de partir tant que le bandeau rouge « Liaison avec
-le boîtier perdue » est affiché**, et l'explique (« Impossible de revenir à
-l'accueil. »). Un écran principal ouvert depuis la page d'accueil, lui, referme
-simplement sa fenêtre : l'accueil est déjà derrière.
+### Vue du journaliste : ce que montre le grand écran
 
-### Afficher ou fermer l'écran du boîtier
+En haut de Settings, **sur n'importe quel appareil connecté au WiFi du boîtier —
+téléphone compris**, la section **« Vue du journaliste »** a trois boutons. Le bleu
+est ce que montre le grand écran ; l'état se relit tout seul toutes les 3 secondes.
 
-Sur le boîtier lui-même, l'icône **« Le Prompteur »** (sur le bureau et dans le
-menu des applications) relance l'écran après l'avoir fermé.
+| Bouton | Le grand écran affiche |
+|---|---|
+| **Journaliste** | le prompteur (ce qu'il affiche au démarrage) |
+| **Settings** | la vue Settings, en grand |
+| **Bureau** | le bureau du Raspberry : le navigateur est fermé |
 
-Depuis la page d'accueil, **sur n'importe quel appareil connecté au WiFi du boîtier
-— téléphone compris**, la barre **« Écran du boîtier »** fait la même chose à
-distance. Elle est **repliée par défaut** : appuyez sur son titre pour l'ouvrir.
-*Ce que vous devez voir à l'intérieur* :
+**Quitter Journaliste demande d'abord confirmation.** Ces boutons agissent toujours sur
+**le grand écran du boîtier**, jamais sur l'appareil depuis lequel on les touche. Sur le
+boîtier lui-même, l'icône **« Le Prompteur »** (bureau et menu des applications)
+relance aussi la vue Journaliste.
 
-- une ligne d'état : **« Le prompteur est affiché sur l'écran du boîtier. »** ou
-  **« Le prompteur est fermé : l'écran du boîtier montre le bureau. »** ;
-- trois boutons : **« Afficher sur le boîtier »**, **« Fermer sur le boîtier »**,
-  **« Actualiser l'état »** — des deux premiers, celui qui n'a rien à faire est
-  grisé.
+### Veille
 
-**« Fermer sur le boîtier » demande d'abord confirmation** : « Fermer le prompteur
-sur l'écran du boîtier et revenir à son bureau ? ». Ces boutons agissent toujours
-sur **l'écran du boîtier**, jamais sur l'appareil depuis lequel on les touche. Le
-texte et les réglages ne sont pas perdus ; la lecture repart du début.
+**⏻ Veille** (Settings et Spectateur) demande confirmation, puis :
+
+- le **grand écran s'éteint** : plus de signal HDMI, le moniteur se met en veille
+  de lui-même (`xset dpms force off` en session X11, `wlopm` en Wayland) ;
+- **toutes les vues passent au noir**, avec un bouton **« ⏻ Rallumer »** ;
+- la vue Journaliste s'arrête là où elle est.
+
+**Pour rallumer** : un appui sur un écran noir, le bouton « Rallumer », ou **une
+pédale**. L'état de veille n'est jamais écrit sur la carte : un boîtier qu'on
+rallume se réveille toujours allumé. Si l'extinction du HDMI échoue, les vues passent
+quand même au noir et le disent (« L'écran du boîtier n'a pas pu être éteint »).
 
 > Pour **éteindre réellement** la machine, c'est toujours son **bouton physique**.
 
@@ -268,7 +274,7 @@ texte et les réglages ne sont pas perdus ; la lecture repart du début.
 
 ## 5. Mettre son texte
 
-Depuis la page d'accueil, onglet **Texte**.
+Depuis la vue Settings, onglet **Texte**.
 
 ### Écrire, envoyer, enregistrer
 
@@ -437,16 +443,17 @@ Le mode se choisit dans l'onglet **Réglages**, section **Pédales**.
 - **Impulsion** : le pied n'a plus à rester posé. Appuyer sur l'**autre** pédale
   change de sens.
 - **Dynamique** : appuyez d'abord sur **« Dynamique »**. *Ce que vous devez voir* :
-  l'explication du mode s'affiche sous les trois boutons, et un curseur
-  **« Montée en vitesse (mode dynamique) »** apparaît juste en dessous, réglé sur
-  **10 s** — c'est la durée d'appui continu pour atteindre la vitesse maximale.
-  **La vitesse atteinte est conservée** quand on relâche : on la pose une fois au
-  pied, puis on lit. La vitesse se construisant au pied, le réglage **« Vitesse de
-  lecture » ne sert pas dans ce mode**.
+  un curseur **« Montée en vitesse (mode dynamique) »** apparaît juste en dessous,
+  réglé sur **10 s** — c'est la durée d'appui continu pour atteindre la vitesse
+  maximale. **La vitesse atteinte est conservée** quand on relâche : on la pose une
+  fois au pied, puis on lit. **Après une pause**, la pédale **droite repart vers
+  l'avant** et la **gauche vers l'arrière**, **à la vitesse d'avant la pause** ;
+  maintenue plus d'une demi-seconde, elle se remet à accélérer. En haut ou en bas du
+  texte, le défilement se met en pause tout seul. La vitesse posée au pied devient
+  celle de la carte **« Vitesse »** du téléphone, qui peut la corriger.
 
-> En **Impulsion** et en **Dynamique**, la lecture et la pause se font **à la
-> pédale** : la touche **Espace** et les boutons **« Lecture »** / **« Pause »** de
-> l'onglet Contrôle n'y répondent pas.
+> **Lecture**, **Pause** et **Début** (onglet Contrôle), comme la touche **Espace**,
+> marchent dans les **trois** modes.
 
 ### Apprendre leurs touches aux pédales
 
@@ -467,12 +474,15 @@ collisions avec un raccourci de l'écran sont signalées.
 
 ## 7. Réglages disponibles (depuis le téléphone)
 
-- **Texte** : taille, interligne, marges latérales, alignement (**Gauche** ou **Centré**).
-- **Couleurs** : couleur du texte, couleur du fond.
-- **Vitesse de lecture** (onglet **Contrôle**) — sans effet en mode **Dynamique** (§ 6).
+- **Mise en page** (onglet **Texte**) : taille, interligne, marges latérales,
+  alignement (**Gauche** ou **Centré**).
+- Le texte est **toujours blanc sur fond noir** ; la couleur d'un passage se pose
+  avec les pastilles de l'éditeur.
+- **Vitesse** (onglet **Contrôle**) : le curseur et **« − Moins vite »** / **« Plus
+  vite + »**, regroupés. En mode **Dynamique**, ils suivent la vitesse posée au pied.
 - **Miroir horizontal / vertical**, pour la vitre sans tain face caméra.
-  **Le miroir ne s'applique qu'à l'écran principal** : les écrans secondaires
-  restent toujours à l'endroit, on les lit directement.
+  **Le miroir ne s'applique qu'à la vue Journaliste** : la vue Spectateur reste
+  toujours à l'endroit, on la lit directement.
 - **Ligne de repère** de lecture.
 - **Pédales** : mode, montée en vitesse, apprentissage des touches (§ 6).
 
@@ -495,23 +505,22 @@ Une seule exception, volontaire : **un texte en cours de saisie n'est jamais
 écrasé**. Si quelqu'un diffuse un autre texte pendant que vous écrivez, un message
 prévient (« Le texte a changé sur le boîtier ») et votre saisie reste intacte.
 
-### 👀 Écran secondaire (régie, retour plateau)
+### 👀 Vue Spectateur (régie, retour plateau)
 
-Un autre appareil connecté au WiFi « Prompteur » peut suivre la lecture en direct,
-avec le bouton **« Écran secondaire »** de l'accueil (adresse
-`http://10.42.0.1:5000/view`, rappelée dans l'onglet **Contrôle**).
+Un autre appareil connecté au WiFi « Prompteur » peut suivre la lecture en direct :
+bouton **Spectateur** en haut de Settings, ou `http://10.42.0.1:5000/spectateur`.
 
-- Il **suit l'écran principal** : même texte, même position.
-- Il est en **lecture seule** : ses pédales et son clavier sont ignorés, **sauf F**
-  qui met la page en plein écran.
-- On peut en connecter **plusieurs** en même temps.
-- Le défilement reste **collé** à celui de l'écran principal : sa position est
+- Elle **suit la vue Journaliste** : même texte, même position.
+- Elle est en **lecture seule** : pédales et clavier ignorés, **sauf F** (plein
+  écran).
+- On peut en ouvrir **plusieurs** en même temps.
+- Le défilement reste **collé** à celui de la vue Journaliste : sa position est
   relue une quinzaine de fois par seconde, et le mouvement est anticipé entre deux
   lectures.
 
 ### ⚡ Où brancher les pédales
 
-**Branchez toujours les pédales sur l'appareil qui affiche l'écran principal** (le
+**Branchez toujours les pédales sur l'appareil qui affiche la vue Journaliste** (le
 boîtier, le plus souvent). Branchées ailleurs, elles réagiraient avec un retard
 visible.
 
@@ -524,17 +533,15 @@ visible.
    - Réseau : **Prompteur**
    - Mot de passe : celui **noté à l'installation**, unique à ce boîtier.
 3. Ouvrez le navigateur du téléphone sur **http://10.42.0.1:5000** : c'est la
-   télécommande.
+   vue Settings.
 4. **Collez le texte**, ou importez un fichier ou une clé USB, puis
    **« Envoyer à l'écran »**.
-5. Les pédales étant branchées sur l'appareil qui affiche l'écran principal, lisez.
+5. Les pédales étant branchées sur l'appareil qui affiche la vue Journaliste, lisez.
 
-> Sur l'écran du boîtier, la touche **i** affiche **les adresses des deux écrans de
-> lecture** : « Écran principal (PC / tablette) », qui se termine par **/display**,
-> et « Écran spectateur / régie », qui se termine par **/view** — à ouvrir sur un PC
-> ou une tablette connectés au WiFi « Prompteur ».
-> **L'adresse de la télécommande (étape 3) est la même, sans ce qui suit le port :
-> http://10.42.0.1:5000.**
+> Sur l'écran du boîtier, la touche **i** affiche **les adresses des vues de
+> lecture** : « Vue Journaliste (PC / tablette) », qui se termine par
+> **/journaliste**, et « Vue Spectateur », qui se termine par **/spectateur** — à
+> ouvrir sur un PC ou une tablette connectés au WiFi « Prompteur ».
 
 ---
 
@@ -556,11 +563,11 @@ les faire exécuter par quelqu'un qui n'est pas technicien.
 
 | Problème | Que faire, dans cet ordre |
 |---|---|
-| **L'écran du boîtier reste noir** | 1. Sur le boîtier : double-cliquez sur l'icône **« Le Prompteur »** du bureau. 2. Depuis le téléphone : barre **« Écran du boîtier »** → **« Afficher sur le boîtier »**. 3. Si l'écran ne revient pas, faites vérifier le service : `sudo systemctl status prompteur` — la réponse doit contenir **active (running)** en vert. |
-| **Le prompteur a été fermé sur le boîtier** | Icône **« Le Prompteur »** du bureau, ou barre **« Écran du boîtier »** → **« Afficher sur le boîtier »**. |
-| **« déjà utilisé par un autre appareil »** sur le bouton « Écran principal » | Un écran principal est déjà ouvert. En service, c'est celui du boîtier : tout va bien. Si c'est le vôtre, **revenez à sa fenêtre**. Sinon, prenez **« Écran secondaire »**, ou **« Prendre la main quand même »** — l'écran du boîtier cesserait alors de piloter. |
-| L'écran affiche **« Un autre appareil a pris la main. »** | Quelqu'un a ouvert un écran principal ailleurs : le texte reste affiché, mais les pédales de cet écran ne font plus rien. Pour reprendre : page d'accueil → **« Écran principal »** → **« Prendre la main quand même »**. |
-| **Les pédales ne font rien** | 1. Vérifiez que le pédalier est branché sur l'appareil qui affiche l'**écran principal** (§ 8). 2. Onglet **Réglages** → **Pédales** → réapprenez les touches (§ 6). 3. Vérifiez la programmation du pédalier lui-même. |
+| **L'écran du boîtier reste noir** | 0. Le système est peut-être **en veille** : touchez un écran ou appuyez sur une pédale. 1. Sur le boîtier : double-cliquez sur l'icône **« Le Prompteur »** du bureau. 2. Depuis le téléphone : **« Vue du journaliste »** → **Journaliste**. 3. Si l'écran ne revient pas, faites vérifier le service : `sudo systemctl status prompteur` — la réponse doit contenir **active (running)** en vert. |
+| **Le prompteur a été fermé sur le boîtier** | Icône **« Le Prompteur »** du bureau, ou **« Vue du journaliste »** → **Journaliste**. |
+| **« La vue Journaliste est déjà ouverte ailleurs »** | Une vue Journaliste est déjà ouverte. En service, c'est celle du boîtier : prenez **« Ouvrir la vue Spectateur »**. Si l'autre a disparu, cet écran reprend la main tout seul en une douzaine de secondes ; **« Prendre la main quand même »** le fait tout de suite — l'écran du boîtier cesserait alors de piloter. |
+| L'écran affiche **« Un autre appareil a pris la main. »** | Quelqu'un a ouvert une vue Journaliste ailleurs : le texte reste affiché, mais les pédales de cet écran ne font plus rien. Il reprend la main tout seul quand l'autre se ferme. |
+| **Les pédales ne font rien** | 0. Système en veille ? La première pression rallume, la suivante pilote. 1. Vérifiez que le pédalier est branché sur l'appareil qui affiche la **vue Journaliste** (§ 8). 2. Onglet **Réglages** → **Pédales** → réapprenez les touches (§ 6). 3. Vérifiez la programmation du pédalier lui-même. |
 | Bandeau rouge **« Liaison avec le boîtier perdue »** | Le texte affiché reste lisible et les pédales fonctionnent. 1. Reconnectez l'appareil au WiFi **« Prompteur »**. 2. Si cela ne suffit pas : `sudo systemctl restart prompteur`. |
 | Message **« Document trop volumineux pour le prompteur… Découpez-le en plusieurs séquences »** | Le document dépasse **300 000 caractères** ou **20 000 lignes** : découpez-le en plusieurs textes, enregistrés séparément (§ 5). |
 | **Le WiFi « Prompteur » n'apparaît pas** | 1. Relancez la recherche de réseaux sur le téléphone, plus près du boîtier. 2. S'il reste absent : `sudo nmcli connection up Prompteur` sur le boîtier — le réseau réapparaît en quelques secondes. |

@@ -161,7 +161,7 @@ cd ~/prompteur && tar xzf ~/prompteur-sauvegarde-*.tar.gz
 sudo systemctl restart prompteur
 ```
 
-**Ce que vous devez voir :** rien à l'écran de la fenêtre noire. Rouvrez la télécommande
+**Ce que vous devez voir :** rien à l'écran de la fenêtre noire. Rouvrez la page Settings
 depuis un téléphone : vos textes sont de retour dans « Mes textes enregistrés ».
 
 ### 4.2 — L'écran reste noir après une modification du démarrage

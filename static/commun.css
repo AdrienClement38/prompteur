@@ -1,0 +1,90 @@
+/* Prompteur — styles communs aux vues : barre de navigation, fenêtres « Info »
+   et de confirmation, fond de veille. Les couleurs reprennent celles de la vue
+   Settings, pour que tout se ressemble d'un écran à l'autre. */
+
+/* --- Barre de navigation (Settings / Spectateur / Veille) ----------------- */
+.navvues {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font: 600 14px/1 system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+/* Le nom de la vue, tout en haut et en petit : on sait toujours où l'on est. */
+.navvues .navnom {
+  margin-right: auto; padding: 0 2px;
+  font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: #9aa3b2;
+}
+.navvues .navbtn {
+  appearance: none; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 40px; padding: 0 14px; border-radius: 10px;
+  border: 1px solid #2b3040; background: #20242e; color: #eef1f6;
+  font: inherit;
+}
+.navvues .navbtn.actif { background: #4f8cff; border-color: #4f8cff; color: #fff; }
+.navvues .navbtn.veillebtn { margin-left: 8px; color: #ffb4ac; border-color: #4a2b2e; }
+.navvues .navbtn:active { transform: translateY(1px); }
+/* Téléphone : le nom de la vue passe sur sa propre petite ligne, au-dessus, et
+   les trois boutons tiennent sur une seule rangée. */
+@media (max-width: 480px) {
+  .navvues .navnom { flex-basis: 100%; margin: 0 0 2px; }
+  .navvues .navbtn { flex: 1 1 auto; padding: 0 10px; }
+  .navvues .navbtn.veillebtn { flex: 0 0 auto; margin-left: 4px; }
+}
+
+/* --- Bouton « Info », en haut à droite de chaque bloc --------------------- */
+.infobtn {
+  appearance: none; cursor: pointer; margin-left: auto;
+  min-height: 0; padding: 5px 11px; border-radius: 8px;
+  border: 1px solid #2b3040; background: transparent; color: #7cc4ff;
+  font: 600 12px/1 system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+  letter-spacing: .04em; text-transform: none;
+}
+.infobtn:active { transform: translateY(1px); }
+
+/* --- Fenêtres (Info, confirmation) ---------------------------------------- */
+.modalfond {
+  position: fixed; inset: 0; z-index: 900;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(0, 0, 0, .65);
+}
+.modale {
+  width: 100%; max-width: 560px; max-height: 88vh; overflow: auto;
+  background: #181b22; color: #eef1f6; border: 1px solid #2b3040; border-radius: 14px;
+  padding: 18px 18px 14px; box-shadow: 0 12px 48px rgba(0, 0, 0, .6);
+  font: 15px/1.5 system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+.modale h3 { margin: 0 0 10px; font-size: 17px; }
+.modalecorps p { margin: 0 0 10px; }
+.modalecorps p:last-child { margin-bottom: 0; }
+.modalecorps .muted { color: #9aa3b2; }
+.modalecorps code {
+  background: #20242e; border: 1px solid #2b3040; border-radius: 6px;
+  padding: 1px 7px; white-space: pre; font-size: 14px;
+}
+.modalecorps .adresse { font-family: 'Consolas', monospace; color: #ffd400; word-break: break-all; }
+.modaleactions { display: flex; gap: 10px; margin-top: 16px; }
+.modaleactions button {
+  flex: 1; appearance: none; cursor: pointer; min-height: 48px; border-radius: 12px;
+  border: 1px solid #2b3040; background: #20242e; color: #eef1f6;
+  font: 600 15px/1 system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+.modaleactions button.primary { background: #4f8cff; border-color: #4f8cff; color: #fff; }
+.modaleactions button.danger { background: #e2544a; border-color: #e2544a; color: #fff; }
+
+/* --- Veille ---------------------------------------------------------------- */
+/* Au-dessus de tout : tant que le système dort, on ne doit rien pouvoir
+   actionner par mégarde, et l'écran doit rester le plus noir possible. */
+.veillefond {
+  position: fixed; inset: 0; z-index: 1000; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  padding: 24px; text-align: center; background: #000; color: #5b6270;
+  font: 500 15px/1.45 system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+.veillefond .rallumer {
+  padding: 26px 44px; border-radius: 20px;
+  border: 1px solid #2a2f3a; background: #0c0e12; color: #c9d1dc;
+  font-size: 26px; font-weight: 700;
+}
+.veillefond .petit { max-width: 520px; }
+.veillefond .detail { color: #8a6d3b; }
+.veillefond.noir { color: #2c313a; }

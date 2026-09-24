@@ -42,6 +42,10 @@ python -m pytest -q
 etape "Node — vérification de syntaxe"
 node --check static/display.js
 node --check static/remote.js
+node --check static/commun.js
+
+etape "Banc d'essai des pédales"
+node tests/banc_pedales.js
 
 etape "ESLint"
 npx --no-install eslint static

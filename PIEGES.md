@@ -221,7 +221,7 @@ journaliste rallume et retrouve le texte de bienvenue, sans explication.
 **Parade :** `flush` + `fsync` avant de renommer.
 
 ### Un verrou sans expiration condamne l'appareil
-Réserver « l'écran principal » à un seul appareil est nécessaire. Mais un verrou
+Réserver la vue Journaliste (l'écran principal) à un seul appareil est nécessaire. Mais un verrou
 qu'on oublie de rendre — onglet fermé brutalement, WiFi coupé — **interdirait à
 tout le monde de lire**, soit l'inverse du but.
 **Parade :** un bail qui expire seul, et une reprise en main toujours offerte.
@@ -230,6 +230,25 @@ tout le monde de lire**, soit l'inverse du but.
 La croix effaçait un texte sans confirmation, sans corbeille, sans sauvegarde, et
 le dossier des textes n'est pas versionné.
 **Parade :** confirmation, et l'échec est dit au lieu d'être avalé.
+
+### 🔴 Une commande qui ne connaît qu'un mode
+Lecture et Pause, sur le téléphone, agissaient sur un drapeau que **seul le mode
+Maintien lisait**. En Impulsion et en Dynamique, les boutons ne faisaient rien — sans
+le moindre message. C'est le journaliste qui l'a signalé.
+**Parade :** un seul point d'entrée par geste (lecture, arrêt, début), qui connaît
+les trois modes ; et un banc d'essai qui joue chaque geste dans chaque mode.
+
+### 🔴 La dernière commande rejouée à l'ouverture
+Un écran qui s'ouvre découvre la dernière commande envoyée et l'applique : un
+« Lecture » de la veille faisait défiler le texte tout seul au démarrage du boîtier.
+**Parade :** à l'ouverture, on note le numéro de la dernière commande sans l'exécuter.
+
+### 🔴 Un kiosque relancé trouve sa place prise par son propre fantôme
+Fermer puis rouvrir le navigateur du kiosque (changement de vue du grand écran)
+laissait la place de meneur à l'ancienne page pendant 12 s. La nouvelle affichait
+« déjà en cours » — et son voile ne partait jamais, même la place libérée.
+**Parade :** le serveur rend la place du kiosque quand il le ferme lui-même ; et un
+écran écarté reprend la main dès que le serveur la lui rend.
 
 ---
 
@@ -290,8 +309,15 @@ remplacer la zone de saisie par une zone éditable riche.
 ### Deux écrans principaux se disputent le défilement
 Chacun pousse sa position : le texte saute d'un endroit à l'autre en pleine
 lecture.
-**Parade :** un seul meneur à la fois, le bouton se grise, la reprise reste
-possible.
+**Parade :** une seule vue Journaliste à la fois ; une seconde affiche un voile et
+propose la vue Spectateur ; la reprise en main reste possible.
+
+### Un raccourci d'écran d'accueil ouvre la page de son manifeste
+« Ajouter à l'écran d'accueil » n'enregistre pas la page affichée, mais l'adresse de
+départ déclarée par le manifeste. Un manifeste unique, pointant sur l'écran de
+lecture, faisait ouvrir au raccourci de la télécommande… l'écran de lecture, déjà
+tenu par le boîtier.
+**Parade :** un manifeste par vue.
 
 ---
 
@@ -304,6 +330,12 @@ plage décalée de trois signes **met en évidence les mauvais mots** en pleine
 lecture : c'est pire que pas de mise en forme du tout.
 **Parade :** un nettoyage qui note, pour chaque caractère survivant, d'où il
 vient. La table est produite pendant le nettoyage, jamais reconstituée après coup.
+
+### 🔴 Un préfixe retiré à l'affichage compte encore dans les indices
+L'écran retirait `[centre] ` d'une ligne avant de l'afficher, puis avançait son
+compteur de la longueur AFFICHÉE. Toutes les plages des lignes suivantes glissaient
+de quelques lettres : le gras et les couleurs tombaient sur les mauvais mots.
+**Parade :** avancer de la longueur de la ligne BRUTE ; le banc d'essai le vérifie.
 
 ### Un nettoyage est contextuel, pas local
 Découper d'abord puis nettoyer chaque morceau donne un texte **différent** :
@@ -537,6 +569,13 @@ antislashs, ce qui produit des fichiers corrompus, parfois subtilement.
 Remplacer un appel partout a réécrit l'intérieur de la fonction qui le
 remplaçait : **récursion infinie**.
 **Parade :** vérifier ce qu'on vient de remplacer, pas seulement que ça compile.
+
+### 🔴 Une animation ne se teste pas dans une page masquée
+Le navigateur ralentit ou suspend `requestAnimationFrame` quand la page n'est pas
+visible. Volet de prévisualisation masqué : les pédales « ne faisaient plus rien »,
+alors que le code était juste.
+**Parade :** `tests/banc_pedales.js` fait tourner le vrai `display.js` avec une
+horloge qu'on avance à la main. Il est dans la CI.
 
 ---
 

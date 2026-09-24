@@ -55,6 +55,9 @@ jobs:
         run: |
           node --check static/display.js
           node --check static/remote.js
+          node --check static/commun.js
+      - name: Banc d'essai des pédales (logique de défilement)
+        run: node tests/banc_pedales.js
       - name: ESLint — lint (propreté)
         run: npm run lint
 

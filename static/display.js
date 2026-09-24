@@ -1,10 +1,10 @@
 /* Prompteur — logique de l'écran (défilement + pédales + synchro temps réel).
 
    Deux modes (indiqués par le serveur via l'attribut data-mode du script) :
-   - "presenter" (/display) : écran MENEUR. Piloté aux pédales EN LOCAL (latence nulle),
-     il DIFFUSE sa position de défilement au serveur.
-   - "viewer" (/view) : écran SPECTATEUR (régie…). Lecture seule : il SUIT le meneur en
-     temps réel, avec anticipation (connaît la vitesse) pour un défilement fluide et collé.
+   - "presenter" (/journaliste) : vue JOURNALISTE, l'écran meneur. Pilotée aux pédales
+     EN LOCAL (latence nulle), elle DIFFUSE sa position de défilement au serveur.
+   - "viewer" (/spectateur) : vue SPECTATEUR (régie…). Lecture seule : elle SUIT le meneur
+     en temps réel, avec anticipation (connaît la vitesse) pour un défilement fluide et collé.
 
    Texte, réglages et position sont synchronisés par interrogation rapide du serveur ;
    le spectateur anticipe le mouvement entre deux lectures -> retard imperceptible. */
@@ -16,6 +16,9 @@
   // aucun script en ligne, donc rien qui contrevienne a la politique de securite.
   const MODE = document.currentScript?.dataset.mode === "viewer" ? "viewer" : "presenter";
   const isViewer = MODE === "viewer";
+  // Éléments communs (veille…). Leur absence ne doit JAMAIS empêcher l'écran de
+  // lecture de fonctionner : tout appel passe par ce garde-fou.
+  const Commun = window.Commun || null;
 
   const scroller = document.getElementById("scroller");
   const viewport = document.getElementById("viewport");
@@ -25,7 +28,6 @@
   const speedTag = document.getElementById("speedTag");
   const emptyMsg = document.getElementById("empty");
   const netinfo = document.getElementById("netinfo");
-  const specBadge = document.getElementById("specBadge");
 
   // --- État courant de l'affichage -----------------------------------------
   let settings = null;
@@ -34,6 +36,7 @@
   let speed = 70; // px / seconde
   const keys = { forward: false, backward: false };
   let lastText = null;
+  let lastMarks = null; // mise en forme affichée (JSON), comparée à chaque mise à jour
   let lastVersion = -1;
   let lastCmdSeq = -1;
   let lastTime = 0;
@@ -43,11 +46,12 @@
 
   // --- Application des réglages reçus du serveur ----------------------------
   function applySettings(s, text, marks) {
+    const vitesseAvant = settings ? Number(settings.speed) || 70 : null;
     settings = s;
     speed = Number(s.speed) || 70;
-
-    document.documentElement.style.setProperty("--bg", s.bgColor || "#000");
-    document.documentElement.style.setProperty("--fg", s.textColor || "#fff");
+    // Une vitesse changée ailleurs (curseur, Plus vite / Moins vite) s'applique
+    // aussi à la vitesse posée au pied en mode dynamique.
+    if (!isViewer && vitesseAvant !== null && speed !== vitesseAvant) adopterVitesse(speed);
 
     const fontMap = {
       "sans-serif": "system-ui, 'Segoe UI', Roboto, Arial, sans-serif",
@@ -76,13 +80,20 @@
       guide.style.display = "none";
     }
 
-    // Texte : on ne remet à zéro le défilement (côté meneur) que s'il a vraiment changé
-    if (text !== lastText) {
+    // On redessine si le texte OU sa mise en forme ont changé : une couleur posée
+    // sur un texte déjà à l'écran ne s'affichait jamais, faute de comparer les
+    // plages. Le défilement ne revient au début que si le TEXTE a changé.
+    const marksJson = JSON.stringify(marks || []);
+    if (text !== lastText || marksJson !== lastMarks) {
       renderScript(text || "", marks);
+      lastMarks = marksJson;
+    }
+    if (text !== lastText) {
       lastText = text;
       if (!isViewer) {
+        // Nouveau texte : on repart du haut, À L'ARRÊT, quel que soit le mode.
         pos = 0;
-        autoPlay = false;
+        arretTout();
       }
     }
     emptyMsg.style.display = text && text.trim() ? "none" : "flex";
@@ -223,32 +234,101 @@
       const aligne = alignementAt(alignements, offset);
       if (aligne && !classeAligne) div.className += " " + aligne;
       frag.appendChild(div);
-      offset += line.length + 1; // +1 pour le saut de ligne retiré par split
+      // Longueur de la ligne BRUTE : « [centre] » ou « [droite] » a été retiré
+      // de « line » pour l'affichage, mais ses caractères comptent dans les
+      // indices des plages. Avec « line », toute la mise en forme des lignes
+      // suivantes glissait de quelques lettres.
+      offset += brute.length + 1; // +1 pour le saut de ligne retiré par split
     }
     scroller.replaceChildren(frag);
   }
 
-  // --- Commandes ponctuelles (meneur uniquement) ---------------------------
+  // --- Lecture, pause, début : les mêmes gestes dans les trois modes ---------
+  // Les boutons de Settings (et la barre d'espace) n'agissaient qu'en mode
+  // Maintien : en Impulsion et en Dynamique, le défilement ne dépend pas de
+  // « autoPlay », et Lecture ou Pause ne faisaient rien. Chaque geste passe
+  // désormais par ces fonctions, qui connaissent les trois modes.
+  function enMouvement() {
+    const mode = currentMode();
+    if (mode === "dyn") return !dynPaused && Math.abs(dynVel) >= 1;
+    if (mode === "tap") return tapDir !== 0;
+    return autoPlay || keys.forward || keys.backward;
+  }
+
+  function lecture() {
+    const mode = currentMode();
+    if (mode === "dyn") {
+      // Vers l'avant, à la vitesse posée au pied ; à défaut, à celle du réglage.
+      dynVel = Math.abs(dynVel) >= 1 ? Math.abs(dynVel) : speed;
+      dynPaused = false;
+    } else if (mode === "tap") {
+      tapDir = 1;
+    } else {
+      autoPlay = true;
+    }
+  }
+
+  // Pédale centrale (mode dynamique) : repart dans le sens d'avant la pause, à
+  // la même vitesse. Sans vitesse posée, vers l'avant à la vitesse du réglage.
+  function repriseCentrale() {
+    if (Math.abs(dynVel) < 1) dynVel = speed;
+    dynPaused = false;
+  }
+
+  // Tout s'arrête ; la vitesse, elle, est conservée pour la reprise.
+  function arretTout() {
+    autoPlay = false;
+    tapDir = 0;
+    dynPaused = true;
+    reprise = null;
+    forceResync();
+  }
+
+  function revenirAuDebut() {
+    pos = 0;
+    arretTout();
+  }
+
   function applyCommand(cmd) {
+    // En veille, rien ne doit se mettre à défiler dans le noir.
+    if (Commun && Commun.veille.active() && (cmd === "play" || cmd === "toggle")) return;
     switch (cmd) {
-      case "play": autoPlay = true; break;
-      case "pause": autoPlay = false; break;
-      case "toggle": autoPlay = !autoPlay; break;
+      case "play": lecture(); break;
+      case "pause": arretTout(); break;
+      case "toggle":
+        if (enMouvement()) arretTout();
+        else lecture();
+        break;
       case "restart":
       case "top":
-        pos = 0;
-        autoPlay = false;
-        resetPedalState(); // revenir au début remet aussi le pilotage au repos
-        forceResync();
+        revenirAuDebut();
         break;
       // faster/slower : le serveur a déjà ajusté settings.speed, appliqué via applySettings.
     }
     updateSpeedTag();
   }
 
-  function changeSpeed(delta) {
-    speed = Math.max(10, Math.min(600, speed + delta));
-    updateSpeedTag();
+  // Vitesse venue d'ailleurs (Settings) : en mode dynamique, elle remplace la
+  // vitesse posée au pied, sens conservé. Pas pendant un appui : la pédale a la
+  // priorité, et sa nouvelle vitesse partira au relâchement.
+  function adopterVitesse(v) {
+    if (keys.forward || keys.backward) return;
+    if (Math.abs(dynVel) >= 1) dynVel = Math.sign(dynVel) * v;
+    renderSpeedTag();
+  }
+
+  // Vitesse posée au pied : on la confie au serveur, qui en fait LA vitesse du
+  // prompteur. Le curseur de Settings la montre, et Plus vite / Moins vite
+  // partent d'elle au lieu d'une valeur périmée.
+  function envoyerVitesse(v) {
+    if (!isLeading || v === Math.round(speed)) return;
+    speed = v;
+    if (settings) settings.speed = v;
+    postJson("/api/settings", { speed: v }).catch(() => {});
+  }
+
+  function envoyerCommande(cmd) {
+    postJson("/api/command", { cmd }).catch(() => {});
   }
 
   // Écrit l'indicateur sans le faire clignoter : en mode dynamique il change à
@@ -259,7 +339,8 @@
     let icon = "⏸";
     let valeur = Math.round(speed);
     if (mode === "dyn") {
-      valeur = Math.round(Math.abs(dynVel));
+      // Sans vitesse posée au pied, c'est celle du réglage qui servira à la reprise.
+      valeur = Math.round(Math.abs(dynVel) >= 1 ? Math.abs(dynVel) : speed);
       if (!dynPaused && dynVel > 0.5) icon = "▶︎";
       else if (!dynPaused && dynVel < -0.5) icon = "◀︎";
     } else if (mode === "tap") {
@@ -327,11 +408,17 @@
       // Rampe intégrée image par image : on atteint la vitesse maximale après
       // « rampSeconds » d'appui continu. La vitesse traverse zéro sans à-coup,
       // ce qui donne le passage progressif de l'avant vers l'arrière.
+      // Pas de rampe à l'arrêt, ni au début d'un appui de reprise : reprendre
+      // après une pause se fait à la vitesse d'avant. Maintenu plus longtemps,
+      // l'appui de reprise se remet à accélérer.
       const secondes = Math.max(1, Math.min(30, Number((settings || {}).rampSeconds) || 10));
       const accel = SPEED_MAX / secondes; // px/s²
-      if (keys.forward) dynVel = Math.min(SPEED_MAX, dynVel + accel * dt);
-      if (keys.backward) dynVel = Math.max(-SPEED_MAX, dynVel - accel * dt);
-      if (keys.forward || keys.backward) renderSpeedTag();
+      const retenue = reprise && now - reprise.depuis < DELAI_REPRISE_MS ? reprise.cle : null;
+      if (!dynPaused) {
+        if (keys.forward && retenue !== "forward") dynVel = Math.min(SPEED_MAX, dynVel + accel * dt);
+        if (keys.backward && retenue !== "backward") dynVel = Math.max(-SPEED_MAX, dynVel - accel * dt);
+        if (keys.forward || keys.backward) renderSpeedTag();
+      }
       v = dynPaused ? 0 : dynVel;
     } else if (mode === "tap") {
       v = tapDir * speed;
@@ -344,8 +431,23 @@
     if (v !== 0) {
       pos += v * dt;
       const maxPos = maxScrollPos();
-      if (pos < 0) pos = 0;
-      else if (pos > maxPos) pos = maxPos;
+      let butee = false;
+      if (pos < 0) {
+        pos = 0;
+        butee = v < 0;
+      } else if (pos > maxPos) {
+        pos = maxPos;
+        butee = v > 0;
+      }
+      // Mode dynamique : arrivé en haut ou en bas du texte, on se met en pause.
+      // Sans cela la vitesse restait lancée contre la butée, et la pédale
+      // opposée semblait morte le temps de la faire redescendre. La vitesse est
+      // conservée : un appui sur l'autre pédale repart aussitôt dans l'autre sens.
+      if (butee && mode === "dyn") {
+        dynPaused = true;
+        v = 0;
+        updateSpeedTag();
+      }
     }
     maybePush(now, v);
     scroller.style.transform = `translateY(${-pos}px)`;
@@ -434,11 +536,20 @@
       const r = await postJson("/api/presenter/ping", { token: presenterToken });
       const body = await r.json().catch(() => ({}));
       if (body.ok === false) {
-        isLeading = false;
-        showTaken(
-          "Un autre appareil a pris la main.",
-          "Cet écran ne pilote plus le défilement. Il continue d'afficher le texte."
-        );
+        if (isLeading) {
+          isLeading = false;
+          showTaken(
+            "Un autre appareil a pris la main.",
+            "Cet écran ne pilote plus le défilement. Il reprendra la main tout seul dès que l'autre sera fermé."
+          );
+        }
+      } else if (body.ok === true && !isLeading) {
+        // La place s'est libérée (l'autre écran a été fermé, ou son bail a
+        // expiré) : le serveur nous l'a rendue. Sans ce retour, le voile restait
+        // affiché pour toujours, sur un écran qui pilotait de nouveau.
+        isLeading = true;
+        takenBox.style.display = "none";
+        forceResync();
       }
     } catch {
       /* liaison perdue : déjà signalée par ailleurs */
@@ -523,16 +634,16 @@
     });
   }
 
-  // --- Revenir à la page d'accueil (Échap) ----------------------------------
-  // C'est le SEUL endroit où l'on est prisonnier : la télécommande et l'écran de
-  // régie sont des pages web ordinaires, qu'on ferme quand on veut. Ici le
+  // --- Quitter la vue Journaliste (Échap) -----------------------------------
+  // C'est le SEUL endroit où l'on est prisonnier : les vues Settings et
+  // Spectateur sont des pages web ordinaires, qu'on ferme quand on veut. Ici le
   // navigateur est en plein écran, sans barre ni onglet.
   //
-  // Échap RAMÈNE À L'ACCUEIL, il ne ferme pas le navigateur. Deux actions
+  // Échap RAMÈNE À LA VUE SETTINGS, il ne ferme pas le navigateur. Deux actions
   // distinctes, pour deux besoins distincts :
-  //   Échap ................. revient à la page d'accueil, partout, toujours ;
-  //   « Fermer le prompteur » (barre de l'accueil) ferme le navigateur et rend
-  //                           la main au bureau du Raspberry.
+  //   Échap ................. revient à la vue Settings, partout, toujours ;
+  //   « Bureau » (section Vue du journaliste) ferme le navigateur et rend la
+  //                           main au bureau du Raspberry.
   // Faire tuer le navigateur par une touche serait à la fois plus risqué et sans
   // effet visible hors du mode kiosque — là où l'on teste, justement.
   // Confirmation en deux temps : une touche unique suffirait à couper l'écran en
@@ -550,7 +661,7 @@
     restoreQuitText();
   }
 
-  const QUIT_TITLE = "Revenir à la page d'accueil ?";
+  const QUIT_TITLE = "Quitter la vue Journaliste ?";
   // On mémorise les NŒUDS d'origine, pas du balisage : rien n'est reconstruit à
   // partir d'une chaîne, donc rien à échapper.
   const QUIT_SUB_NODES = [...document.getElementById("quitSub").childNodes];
@@ -563,7 +674,7 @@
   // Refus de quitter : on le dit dans la même fenêtre, et elle se referme seule.
   function refuseQuit() {
     quitPending = false;
-    document.getElementById("quitTitle").textContent = "Impossible de revenir à l'accueil.";
+    document.getElementById("quitTitle").textContent = "Impossible de quitter la vue Journaliste.";
     const petit = document.createElement("span");
     petit.style.fontSize = "15px";
     petit.textContent =
@@ -571,7 +682,7 @@
       "Réessayez quand le bandeau rouge aura disparu.";
     document.getElementById("quitSub").replaceChildren(
       document.createTextNode(
-        "La liaison avec le boîtier est perdue : la page d'accueil ne répondrait pas, " +
+        "La liaison avec le boîtier est perdue : la vue Settings ne répondrait pas, " +
           "et il n'y a pas de flèche retour ici."
       ),
       document.createElement("br"),
@@ -584,7 +695,7 @@
   }
   function doQuit() {
     // En kiosque il n'y a NI barre d'adresse NI flèche retour : si le serveur est
-    // tombé, partir vers « / » mènerait à une page d'erreur sans aucun moyen de
+    // tombé, partir vers Settings mènerait à une page d'erreur sans aucun moyen de
     // revenir. On refuse donc de quitter tant que la liaison est perdue, et on le
     // dit — mieux vaut rester sur un texte lisible que s'échouer sur une impasse.
     // Refermer une fenêtre ne demande rien au serveur : on ne refuse que la
@@ -597,13 +708,33 @@
     cancelQuit();
     leavingOnPurpose = true;
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
-    // Fenêtre ouverte par l'accueil : on la referme, et l'accueil est déjà là
+    // Fenêtre ouverte par Settings : on la referme, et Settings est déjà là
     // derrière. Aucune navigation, donc aucune impasse même serveur coupé.
     if (window.opener && !window.opener.closed) {
       window.close();
       return;
     }
-    window.location.href = "/";
+    // Sur le boîtier, c'est le grand écran qu'on change de vue, par le même
+    // chemin que la section « Vue du journaliste » : l'état qu'elle affiche
+    // reste juste, et « Journaliste » y ramène d'un appui.
+    // Seulement si c'est bien le kiosque qui affiche cette vue : une fenêtre
+    // ordinaire ouverte sur le boîtier navigue, simplement.
+    const naviguer = () => {
+      window.location.href = "/settings";
+    };
+    if (!["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname)) {
+      naviguer();
+      return;
+    }
+    fetch("/api/kiosk", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((etat) => {
+        if (!etat.running || etat.vue !== "journaliste") return naviguer();
+        return postJson("/api/kiosk/launch", { vue: "settings" }).then((r) => {
+          if (!r.ok) naviguer();
+        });
+      })
+      .catch(naviguer);
   }
 
   // --- Les trois modes de pédalier ------------------------------------------
@@ -624,15 +755,14 @@
   let dynVel = 0; // vitesse signée construite au pied, en px/s
   let dynPaused = true; // la pédale centrale bascule ce drapeau
   let tapDir = 0; // -1 arrière, 0 pause, +1 avant (mode impulsion)
+  // Reprise après une pause (mode dynamique) : la pédale choisit le SENS, la
+  // vitesse reste celle d'avant la pause. { cle, depuis } tant que la pédale de
+  // reprise est enfoncée.
+  let reprise = null;
+  const DELAI_REPRISE_MS = 400; // au-delà, l'appui de reprise se remet à accélérer
 
   function currentMode() {
     return (settings || {}).mode || "hold";
-  }
-
-  function resetPedalState() {
-    dynVel = 0;
-    dynPaused = true;
-    tapDir = 0;
   }
 
   // --- Touches (pédales + raccourcis) — meneur uniquement pour le pilotage --
@@ -643,6 +773,13 @@
 
   window.addEventListener("keydown", (e) => {
     const k = keyName(e);
+    // En veille, la première touche (une pédale, le plus souvent) rallume tout
+    // et ne fait rien d'autre : pas de défilement surprise au réveil.
+    if (!isViewer && Commun && Commun.veille.active()) {
+      e.preventDefault();
+      if (!e.repeat) Commun.veille.rallumer();
+      return;
+    }
     if (k === "f" || k === "F") {
       toggleFullscreen();
       return;
@@ -667,27 +804,27 @@
     const kc = s.keyCenter || "ArrowRight";
     const mode = s.mode || "hold";
 
-    if (k === kf) {
+    if (k === kf || k === kb) {
       e.preventDefault();
+      const sens = k === kf ? 1 : -1;
+      const cle = sens > 0 ? "forward" : "backward";
+      // L'autorépétition du clavier est ignorée : une pédale maintenue
+      // basculerait sinon des dizaines de fois par seconde.
+      if (e.repeat) return;
       if (mode === "tap") {
         // Deuxième appui sur la MÊME pédale = pause. Sur l'autre = on repart
-        // dans l'autre sens. L'autorépétition du clavier est ignorée, sinon une
-        // pédale maintenue basculerait des dizaines de fois par seconde.
-        if (!e.repeat) tapDir = tapDir === 1 ? 0 : 1;
+        // dans l'autre sens.
+        tapDir = tapDir === sens ? 0 : sens;
+      } else if (mode === "dyn" && dynPaused) {
+        // Reprise après une pause : droite = vers l'avant, gauche = vers
+        // l'arrière, à la vitesse d'avant la pause (à défaut, celle du réglage).
+        const v = Math.abs(dynVel) >= 1 ? Math.abs(dynVel) : speed;
+        dynVel = sens * v;
+        dynPaused = false;
+        reprise = { cle, depuis: performance.now() };
+        keys[cle] = true;
       } else {
-        keys.forward = true; // maintien et dynamique : pédale enfoncée
-        if (mode === "dyn") dynPaused = false;
-      }
-      updateSpeedTag();
-      return;
-    }
-    if (k === kb) {
-      e.preventDefault();
-      if (mode === "tap") {
-        if (!e.repeat) tapDir = tapDir === -1 ? 0 : -1;
-      } else {
-        keys.backward = true;
-        if (mode === "dyn") dynPaused = false;
+        keys[cle] = true; // maintien et dynamique : pédale enfoncée
       }
       updateSpeedTag();
       return;
@@ -696,16 +833,24 @@
       e.preventDefault();
       // Pédale centrale : lecture/pause, et UNIQUEMENT en mode dynamique. Dans
       // les deux autres modes le client la veut explicitement sans fonction.
-      if (mode === "dyn" && !e.repeat) dynPaused = !dynPaused;
+      if (mode === "dyn" && !e.repeat) {
+        if (!dynPaused) arretTout();
+        else repriseCentrale();
+      }
       updateSpeedTag();
       return;
     }
 
     switch (k) {
-      case " ": e.preventDefault(); autoPlay = !autoPlay; updateSpeedTag(); break;
-      case "+": case "=": changeSpeed(+10); break;
-      case "-": case "_": changeSpeed(-10); break;
-      case "r": case "R": pos = 0; autoPlay = false; forceResync(); updateSpeedTag(); break;
+      case " ":
+        e.preventDefault();
+        if (!e.repeat) applyCommand("toggle");
+        break;
+      // Plus vite / moins vite passent par le serveur, comme les boutons de
+      // Settings : sinon le réglage s'annulait à la mise à jour suivante.
+      case "+": case "=": envoyerCommande("faster"); break;
+      case "-": case "_": envoyerCommande("slower"); break;
+      case "r": case "R": revenirAuDebut(); updateSpeedTag(); break;
       case "m": case "M":
         if (settings) {
           settings.mirrorH = !settings.mirrorH;
@@ -721,8 +866,17 @@
     if (isViewer) return;
     const s = settings || {};
     const k = keyName(e);
-    if (k === (s.keyForward || "ArrowDown")) { keys.forward = false; updateSpeedTag(); }
-    if (k === (s.keyBackward || "ArrowUp")) { keys.backward = false; updateSpeedTag(); }
+    let cle = null;
+    if (k === (s.keyForward || "ArrowDown")) cle = "forward";
+    else if (k === (s.keyBackward || "ArrowUp")) cle = "backward";
+    if (!cle) return;
+    keys[cle] = false;
+    if (reprise && reprise.cle === cle) reprise = null;
+    // Mode dynamique : la vitesse posée au pied devient celle du prompteur.
+    if (currentMode() === "dyn" && Math.abs(dynVel) >= 1) {
+      envoyerVitesse(Math.max(10, Math.min(SPEED_MAX, Math.round(Math.abs(dynVel)))));
+    }
+    updateSpeedTag();
   });
 
   // Sécurité meneur : perte de focus pédale enfoncée -> on relâche (pas de « pédale collée »)
@@ -737,6 +891,7 @@
     keys.backward = false;
     tapDir = 0;
     dynPaused = true; // la vitesse acquise est conservée, on la reprend au pied
+    reprise = null;
     forceResync();
     updateSpeedTag();
   }
@@ -778,6 +933,7 @@
     try {
       const v = await (await fetch("/api/version", { cache: "no-store" })).json();
       linkOk();
+      if (Commun) Commun.veille.maj(v.veille);
       if (v.version === lastVersion && v.cmdSeq === lastCmdSeq) return;
       // On demande les réglages DÉJÀ résolus pour cette surface : l'écran ne
       // porte aucune logique de portée, il applique ce qu'on lui donne.
@@ -789,8 +945,12 @@
         applySettings(st.settings, st.text, st.marks);
       }
       if (st.control && st.control.cmdSeq !== lastCmdSeq) {
+        // À l'ouverture de l'écran, la dernière commande envoyée est de
+        // l'histoire ancienne : la rejouer faisait défiler le texte tout seul
+        // dès le démarrage du boîtier.
+        const ouverture = lastCmdSeq === -1;
         lastCmdSeq = st.control.cmdSeq;
-        if (!isViewer && st.control.cmd) applyCommand(st.control.cmd);
+        if (!ouverture && !isViewer && st.control.cmd) applyCommand(st.control.cmd);
       }
     } catch {
       // le serveur peut redémarrer : on réessaie au prochain tick, et on
@@ -828,8 +988,8 @@
       const addresses = info.addresses || [];
       const port = info.port || 5000;
       const primary = addresses[0] || "10.42.0.1";
-      const main = `http://${primary}:${port}/display`;
-      const spec = `http://${primary}:${port}/view`;
+      const main = `http://${primary}:${port}/journaliste`;
+      const spec = `http://${primary}:${port}/spectateur`;
       // Construit element par element : les adresses viennent du systeme, et
       // aucune chaine de balisage n'est assemblee a la main.
       const bloc = (cls, texte, style) => {
@@ -842,9 +1002,9 @@
       const ligneSpec = document.createElement("div");
       ligneSpec.setAttribute("style", "margin-top:10px");
       ligneSpec.append(
-        document.createTextNode("Écran "),
-        Object.assign(document.createElement("b"), { textContent: "spectateur / régie" }),
-        document.createTextNode(" (suit en direct) :")
+        document.createTextNode("Vue "),
+        Object.assign(document.createElement("b"), { textContent: "Spectateur" }),
+        document.createTextNode(" (régie, suit en direct) :")
       );
       const ligneWifi = document.createElement("div");
       ligneWifi.setAttribute("style", "font-size:14px;opacity:.65;margin-top:8px");
@@ -853,7 +1013,7 @@
         Object.assign(document.createElement("b"), { textContent: "Prompteur" })
       );
       netinfo.replaceChildren(
-        document.createTextNode("Écran principal (PC / tablette) :"),
+        document.createTextNode("Vue Journaliste (PC / tablette) :"),
         bloc("addr", main),
         ligneSpec,
         bloc("addr", spec, "color:#ffd400"),
@@ -872,7 +1032,6 @@
   setInterval(pollState, 300); // texte / réglages / commandes
 
   if (isViewer) {
-    specBadge.style.display = "block";
     hud.style.display = "none";
     speedTag.style.display = "none";
     pollScroll();
@@ -883,5 +1042,14 @@
       setTimeout(() => netinfo.classList.add("hidden"), 12000);
     });
     setTimeout(() => hud.classList.add("hidden"), 6000);
+    // Mise en veille : le texte s'arrête là où il est, pédales relâchées.
+    if (Commun) {
+      Commun.veille.surChangement((endormi) => {
+        if (!endormi) return;
+        releasePedals();
+        arretTout();
+        updateSpeedTag();
+      });
+    }
   }
 })();

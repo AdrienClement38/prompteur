@@ -167,7 +167,7 @@ Branchez le **pédalier USB** sur le Pi. **Trois** pédales sont gérées, avec 
 Deux méthodes, au choix :
 
 - **A) Programmer le pédalier** (recommandé pour du matériel type PCsensor) : avec le petit logiciel du fabricant (sur un PC), assignez les touches ci-dessus.
-- **B) Adapter le logiciel au pédalier** *(recommandé : aucun PC Windows requis)* : sur la télécommande (voir étape 8) → onglet **Réglages** → section **Pédales** → **« Réapprendre »**, **appuyez une fois sur la pédale**, puis **« Enregistrer »** ; idem pour les autres. Rien n'est envoyé au boîtier avant la confirmation, et la ligne d'état ne passe au vert qu'après relecture de l'état réel du boîtier. Sont refusées : `F` (plein écran), `Échap` (retour à l'accueil) et toute touche déjà attribuée à une autre pédale.
+- **B) Adapter le logiciel au pédalier** *(recommandé : aucun PC Windows requis)* : sur la télécommande (voir étape 8) → onglet **Réglages** → section **Pédales** → **« Réapprendre »**, **appuyez une fois sur la pédale**, puis **« Enregistrer »** ; idem pour les autres. Rien n'est envoyé au boîtier avant la confirmation, et la ligne d'état ne passe au vert qu'après relecture de l'état réel du boîtier. Sont refusées : `F` (plein écran), `Échap` (quitter la vue Journaliste) et toute touche déjà attribuée à une autre pédale.
   ⚠️ L'apprentissage écoute le clavier de **l'appareil qui affiche la page** : il faut donc le faire depuis le boîtier lui-même, ou depuis un ordinateur portable sur lequel le pédalier est branché — jamais depuis un téléphone.
 
 ### Le mode de pédalier
@@ -185,21 +185,21 @@ Onglet **Réglages** → **Pédales** → **Mode**. Trois choix :
 ## 8. Connecter un téléphone / PC et tester
 
 1. Sur le téléphone : rejoignez le WiFi **« Prompteur »** (mot de passe de l'étape 5).
-2. Ouvrez le navigateur sur **http://10.42.0.1:5000** (page d'accueil : télécommande + les boutons **« Écran principal »** / **« Écran secondaire »**).
+2. Ouvrez le navigateur sur **http://10.42.0.1:5000** : c'est la vue **Settings** (en haut : Settings · Spectateur · ⏻ Veille, puis la section « Vue du journaliste »).
 3. Onglet **Texte** : collez un texte, **ou** importez un fichier (Word `.docx`, PDF, `.odt`, RTF, `.txt`). L'import **remplit la zone de saisie** sans rien diffuser ; **« Envoyer à l'écran »** est le seul geste qui met le texte à l'antenne.
 4. Vérifiez le **défilement aux pédales** et les **réglages** (taille, vitesse, couleurs, miroir).
 
 ---
 
-## 9. (Optionnel) Écran secondaire (régie)
+## 9. (Optionnel) Vue Spectateur (régie)
 
-Sur un autre appareil connecté au WiFi « Prompteur » (le **PC de la régie**, par exemple), ouvrez la page d'accueil et cliquez sur **« Écran secondaire »** — ou directement :
+Sur un autre appareil connecté au WiFi « Prompteur » (le **PC de la régie**, par exemple), ouvrez la vue Settings et appuyez sur **Spectateur**, en haut — ou directement :
 
 ```
-http://10.42.0.1:5000/view
+http://10.42.0.1:5000/spectateur
 ```
 
-Il **suit l'écran principal en temps réel** (lecture seule, jamais en miroir). Plusieurs écrans secondaires possibles.
+Elle **suit la vue Journaliste en temps réel** (lecture seule, jamais en miroir). Plusieurs vues Spectateur possibles.
 
 ---
 
@@ -210,9 +210,10 @@ Il **suit l'écran principal en temps réel** (lecture seule, jamais en miroir).
 - [ ] **http://10.42.0.1:5000** s'ouvre depuis le téléphone
 - [ ] Un texte envoyé **apparaît à l'écran**
 - [ ] Pédales : **droite = avance**, **gauche = recule**, relâché = stop
-- [ ] **Échap** (deux fois) ramène à la page d'accueil, et l'icône **« Le Prompteur »** réaffiche l'écran
+- [ ] **Échap** (deux fois) passe le grand écran sur la vue Settings, et **« Vue du journaliste »** → **Journaliste** y remet le prompteur
 - [ ] Un **.docx** importé garde ses **titres** (gros/gras) et ses paragraphes
-- [ ] **http://10.42.0.1:5000/view** suit l'écran principal en direct
+- [ ] **http://10.42.0.1:5000/spectateur** suit la vue Journaliste en direct
+- [ ] **⏻ Veille** éteint le grand écran ; un appui sur « Rallumer » ou une pédale le rallume
 - [ ] Après extinction/rallumage, tout revient automatiquement
 
 ---
@@ -231,11 +232,11 @@ Il **suit l'écran principal en temps réel** (lecture seule, jamais en miroir).
 | Changer le mot de passe WiFi | `sudo nmcli connection modify Prompteur wifi-sec.psk "NOUVEAU_MDP"` puis `sudo nmcli connection up Prompteur` |
 | Retrouver l'adresse à l'écran | sur l'écran du boîtier, appuyer sur la touche **i** |
 | **Sortir** de l'écran de lecture | **Échap**, puis **Échap** à nouveau pour confirmer (toute autre touche annule) |
-| Le prompteur a été **fermé** sur le boîtier | Icône **« Le Prompteur »** (bureau ou menu des applications), ou barre **« Écran du boîtier »** de l'accueil, ou `./install/kiosk.sh` |
+| Le prompteur a été **fermé** sur le boîtier | Icône **« Le Prompteur »** (bureau ou menu des applications), ou section **« Vue du journaliste »** → **Journaliste**, ou `./install/kiosk.sh` |
 | Fermer / relancer / diagnostiquer le kiosque en ligne de commande | `./install/kiosk.sh --stop` · `--restart` · `--status` (répond `running` ou `stopped`) |
-| **« déjà utilisé par un autre appareil »** sur le bouton Écran principal | Un autre écran principal est ouvert. Prendre **« Écran secondaire »**, ou **« Prendre la main quand même »**. La place se libère seule ~12 s après la disparition de l'appareil |
+| **« La vue Journaliste est déjà ouverte ailleurs »** | Une autre vue Journaliste pilote. Prendre **« Ouvrir la vue Spectateur »**, ou **« Prendre la main quand même »**. La place se libère seule ~12 s après la disparition de l'autre appareil, et cet écran la reprend tout seul |
 | Bandeau rouge **« Liaison avec le boîtier perdue »** | L'écran n'atteint plus le serveur ; le texte reste lisible et les pédales fonctionnent. `sudo systemctl status prompteur`, vérifier le WiFi. Tant que le bandeau est là, **Échap refuse** de revenir à l'accueil (c'est voulu) |
-| La barre **« Écran du boîtier »** n'apparaît pas | Normal depuis un téléphone : ces boutons ne sont proposés que sur le boîtier lui-même |
+| **« Vue du journaliste »** annonce un état inconnu | Le script `install/kiosk.sh` n'a pas pu s'exécuter : c'est le cas sur un PC de test, jamais sur le boîtier installé |
 | Une pédale est refusée à l'apprentissage | `F`, `Échap` et une touche déjà prise par une autre pédale sont interdites (étape 7) |
 
 ## Annexe B — Mettre à jour le logiciel plus tard
@@ -254,9 +255,11 @@ sudo systemctl restart prompteur
 
 | Adresse | Usage |
 |---|---|
-| `http://10.42.0.1:5000/` | Page d'accueil : télécommande / import, et les deux boutons qui ouvrent les écrans |
-| `http://10.42.0.1:5000/display` | Écran **principal** (piloté aux pédales) — affiché en kiosque sur le boîtier ; **un seul à la fois** |
-| `http://10.42.0.1:5000/view` | Écran **secondaire / régie** (suit le principal en direct, lecture seule, jamais en miroir) |
+| `http://10.42.0.1:5000/settings` | Vue **Settings** : texte, import, réglages, commandes, veille, choix de ce qu'affiche le grand écran |
+| `http://10.42.0.1:5000/journaliste` | Vue **Journaliste** (pilotée aux pédales) — affichée en kiosque sur le boîtier ; **une seule à la fois** |
+| `http://10.42.0.1:5000/spectateur` | Vue **Spectateur** / régie (suit la vue Journaliste en direct, lecture seule, jamais en miroir) |
+
+Les anciennes adresses (`/`, `/display`, `/view`, `/menu`) restent valables : elles redirigent vers les nouvelles.
 
 ---
 

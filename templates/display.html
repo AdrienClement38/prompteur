@@ -3,17 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-  <title>Prompteur — Écran</title>
-  <link rel="manifest" href="/manifest.webmanifest">
+  <title>Prompteur — {{ "Spectateur" if mode == "viewer" else "Journaliste" }}</title>
+  <link rel="manifest" href="/manifest.webmanifest?vue={{ 'spectateur' if mode == 'viewer' else 'journaliste' }}">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#000000">
+  <link rel="stylesheet" href="/static/commun.css">
   <style>
+    /* Toujours blanc sur noir : la couleur d'un passage se pose dans l'éditeur. */
     :root { --bg:#000; --fg:#fff; }
     * { box-sizing:border-box; margin:0; padding:0; }
     html, body { height:100%; overflow:hidden; background:var(--bg); }
-    body { cursor:none; }               /* pas de curseur en mode kiosque */
+    body.journaliste { cursor:none; }   /* pas de curseur en mode kiosque */
 
     /* Zone qui subit l'effet miroir (le texte ET la ligne de repère) */
     #stage {
@@ -60,19 +62,20 @@
     #scroller .al-c { text-align:center; }
     #scroller .al-r { text-align:right; }
 
-    /* Ligne de repère de lecture */
+    /* Ligne de repère de lecture. Épaissie à la demande du journaliste : à 2 px
+       elle se perdait derrière la vitre. Les flèches restent centrées sur elle. */
     #guide {
       position:absolute; left:0; right:0; height:0;
-      border-top:2px solid rgba(255,60,60,.55);
+      border-top:4px solid rgba(255,60,60,.75);
       pointer-events:none;
       display:none;
     }
     #guide::before, #guide::after {
-      content:""; position:absolute; top:-9px;
-      border-top:9px solid transparent; border-bottom:9px solid transparent;
+      content:""; position:absolute; top:-13px;
+      border-top:11px solid transparent; border-bottom:11px solid transparent;
     }
-    #guide::before { left:0;  border-left:14px solid rgba(255,60,60,.7); }
-    #guide::after  { right:0; border-right:14px solid rgba(255,60,60,.7); }
+    #guide::before { left:0;  border-left:17px solid rgba(255,60,60,.85); }
+    #guide::after  { right:0; border-right:17px solid rgba(255,60,60,.85); }
 
     /* Bandeau d'aide / d'état, discret */
     /* Bandeau d'aide EN HAUT : en bas, le texte defilant lui passait dessus et
@@ -88,6 +91,7 @@
       z-index:10;
     }
     #hud.hidden { opacity:0; }
+    #hud .vuenom { font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.75); }
     #speedTag {
       position:fixed; right:14px; top:10px;
       font:700 16px/1 system-ui, sans-serif;
@@ -162,16 +166,15 @@
     }
     #linkLost .sub { font-weight:400; font-size:15px; color:rgba(255,233,233,.75); margin-top:6px; }
 
-    /* Badge affiché uniquement sur les écrans spectateurs (régie) */
-    #specBadge {
-      position:fixed; left:12px; top:10px; z-index:25;
-      font:700 13px/1 system-ui, sans-serif; letter-spacing:.08em;
-      color:#0b1220; background:#ffd400; padding:6px 11px; border-radius:8px;
-      display:none;
+    /* Vue Spectateur : la barre des vues, en haut, par-dessus le texte. */
+    .navvues {
+      position:fixed; left:0; right:0; top:0; z-index:25;
+      padding:8px 12px; background:rgba(0,0,0,.72);
+      border-bottom:1px solid rgba(255,255,255,.08);
     }
   </style>
 </head>
-<body>
+<body class="{{ 'spectateur' if mode == 'viewer' else 'journaliste' }}" data-veille="{{ '' if mode == 'viewer' else 'noir' }}">
   <div id="stage">
     <div id="viewport">
       <div id="scroller"></div>
@@ -179,17 +182,25 @@
     <div id="guide"></div>
   </div>
 
+  {% if mode == "viewer" %}
+  <nav class="navvues" aria-label="Vues">
+    <span class="navnom">Spectateur</span>
+    <a class="navbtn" href="/settings">Settings</a>
+    <a class="navbtn actif" href="/spectateur" aria-current="page">Spectateur</a>
+    <button type="button" class="navbtn veillebtn">⏻ Veille</button>
+  </nav>
+  {% endif %}
   <div id="speedTag">▶︎ 70</div>
-  <div id="specBadge">SPECTATEUR — suit l'écran principal</div>
   <div id="netinfo" class="hidden"></div>
   <div id="taken">
-    <div id="takenTitle">Un autre écran principal est déjà en cours.</div>
+    <div id="takenTitle">La vue Journaliste est déjà ouverte ailleurs.</div>
     <div class="sub" id="takenSub">
-      Deux écrans principaux se disputeraient le pilotage : le texte sauterait
-      d'un endroit à l'autre en pleine lecture.
+      Deux vues Journaliste se disputeraient le pilotage : le texte sauterait
+      d'un endroit à l'autre en pleine lecture. Cet écran reprendra la main tout
+      seul dès que l'autre sera fermée.
     </div>
     <div class="acts">
-      <a class="btn go" href="/view">Ouvrir en écran secondaire</a>
+      <a class="btn go" href="/spectateur">Ouvrir la vue Spectateur</a>
       <button class="btn" id="takeOver">Prendre la main quand même</button>
     </div>
   </div>
@@ -201,18 +212,18 @@
     </div>
   </div>
   <div id="quitAsk">
-    <div id="quitTitle">Revenir à la page d'accueil ?</div>
+    <div id="quitTitle">Quitter la vue Journaliste ?</div>
     <div class="sub" id="quitSub">
       <b>Échap</b> pour confirmer &nbsp;·&nbsp; n'importe quelle autre touche pour rester<br>
-      <span style="font-size:15px;">Le texte et la position sont conservés.</span>
+      <span style="font-size:15px;">On revient à la vue Settings. Le texte et la position sont conservés.</span>
     </div>
   </div>
   <div id="hud">
-    Pédale droite = avancer · gauche = reculer · Espace = lecture/pause · +/− = vitesse · M = miroir · F = plein écran · i = adresse PC · Échap = revenir à l'accueil
+    <span class="vuenom">Journaliste</span> · Pédale droite = avancer · gauche = reculer · Espace = lecture/pause · +/− = vitesse · M = miroir · F = plein écran · i = adresses · Échap = vue Settings
   </div>
   <div id="empty">
     <div>Aucun texte.<br>Envoie ton texte depuis le téléphone (WiFi « Prompteur ») ou par clé USB.</div>
-    <div style="margin-top:22px; font-size:20px;">Écran déporté (PC / tablette) :
+    <div style="margin-top:22px; font-size:20px;">Vue Journaliste sur un PC ou une tablette :
       <span id="emptyAddr" style="font-family:'Consolas',monospace; color:#8ab4ff;">…</span>
     </div>
   </div>
@@ -220,6 +231,7 @@
   <!-- Le mode passe par un attribut, et non par un <script> en ligne : la
        politique de sécurité (script-src 'self') interdit desormais tout script
        ecrit dans la page. Un attribut data- est une donnee, pas du code. -->
+  <script src="/static/commun.js"></script>
   <script src="/static/display.js" data-mode="{{ mode | default('presenter') }}"></script>
 </body>
 </html>

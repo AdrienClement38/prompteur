@@ -32,13 +32,14 @@ Au quotidien, tout tient en six gestes.
 | **2** | **Attendez une minute complète**, sans rien toucher | L'écran du boîtier devient noir avec du gros texte blanc |
 | **3** | Appuyez sur la **pédale de droite** et gardez le pied appuyé | Le texte monte ; en haut à droite, `⏸` devient `▶︎` |
 | **4** | Sur le téléphone : réseau sans fil **Prompteur** → **restez connecté** malgré le message « pas d'internet » | Le téléphone indique « connecté à Prompteur » |
-| **5** | Dans le navigateur du téléphone : `http://10.42.0.1:5000` | La page d'accueil : deux gros boutons **« Écran principal »** et **« Écran secondaire »**, puis trois onglets Texte / Contrôle / Réglages |
+| **5** | Dans le navigateur du téléphone : `http://10.42.0.1:5000` | La page **Settings** : en haut, **Settings · Spectateur · ⏻ Veille** ; dessous, **« Vue du journaliste »** puis trois onglets Texte / Contrôle / Réglages |
 | **6** | Onglet **Texte** → collez votre texte → **« Envoyer à l'écran »** | Le message **« Texte envoyé à l'écran ✓ »**, et votre texte apparaît en grand |
 
-> 📌 **Le bouton « Écran principal »** ouvre l'écran de lecture, celui qu'on pilote aux pédales.
-> **Sur le boîtier, il s'ouvre tout seul au branchement : vous n'avez rien à faire.** Depuis le
-> téléphone, il porte alors la mention **« déjà utilisé par un autre appareil »** : c'est normal,
-> et c'est bon signe. **« Écran secondaire »**, lui, ouvre un écran de suivi pour la régie.
+> 📌 **Trois vues, trois noms.** **Journaliste** = l'écran qu'on lit et qu'on pilote aux
+> pédales : **le grand écran du boîtier l'affiche tout seul au branchement**. **Settings** = la
+> page du téléphone (texte, réglages). **Spectateur** = le suivi en direct pour la régie. Dans
+> **« Vue du journaliste »**, le bouton **Journaliste** en bleu confirme que le grand écran affiche
+> bien le prompteur.
 
 > **Et c'est tout.** Pendant la prise, **le téléphone ne sert plus à rien** : vous pilotez
 > uniquement au pied. Pédale droite maintenue = ça avance, pied levé = ça s'arrête.
@@ -70,10 +71,10 @@ tableau de dépannage, et la dernière page est une fiche à découper et coller
 | **7** | **Mettre un passage en valeur** | Gras, italique, souligné, tailles et couleurs |
 | **8** | **Lire au pied** | Les pédales, les trois modes, la vitesse, la fin du texte |
 | **9** | **Travailler par séquences** | Refaire une prise sans tout reprendre au début |
-| **10** | **Régler le confort de lecture** | Taille, couleurs, miroir, ligne de repère |
-| **11** | **L'écran secondaire (régie)** | Afficher le même texte sur un deuxième écran |
+| **10** | **Régler le confort de lecture** | Taille, marges, miroir, ligne de repère |
+| **11** | **La vue Spectateur (régie)** | Afficher le même texte sur un deuxième écran |
 | **12** | **Si le pédalier ou le téléphone lâche** | Les solutions de repli, sur place |
-| **13** | **Fermer, éteindre et ranger** | La bonne façon d'arrêter et de remballer |
+| **13** | **Veille, grand écran, extinction** | Mettre en veille, choisir ce que montre le grand écran, arrêter et remballer |
 | **14** | **Si quelque chose cloche** | Le tableau de dépannage |
 | **15** | **Les bons réflexes avant un tournage** | Les check-lists, dont celle du sac |
 | **✂️** | **Fiche à découper et coller sur le boîtier** | L'essentiel sur une seule page |
@@ -91,7 +92,7 @@ tableau de dépannage, et la dernière page est une fiche à découper et coller
 | **Le câble d'écran** | Il n'a **aucun bloc** : c'est un simple câble d'appareil à appareil. Embout **plat et légèrement trapézoïdal** côté boîtier, plus large côté écran | Il transporte l'image du boîtier vers l'écran. |
 | **Votre téléphone** | Le vôtre, Android ou iPhone | C'est votre télécommande : c'est par lui que vous envoyez le texte et réglez tout. |
 | **Une petite souris USB** | N'importe quelle souris USB ordinaire | Elle sert à cliquer sur l'écran du boîtier, et à rouvrir le prompteur par son icône s'il a été fermé (chapitre 13). Gardez-la dans le sac. |
-| **Un clavier USB ordinaire** | Un clavier filaire quelconque | **Clavier de secours** : il remplace entièrement les pédales si elles lâchent (chapitre 12), et c'est lui qui porte la touche **Échap**, celle qui ramène de l'écran de lecture à la page d'accueil. |
+| **Un clavier USB ordinaire** | Un clavier filaire quelconque | **Clavier de secours** : il remplace entièrement les pédales si elles lâchent (chapitre 12), et c'est lui qui porte la touche **Échap**, celle qui fait quitter la vue Journaliste. |
 | *(Facultatif)* **Une clé USB** | Une petite clé USB ordinaire | Une deuxième façon d'apporter vos textes, sans passer par le téléphone. |
 | *(Recommandé)* **Une deuxième carte mémoire** | Une petite carte préparée à l'identique par l'installateur | En cas de panne totale, l'échange prend deux minutes et se fait sans ordinateur. Demandez-la à l'installateur. |
 
@@ -249,13 +250,14 @@ il prend deux minutes.
   ou le message **« Aucun texte. Envoie ton texte depuis le téléphone… »**.
   **Les deux sont normaux** : dans les deux cas le boîtier fonctionne, il attend simplement
   votre texte ;
-- une **fine ligne rouge** barre l'écran horizontalement, un peu au-dessus du milieu, avec un
+- une **ligne rouge** barre l'écran horizontalement, un peu au-dessus du milieu, avec un
   **petit repère triangulaire rouge à chaque extrémité** ;
 - en **haut à droite**, un petit repère **`⏸` suivi d'un nombre** (70 au départ) reste affiché en
   permanence : il indique l'état (`⏸` à l'arrêt, `▶︎` en marche) et votre réglage de vitesse.
   Nous y reviendrons — il n'y a rien à faire pour l'instant ;
 - pendant les **premières secondes**, un **bandeau gris** apparaît **en haut de l'écran** avec des
-  mots techniques (Espace, M, F, Échap…), et un **panneau sombre** affiche **deux adresses**
+  le mot **JOURNALISTE** et des mots techniques (Espace, M, F, Échap…), et un **panneau
+  sombre** affiche **deux adresses**
   pendant une douzaine de secondes. **Les deux disparaissent tout seuls : ne vous en occupez
   pas.** Le bandeau gris réapparaît brièvement chaque fois que l'on clique sur l'écran ;
 - **aucune barre de navigateur, aucun bureau, aucune icône** — si vous voyez cela, allez au
@@ -292,7 +294,8 @@ Cochez au fur et à mesure : sur un tournage, on est toujours interrompu au mili
 > 🆘 **Si l'écran du boîtier montre le bureau du Raspberry** (un fond d'écran, des icônes) **au
 > lieu de votre texte** : le prompteur a simplement été fermé, et il se rouvre **sans rien
 > débrancher** — avec la **souris USB**, double-cliquez sur l'icône **« Le Prompteur »** posée
-> sur ce bureau. *(Autre façon, depuis le téléphone : voir le chapitre 13.)*
+> sur ce bureau. *(Autre façon, depuis le téléphone : section **« Vue du journaliste »** →
+> **Journaliste**, chapitre 13.)*
 
 - [ ] **3. Vérifiez que les pédales répondent.** Appuyez sur la **pédale de droite et gardez le
       pied appuyé** deux secondes.
@@ -335,22 +338,24 @@ Cochez au fur et à mesure : sur un tournage, on est toujours interrompu au mili
 >
 > À faire **une fois pour toutes**, tranquillement, et surtout pas le jour du tournage.
 
-- [ ] **5. Ouvrez la télécommande sur le téléphone.** Ouvrez le navigateur internet de votre
+- [ ] **5. Ouvrez la page Settings sur le téléphone.** Ouvrez le navigateur internet de votre
       téléphone et tapez cette adresse **en entier**, exactement :
 
 ```
 http://10.42.0.1:5000
 ```
 
-*Ce que vous devez voir : une page avec le mot « Prompteur » en haut, puis **deux gros boutons**
-côte à côte — **« Écran principal »** et **« Écran secondaire »** — et, en dessous, **trois
-onglets** : **Texte**, **Contrôle**, **Réglages**. L'onglet « Texte » est déjà ouvert et contient
-déjà le texte affiché à l'écran.*
+*Ce que vous devez voir : tout en haut, le mot **SETTINGS** en petit et trois boutons,
+**Settings**, **Spectateur** et **⏻ Veille** ; en dessous, la section **« Vue du journaliste »**,
+puis **trois onglets** : **Texte**, **Contrôle**, **Réglages**. L'onglet « Texte » est déjà
+ouvert et contient déjà le texte affiché à l'écran.*
 
-> 📌 **Sur le téléphone, on ne touche à aucun des deux gros boutons** : ils ouvrent l'écran de
-> lecture **sur l'appareil où l'on appuie**, et le vôtre, vous l'avez déjà — c'est celui du
-> boîtier. « Écran principal » doit d'ailleurs indiquer **« déjà utilisé par un autre
-> appareil »** : c'est le signe que l'écran du boîtier tient bien les commandes.
+> 📌 **Dans « Vue du journaliste », le bouton Journaliste doit être bleu** : c'est le signe que
+> le grand écran affiche bien le prompteur. **N'appuyez pas sur les deux autres** : ils changent
+> ce que montre le grand écran du boîtier (chapitre 13), quel que soit l'appareil où l'on appuie.
+>
+> 💡 Les explications ne sont plus affichées en permanence : chaque bloc a son petit bouton
+> **Info**, en haut à droite, qui les ouvre à la demande.
 
 > ⚠️ **PIÈGE — le téléphone lance une recherche au lieu d'ouvrir la page.** Si vous tapez
 > seulement `10.42.0.1:5000`, le téléphone croit que vous faites une recherche sur internet…
@@ -382,17 +387,18 @@ déjà le texte affiché à l'écran.*
       *Ce que vous devez voir : la première ligne démarre volontairement **bas** sur l'écran, sous
       la ligne rouge. C'est voulu : le texte monte vers la ligne rouge dès la première pression.*
 
-> 💡 **Pour sortir de l'écran de lecture** (par exemple pour revenir à la page d'accueil sur le
-> boîtier) : appuyez sur la touche **Échap** du clavier USB. Une fenêtre demande confirmation —
-> **appuyez une deuxième fois sur Échap** pour confirmer, **n'importe quelle autre touche** pour
-> rester. Le texte et la position sont conservés.
+> 💡 **Pour quitter la vue Journaliste sur le boîtier** : appuyez sur la touche **Échap** du
+> clavier USB. Une fenêtre demande confirmation — **appuyez une deuxième fois sur Échap** pour
+> confirmer, **n'importe quelle autre touche** pour rester. Le grand écran passe alors sur la vue
+> **Settings** ; pour y remettre le texte : section **« Vue du journaliste »** → **Journaliste**.
+> Le texte et la position sont conservés.
 
 ---
 
 ## 6. Mettre son texte
 
 Il y a **trois façons** d'apporter un texte. **Les trois se pilotent depuis l'onglet « Texte »
-de la télécommande.** La clé USB demande simplement, en plus, d'être branchée physiquement
+de la page Settings.** La clé USB demande simplement, en plus, d'être branchée physiquement
 **sur le boîtier** — jamais sur le téléphone.
 
 > 📌 **LA RÈGLE DES DEUX BOUTONS, à retenir par cœur :**
@@ -419,7 +425,7 @@ de la télécommande.** La clé USB demande simplement, en plus, d'être branch�
 
 ### Voie n° 1 — Copier-coller depuis le téléphone (la plus simple, la plus sûre)
 
-1. Onglet **Texte**, première carte **« Coller / écrire le texte »**.
+1. Onglet **Texte**, première carte **« Texte »**.
 2. Remplissez le champ **Titre** (par exemple : `Interview Elise 1`).
 3. Collez votre texte dans la grande zone **« Texte du prompteur »**.
 4. Appuyez sur **« Envoyer à l'écran »**.
@@ -472,7 +478,7 @@ simplifié — et le titre qui apparaît dans la liste « Mes textes enregistré
 > *Si vous vous en apercevez sur place : ouvrez le mail sur la 4G et **copiez-collez** le texte
 > (voie n° 1), qui ne demande aucun fichier.*
 
-1. Onglet **Texte**, deuxième carte **« Importer »**.
+1. Onglet **Texte**, carte **« Importer »** (sous « Mise en page »).
 2. Appuyez sur le bouton **« Fichier »**.
 3. Le sélecteur de fichiers de votre téléphone s'ouvre : choisissez votre document.
 4. **Relisez le texte**, corrigez-le si besoin, puis appuyez sur **« Envoyer à l'écran »**.
@@ -488,7 +494,7 @@ change pas encore**. Le titre devient automatiquement le nom du fichier, **sans 
 > enregistrés » : pour le retrouver plus tard sans le fichier, appuyez **aussi** sur
 > **« Enregistrer »**.
 
-**Formats acceptés** (c'est écrit sous les deux boutons) : Word (`.docx`, `.doc`), PDF,
+**Formats acceptés** (rappelés par le bouton **Info** de la carte) : Word (`.docx`, `.doc`), PDF,
 LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 
 > 💡 **Vos documents arrivent avec leur mise en forme.** Tous, désormais.
@@ -499,7 +505,7 @@ LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 > | **Gras**, *italique* | ✅ | ✅ | ✅ | ✅ |
 > | Souligné | ✅ | ✅ | ✅ | ✅ |
 > | Texte en couleur | ✅ | ✅ | ✅ | ✅ |
-> | Plus gros ou plus petit | ✅ | ✅ | ✅ | ✅ |
+> | Plus gros ou plus petit | ✅ | ✅ | ✅ | titres `#` |
 > | Paragraphe centré, à droite | ✅ | ✅ | ✅ | ✅ |
 > | Listes à puces | ✅ | ✅ | ✅ | ✅ |
 >
@@ -528,8 +534,7 @@ LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 > cliquez. Ces signes servent quand vous écrivez votre texte dans un éditeur, sur un
 > ordinateur, avant de l'importer.
 >
-> La télécommande rappelle les deux familles sous les boutons de mise en forme, dans
-> **« Écrire la mise en forme au clavier »**.
+> Le bouton **Info** de la carte « Texte » rappelle les deux familles.
 >
 > **Rien ne se déclenche par accident** dans un texte simple : une étoile isolée, une
 > multiplication (`3 * 4`), un nom de fichier (`mon_texte.txt`) ou une adresse internet
@@ -636,8 +641,8 @@ l'écran du téléphone, et le texte qui apparaît aussitôt sur le grand écran
 téléphone a perdu le réseau : reconnectez-le à « Prompteur » et rechargez la page.*
 
 > ⚠️ **LE PIÈGE LE PLUS DANGEREUX — le petit bouton sombre marqué d'une croix rouge ✕.**
-> Il est collé au bouton « Charger », et il **supprime immédiatement, sans question, sans
-> corbeille et sans message**. Aucune annulation n'est possible.
+> Il est collé au bouton « Charger », et il **supprime définitivement** après une seule
+> question de confirmation : ni corbeille, ni annulation.
 > **Parade : ne touchez jamais la croix ✕ un jour de tournage.** Pour rappeler un texte, c'est
 > le bouton **BLEU « Charger »**.
 
@@ -693,8 +698,7 @@ Le bouton **« Tout effacer »** retire la mise en forme de **tout** le texte (m
 > C'est aussi pourquoi une ligne commençant par un dièse change d'aspect sans prévenir : si vous
 > ne voulez pas de titre, ne commencez pas la ligne par un dièse.
 >
-> *Ce mémo est rappelé sur la télécommande elle-même : sous les boutons de mise en forme,
-> dépliez **« Écrire un titre à la main »**.*
+> *Ce mémo est rappelé sur le téléphone : bouton **Info** de la carte « Texte ».*
 
 La mise en forme est **conservée par « Enregistrer »** et revient telle quelle quand vous
 rappelez le texte avec « Charger ».
@@ -725,8 +729,8 @@ textes courts (chapitre 9).
 ### Les trois modes de pédalier
 
 Onglet **Réglages**, carte **« Pédales »**, ligne **« Mode »** : trois boutons.
-**Le mode actif est celui dont le bouton est bleu**, et une phrase d'explication s'affiche
-juste en dessous — **celle du mode choisi, et elle seule**.
+**Le mode actif est celui dont le bouton est bleu.** Le bouton **Info** de la carte rappelle ce
+que fait chacun des trois modes.
 
 | Le mode | Pédale de DROITE | Pédale de GAUCHE | Pédale CENTRALE |
 |---|---|---|---|
@@ -736,6 +740,11 @@ juste en dessous — **celle du mode choisi, et elle seule**.
 
 **En mode Dynamique, la vitesse atteinte est conservée quand vous relâchez** : vous la posez une
 fois au pied, puis vous lisez sans rien tenir, la pédale centrale servant à partir et à s'arrêter.
+
+**Après une pause, c'est la pédale qui choisit le sens** : la **droite repart vers l'avant**, la
+**gauche vers l'arrière**, **à la vitesse d'avant la pause**. Gardez le pied appuyé plus d'une
+demi-seconde, et la vitesse se remet à changer. Arrivé en haut ou en bas du texte, le défilement
+se met en pause tout seul : l'autre pédale repart aussitôt dans l'autre sens.
 Un réglage apparaît alors sous les trois boutons, **« Montée en vitesse (mode dynamique) »** :
 c'est le nombre de **secondes d'appui continu pour atteindre la vitesse maximale**, **10 s** au
 départ. Plus le nombre est petit, plus la pédale est nerveuse.
@@ -752,21 +761,17 @@ pédales fonctionne aussi en Dynamique, mais sans bouton lecture/pause.
 ### Si le texte monte trop vite (ou trop lentement)
 
 En mode **Maintien** et en mode **Impulsion**, le pied commande le **départ** et l'**arrêt** ;
-un réglage séparé commande la **vitesse**. *(Le mode Dynamique, lui, ignore ce réglage : sa
-vitesse se construit au pied.)*
+la **vitesse** se règle sur le téléphone. En mode **Dynamique**, elle se pose au pied — et le
+téléphone la suit, et peut la corriger.
 
 1. **Sur le moment, le plus simple : relâchez la pédale.** Le texte s'arrête tout de suite.
-2. Sur le téléphone, onglet **Contrôle**, appuyez sur **« Moins vite »** (ou **« Plus vite »**).
-   Chaque appui change la vitesse d'un cran.
+2. Sur le téléphone, onglet **Contrôle**, carte **« Vitesse »** : appuyez sur **« − Moins vite »**
+   (ou **« Plus vite + »**). Chaque appui change la vitesse d'un cran.
 3. Le grand écran le confirme : le nombre en haut à droite change immédiatement.
 
-*L'onglet Contrôle contient aussi une barre **« Vitesse de lecture »** : c'est le même réglage,
-en plus précis. Faites-la glisser, puis lâchez, puis regardez le grand écran.*
-
-> 💡 **Pour que votre vitesse soit conservée après extinction, terminez toujours en la posant avec
-> la barre « Vitesse de lecture » de l'onglet Contrôle.** Les boutons « Plus vite » / « Moins
-> vite » agissent tout de suite, mais leur réglage n'est pas toujours gardé une fois le boîtier
-> débranché.
+*La barre de la même carte règle la même vitesse, en plus précis. Faites-la glisser, puis
+lâchez, puis regardez le grand écran.* **La vitesse est conservée après extinction**, quelle que
+soit la façon dont vous l'avez réglée.
 
 > ✍️ **À NOTER SUR PAPIER** : la vitesse qui vous convient (le nombre affiché en haut à droite
 > de l'écran, par exemple `70`), une fois trouvée en répétition. Vous gagnerez cinq minutes au
@@ -775,7 +780,8 @@ en plus précis. Faites-la glisser, puis lâchez, puis regardez le grand écran.
 > ⚠️ **PIÈGE — le bouton « Lecture ».** L'onglet **Contrôle** contient un bouton **« Lecture »**
 > qui fait défiler le texte **tout seul**, en continu. Dans ce cas, **relâcher la pédale n'arrête
 > plus rien.** **Parade** : appuyez sur **« Pause »** sur le téléphone. En tournage, on n'utilise
-> **pas** « Lecture » : on pilote au pied. *(Ce bouton n'agit qu'en mode « Maintien ».)*
+> **pas** « Lecture » : on pilote au pied. *(Lecture, Pause et Début marchent dans les trois
+> modes.)*
 
 ### Réapprendre les touches des pédales
 
@@ -800,7 +806,7 @@ pas appuyé sur **« Enregistrer »**, et un bouton **« Annuler »** remet tout
 nom de la touche s'affiche.* Les pédales refonctionnent immédiatement.
 
 > 📌 **Trois touches sont refusées, et le message vous dit pourquoi :**
-> **Échap** (elle sert à revenir à la page d'accueil), **F** (elle sert au plein écran), et
+> **Échap** (elle sert à quitter la vue Journaliste), **F** (elle sert au plein écran), et
 > **toute touche déjà attribuée à une autre pédale** (sinon l'une des deux devient muette).
 > Appuyez simplement sur une autre pédale.
 
@@ -840,19 +846,20 @@ Sur un texte de dix minutes, chercher sa place à l'aveugle entre deux prises es
 
 ## 10. Régler le confort de lecture
 
-Tout se passe dans l'onglet **Réglages** de la télécommande. Ces réglages sont **mémorisés** et
-survivent à l'extinction du boîtier. **Ils s'appliquent tout de suite à toutes les pages
-ouvertes**, sans rien recharger.
+La **taille**, l'**interligne**, les **marges** et l'**alignement** sont dans l'onglet **Texte**,
+carte **« Mise en page »** ; le **miroir** et la **ligne de repère**, dans l'onglet **Réglages**,
+carte **« Affichage »**. Ces réglages sont **mémorisés** et survivent à l'extinction du boîtier.
+**Ils s'appliquent tout de suite à toutes les pages ouvertes**, sans rien recharger ni envoyer.
 
 > 💡 **Comment savoir qu'un réglage est pris en compte.** Les réglages en boutons (Alignement,
-> Mode) et les pastilles de couleur se contentent de **devenir bleus**. Les barres à faire
+> Mode) se contentent de **devenir bleus**. Les barres à faire
 > glisser, elles, n'affichent **rien du tout** : la seule preuve, c'est **le grand écran qui
 > change** — et seulement **au moment où vous retirez le doigt**.
 > Glissez, lâchez, PUIS regardez l'écran.
 
 ### La taille du texte, l'interligne et les marges
 
-Carte **« Texte »** : trois barres à faire glisser — **Taille du texte**, **Interligne**,
+Onglet **Texte**, carte **« Mise en page »** : trois barres à faire glisser — **Taille du texte**, **Interligne**,
 **Marges latérales** — plus le choix de l'**Alignement** (Gauche / Centré). Le choix actif est
 celui dont le bouton est bleu.
 
@@ -868,12 +875,9 @@ celui dont le bouton est bleu.
 
 ### Les couleurs
 
-Carte **« Couleurs »** : six pastilles pour le texte, six pour le fond. Un simple appui applique
-la couleur tout de suite, et la pastille choisie prend un contour bleu.
-
-> ⚠️ **PIÈGE — on peut choisir du texte noir sur fond noir.** L'écran devient alors totalement
-> illisible et on croit à une panne. **Parade** : appuyez simplement sur une autre pastille.
-> **La combinaison de secours qui marche toujours : texte BLANC sur fond NOIR.**
+Le texte est **toujours blanc sur fond noir** : c'est le plus lisible, et il n'y a rien à régler.
+Pour faire ressortir un passage en couleur, ce sont les pastilles de la zone de saisie
+(chapitre 7).
 
 ### Le miroir
 
@@ -893,11 +897,11 @@ l'avance, pour qu'il redevienne parfaitement lisible **dans la vitre**.
   interrupteurs éteints.**
 - **Vous lisez le reflet dans une vitre** : **activez le miroir horizontal**, et lui seul.
 
-> 📌 **Le miroir ne s'applique qu'à l'écran principal**, celui que vous lisez. **Les écrans
-> secondaires (régie) restent toujours à l'endroit**, donc lisibles par tout le monde : c'est
-> écrit sur la carte « Affichage », et il n'y a rien à régler pour cela.
+> 📌 **Le miroir ne s'applique qu'à la vue Journaliste**, celle que vous lisez. **La vue
+> Spectateur (régie) reste toujours à l'endroit**, donc lisible par tout le monde : il n'y a
+> rien à régler pour cela.
 
-*Ce que vous devez voir quand le miroir est actif : sur l'écran principal, le texte apparaît à
+*Ce que vous devez voir quand le miroir est actif : sur le grand écran, le texte apparaît à
 l'envers, illisible de face — mais le **repère en haut à droite**, lui, reste lisible à l'endroit.
 C'est normal.*
 
@@ -906,38 +910,34 @@ C'est normal.*
 
 ### La ligne de repère
 
-Toujours dans la carte **« Affichage »** : l'interrupteur **« Ligne de repère »** affiche la fine
+Toujours dans la carte **« Affichage »** : l'interrupteur **« Ligne de repère »** affiche la
 ligne rouge horizontale, un peu au-dessus du milieu de l'écran, avec un petit repère triangulaire
 rouge à chaque extrémité. C'est le repère où poser les yeux.
 Elle est activée d'usine : laissez-la, ou éteignez-la si elle vous gêne.
 
 ---
 
-## 11. L'écran secondaire (régie) — facultatif
+## 11. La vue Spectateur (régie) — facultatif
 
 Vous pouvez afficher **le même texte, en direct, sur un deuxième écran** (l'ordinateur ou la
-tablette de la régie), pour que quelqu'un suive la lecture.
+tablette de la régie, ou le petit écran du boîtier), pour que quelqu'un suive la lecture.
 
 1. Connectez cet appareil au réseau sans fil **Prompteur**, exactement comme le téléphone.
-2. Dans son navigateur, ouvrez la page d'accueil `http://10.42.0.1:5000`.
-3. Appuyez sur le gros bouton **« Écran secondaire »** *(régie, retour plateau — lecture seule)*.
+2. Dans son navigateur, ouvrez `http://10.42.0.1:5000`, puis appuyez sur **Spectateur**, tout
+   en haut. *(Ou tapez directement `http://10.42.0.1:5000/spectateur`.)*
 
-*Ce que vous devez voir : une étiquette **jaune** en haut à gauche indiquant
-**« SPECTATEUR — suit l'écran principal »**, et le texte qui défile en même temps que le vôtre.*
+*Ce que vous devez voir : tout en haut, le mot **SPECTATEUR** en petit et les boutons
+**Settings · Spectateur · ⏻ Veille** ; en dessous, le texte qui défile en même temps que le vôtre.*
 
-**Plusieurs écrans secondaires peuvent être ouverts en même temps, sans aucun risque** : ils ne
-font que regarder, ils ne pilotent rien et ils restent toujours à l'endroit, même si vous lisez
-en miroir.
+**Plusieurs vues Spectateur peuvent être ouvertes en même temps, sans aucun risque** : elles ne
+font que regarder, elles ne pilotent rien et elles restent toujours à l'endroit, même si vous
+lisez en miroir. **Settings** et **Spectateur** passent de l'une à l'autre d'un seul appui :
+le technicien change un réglage, puis revient au texte aussitôt.
 
-> 📌 **Si vous préférez taper l'adresse** (elle est aussi rappelée sur le téléphone, onglet
-> **Contrôle**, carte « Écran régie / spectateur ») : `http://10.42.0.1:5000/view`, en entier et
-> terminée par **`/view`**. Si l'étiquette jaune « SPECTATEUR » n'apparaît pas, fermez la page et
-> recommencez par le bouton **« Écran secondaire »**, c'est plus sûr.
-
-> ⚠️ **UN SEUL ÉCRAN PRINCIPAL À LA FOIS.** Deux écrans principaux se disputeraient le pilotage,
+> ⚠️ **UNE SEULE VUE JOURNALISTE À LA FOIS.** Deux vues Journaliste se disputeraient le pilotage,
 > et le texte sauterait d'un endroit à l'autre en pleine lecture. Le logiciel s'en charge seul :
-> sur les autres appareils, le bouton « Écran principal » se grise et indique **« déjà utilisé
-> par un autre appareil »**. **Laissez-le grisé et prenez « Écran secondaire ».**
+> une deuxième vue Journaliste ouverte ailleurs affiche **« La vue Journaliste est déjà ouverte
+> ailleurs »** et propose la vue Spectateur. **Prenez Spectateur.**
 
 > 💡 **Toutes les pages ouvertes se mettent à jour toutes seules**, sans rechargement : réglages,
 > texte à l'antenne et liste des textes enregistrés. Un deuxième téléphone ne risque donc plus de
@@ -967,12 +967,12 @@ boîtier fait exactement le même travail** — et même davantage.
 | **Flèche bas** (maintenue) | Le texte **avance** — remplace la pédale droite |
 | **Flèche haut** (maintenue) | Le texte **recule** — remplace la pédale gauche |
 | **Flèche droite** | Lecture / pause en mode **Dynamique** — remplace la pédale centrale |
-| **Espace** | Lecture / pause du défilement automatique *(mode « Maintien »)* |
+| **Espace** | Lecture / pause, dans les trois modes |
 | **R** | Revient au tout début du texte (et met en pause) |
-| **+** / **−** | Plus vite / moins vite, d'un cran |
+| **+** / **−** | Plus vite / moins vite, d'un cran (comme sur le téléphone) |
 | **I** | Réaffiche les adresses du boîtier |
 | **H** | Affiche ou masque le bandeau d'aide en haut de l'écran |
-| **Échap** | Revient à la page d'accueil — **deux fois** : une pour demander, une pour confirmer |
+| **Échap** | Quitte la vue Journaliste (le grand écran passe sur Settings) — **deux fois** : une pour demander, une pour confirmer |
 
 > ⚠️ **N'appuyez pas sur la touche M** (elle retourne le texte en miroir) **ni sur la touche F**
 > (plein écran) : elles ne servent à rien ici et peuvent vous faire perdre du temps.
@@ -990,28 +990,45 @@ Les pédales fonctionnent seules, même téléphone éteint. Le téléphone n'es
 
 ---
 
-## 13. Fermer, éteindre et ranger
+## 13. Veille, grand écran, extinction
 
 > 💡 **Le boîtier peut rester allumé toute la journée de tournage sans problème.**
 > Entre deux séquences, **laissez-le branché** : c'est le **débranchement répété** qui abîme sa
 > mémoire, pas le fait de rester allumé. On ne l'éteint qu'**à la fin du tournage**.
 
-### Fermer le prompteur sans éteindre le boîtier
+### Mettre en veille
 
-Le prompteur est une application : **on peut la fermer et la rouvrir sans rien débrancher.**
-C'est utile si quelqu'un a besoin du bureau du Raspberry, ou si l'affichage s'est mis de travers.
+Entre deux séquences, **⏻ Veille** (en haut à droite des pages Settings et Spectateur) met le
+système au repos sans rien débrancher. Une question de confirmation, puis :
 
-Sur la page d'accueil du téléphone, dépliez la barre **« Écran du boîtier »** (tout en haut,
-sous les deux gros boutons). Elle indique si le prompteur est **affiché** ou **fermé**, et
-propose **« Afficher sur le boîtier »** (le remet en plein écran) et **« Fermer sur le boîtier »**
-(le referme et rend la main au bureau du Raspberry, après une question de confirmation).
+- le **grand écran s'éteint** (il ne reçoit plus d'image et se met en veille de lui-même) ;
+- le **petit écran** et le téléphone passent **au noir**, avec un bouton **« ⏻ Rallumer »**.
 
-**Le texte et vos réglages ne sont pas perdus.** On peut aussi rouvrir le prompteur sur le
-boîtier en double-cliquant, avec la souris USB, sur l'icône **« Le Prompteur »** posée sur son
-bureau (elle figure aussi dans le menu des applications).
+**Pour rallumer** : touchez l'écran noir (ou « Rallumer » sur le téléphone), ou appuyez sur
+**une pédale**. Tout revient en une seconde, **à l'arrêt, là où vous en étiez** : texte,
+position et réglages ne bougent pas.
 
-> 📌 **Ces deux boutons agissent sur l'écran du boîtier, pas sur l'appareil que vous tenez**, et
-> ils **n'éteignent pas** la machine : pour cela, c'est le **bouton physique** ci-dessous.
+> 📌 **La veille n'éteint pas le boîtier.** Il reste allumé et prêt. Pour l'éteindre vraiment,
+> c'est le **bouton physique** ci-dessous.
+
+### Choisir ce que montre le grand écran
+
+En haut de la page Settings, la section **« Vue du journaliste »** a trois boutons. **Le bleu est
+ce que montre le grand écran en ce moment** :
+
+| Le bouton | Le grand écran affiche |
+|---|---|
+| **Journaliste** | le prompteur, piloté aux pédales *(ce qu'il affiche au branchement)* |
+| **Settings** | la page Settings, en grand *(pratique avec une souris)* |
+| **Bureau** | le bureau du Raspberry : le prompteur est fermé |
+
+Quitter **Journaliste** demande une confirmation : depuis un téléphone, un appui involontaire
+retirerait le texte en pleine prise. **Le texte et vos réglages ne sont jamais perdus.** On peut
+aussi rouvrir le prompteur en double-cliquant, avec la souris USB, sur l'icône
+**« Le Prompteur »** posée sur le bureau du boîtier.
+
+> 📌 **Ces boutons agissent sur le grand écran du boîtier, pas sur l'appareil que vous tenez**,
+> et ils **n'éteignent pas** la machine.
 
 ### Éteindre
 
@@ -1045,10 +1062,9 @@ Faites-le vérifier une fois par l'installateur et notez la réponse (chapitre 2
 > d'abîmer la mémoire du boîtier. Attendez que tout soit calme.
 
 **Ce que vous ne perdez pas** (tout est conservé dans la mémoire du boîtier) : votre texte
-affiché, son titre, **sa mise en forme**, tous vos réglages (taille, interligne, marges, couleurs,
-alignement, miroir, ligne de repère, mode et touches des pédales), la **vitesse** — à condition de
-l'avoir posée avec la barre « Vitesse de lecture » et non seulement avec les boutons « Plus
-vite » / « Moins vite » (chapitre 8) — et toute votre bibliothèque « Mes textes enregistrés ».
+affiché, son titre, **sa mise en forme**, tous vos réglages (taille, interligne, marges,
+alignement, miroir, ligne de repère, mode et touches des pédales), la **vitesse**, et toute votre
+bibliothèque « Mes textes enregistrés ».
 
 **Ce que vous perdez, et c'est normal** : la position dans le texte. Au rallumage, **on repart
 toujours du tout début**.
@@ -1074,11 +1090,11 @@ toujours du tout début**.
 | **Rien ne s'allume du tout (ni l'écran, ni le boîtier)** | C'est un problème **de courant**, pas de prompteur. Vérifiez que la **multiprise est allumée** (son interrupteur lumineux), essayez **une autre prise murale**, et vérifiez que **chaque bloc d'alimentation est bien enfoncé aux deux bouts**. |
 | **L'écran reste noir alors que le boîtier est alimenté** | Vérifiez que l'écran est **allumé** et que **sa propre** alimentation est branchée. Puis que le câble d'image est branché, côté boîtier, sur **la prise plate collée à la prise du courant**. Puis débranchez le boîtier, attendez 10 secondes, rebranchez **écran allumé en premier**, et attendez **une minute complète**. |
 | **L'écran affiche « pas de signal », ou reste bleu** | C'est l'écran, pas le boîtier. Cherchez les **petits boutons de menu sur sa tranche** et vérifiez qu'il est réglé sur l'entrée **HDMI** (et non AV, ni HDMI 2). Vérifiez aussi que la **luminosité n'est pas au minimum**. |
-| **L'écran du boîtier affiche un bureau, des icônes ou une barre de navigateur au lieu du texte** | Le prompteur a été fermé : **plus besoin de redémarrer**. Avec la **souris USB**, double-cliquez sur l'icône **« Le Prompteur »** sur ce bureau. Ou, depuis le téléphone : page d'accueil → barre **« Écran du boîtier »** → **« Afficher sur le boîtier »**. *(Si seule une barre de navigateur dépasse et qu'un clavier est branché, la touche **F** remet le plein écran.)* |
-| **Le bouton « Écran principal » est grisé : « déjà utilisé par un autre appareil »** | **C'est normal et c'est bon signe** : l'écran du boîtier est l'écran principal, et il tient les commandes. Sur les autres appareils, prenez **« Écran secondaire »**. Si l'appareil qui lisait a réellement disparu (éteint, parti), **la place se libère toute seule en une quinzaine de secondes**. |
-| **Un écran de lecture annonce « Un autre appareil a pris la main. »** ou **« Un autre écran principal est déjà en cours. »** | Deux écrans principaux se sont disputé le pilotage. Celui qui affiche ce message **continue de montrer le texte, mais ses pédales ne pilotent plus rien**. **Refermez l'écran principal de trop** (touche **Échap**, deux fois) et n'en gardez **qu'un seul** : sur les autres appareils, le bouton **« Ouvrir en écran secondaire »**. Si c'est au contraire cet écran-ci qui doit mener (l'autre est parti, ou dans une autre pièce), appuyez sur **« Prendre la main quand même »**. |
+| **L'écran du boîtier affiche un bureau, des icônes ou une barre de navigateur au lieu du texte** | Le prompteur a été fermé : **plus besoin de redémarrer**. Avec la **souris USB**, double-cliquez sur l'icône **« Le Prompteur »** sur ce bureau. Ou, depuis le téléphone : page Settings → section **« Vue du journaliste »** → **Journaliste**. *(Si seule une barre de navigateur dépasse et qu'un clavier est branché, la touche **F** remet le plein écran.)* |
+| **Le grand écran est tout noir, et le téléphone affiche un fond noir avec « ⏻ Rallumer »** | Le système est **en veille** (quelqu'un a appuyé sur ⏻ Veille). Touchez **« Rallumer »**, ou appuyez sur une pédale. Tout revient à l'arrêt, là où vous en étiez. |
+| **Un écran annonce « La vue Journaliste est déjà ouverte ailleurs. »** ou **« Un autre appareil a pris la main. »** | Deux vues Journaliste se disputent le pilotage. Celle qui affiche ce message **continue de montrer le texte, mais ses pédales ne pilotent plus rien**. **Refermez celle de trop** (touche **Échap**, deux fois) : **l'autre reprend la main toute seule** en quelques secondes. Sur les autres appareils, prenez **« Ouvrir la vue Spectateur »**. Si c'est au contraire cet écran-ci qui doit mener tout de suite, appuyez sur **« Prendre la main quand même »**. |
 | **Un bandeau rouge annonce « Liaison avec le boîtier perdue »** | Le téléphone ne peut plus parler au boîtier. **Le texte affiché reste lisible et les pédales continuent de fonctionner** : vous pouvez terminer la prise. Vérifiez ensuite le courant, puis débranchez le boîtier, attendez 10 secondes et rebranchez (écran allumé en premier). |
-| **Échap affiche « Impossible de revenir à l'accueil »** | C'est une **protection**, pas une panne : la liaison avec le boîtier est perdue, et la page d'accueil ne répondrait pas — vous resteriez devant une page vide, sans flèche retour. **Restez sur le texte**, il est lisible et les pédales marchent. Réessayez quand le bandeau rouge aura disparu. |
+| **Échap affiche « Impossible de quitter la vue Journaliste »** | C'est une **protection**, pas une panne : la liaison avec le boîtier est perdue, et la vue Settings ne répondrait pas — vous resteriez devant une page vide, sans flèche retour. **Restez sur le texte**, il est lisible et les pédales marchent. Réessayez quand le bandeau rouge aura disparu. |
 | **Les pédales ne répondent plus** | Dans cet ordre : **1)** débranchez le câble USB du pédalier et rebranchez-le **sur une autre prise USB** du boîtier, attendez 5 secondes ; **2)** appuyez sur la pédale en regardant le repère en haut à droite de l'écran — s'il ne bouge pas, l'appui n'arrive pas au boîtier ; **3)** si une **souris USB** est branchée (ou si votre écran est tactile), cliquez **une fois** sur l'écran noir et réessayez ; **4)** débranchez l'alimentation du boîtier, attendez 10 secondes, rebranchez, attendez une minute ; **5)** branchez un **clavier USB** : Flèche bas = avancer, Flèche haut = reculer (chapitre 12). |
 | **La pédale de droite fait reculer le texte au lieu d'avancer** | Le **pédalier est posé à l'envers**. Tournez-le d'un demi-tour (le câble doit partir vers le boîtier) et refaites l'essai. **Aucun réglage n'est à modifier.** Si l'inversion persiste, notez-le, faites l'inverse pour la journée, et signalez-le à l'installateur après le tournage. |
 | **Le pédalier ne fonctionne plus du tout (câble arraché, pédale cassée)** | Branchez un **clavier USB ordinaire** sur le boîtier : **Flèche bas** remplace la pédale droite, **Flèche haut** la pédale gauche. Voir chapitre 12. |
@@ -1091,13 +1107,12 @@ toujours du tout début**.
 | **Le téléphone n'ouvre pas la page, ou affiche « Erreur de connexion au boîtier »** | Votre téléphone est reparti sur la 4G. Retournez dans ses réglages sans fil, resélectionnez **Prompteur**, acceptez de rester connecté malgré l'absence d'internet, puis **rechargez la page**. |
 | **La page du téléphone semble figée (le texte ou les réglages n'y suivent plus)** | Normalement, **toutes les pages se mettent à jour toutes seules**. Si l'une reste en arrière, c'est qu'elle a perdu le réseau du boîtier : reconnectez le téléphone à **Prompteur**, puis **rechargez la page** — c'est le geste de secours universel côté téléphone. |
 | **L'écran affiche « Aucun texte. »** | Trois cas. **Au premier allumage : c'est normal**, le boîtier fonctionne et attend votre texte. **Juste après un envoi** : la zone de saisie du téléphone était **vide** au moment de l'envoi — rechargez votre texte depuis « Mes textes enregistrés », ou recollez-le. **Après un import qui n'a rien rempli** : le document n'était pas lisible (typiquement un **PDF scanné**) — repartez du `.docx` ou copiez-collez. |
-| **L'écran est illisible (texte de la même couleur que le fond)** | Onglet **Réglages**, carte **Couleurs** : appuyez sur la pastille **blanche** pour le texte et la **noire** pour le fond. |
-| **Le texte est à l'envers, ou la tête en bas** | Onglet **Réglages**, carte **Affichage** : vérifiez **les DEUX interrupteurs**, « Miroir horizontal » et « Miroir vertical », et éteignez celui qui est allumé à tort. *(Si vous lisez dans une vitre sans tain, seul l'horizontal doit être allumé. Le miroir ne touche que l'écran principal : les écrans secondaires sont toujours à l'endroit.)* |
+| **Le texte est à l'envers, ou la tête en bas** | Onglet **Réglages**, carte **Affichage** : vérifiez **les DEUX interrupteurs**, « Miroir horizontal » et « Miroir vertical », et éteignez celui qui est allumé à tort. *(Si vous lisez dans une vitre sans tain, seul l'horizontal doit être allumé. Le miroir ne touche que la vue Journaliste : la vue Spectateur est toujours à l'endroit.)* |
 | **Le texte démarre trop bas sur l'écran** | C'est voulu : la première ligne est placée sous la ligne rouge, et le texte monte vers elle dès la première pression sur la pédale. |
 | **La clé USB n'est pas détectée, ou mon document n'apparaît pas dans la liste** | Retirez la clé, rebranchez-la **sur le boîtier**, attendez 5 secondes, réappuyez sur **« Clé USB »**. Si votre document n'est toujours pas listé, il est probablement **trop lourd** (plus de 5 Mo) : il est alors ignoré **sans aucun message**. Utilisez un `.docx` léger, posé **à la racine** d'une petite clé ordinaire. |
 | **Un import échoue, ou ne remplit rien** | Le document n'est pas lisible (PDF scanné, document protégé, fichier trop lourd) ; un format qui n'est pas un document texte, lui, est refusé avec un message. N'envoyez pas à l'écran : repartez du document Word d'origine, ou **copiez-collez le texte** dans la télécommande — cette voie marche toujours. |
 | **Le texte importé s'arrête au milieu** | Le fichier dépassait 5 Mo : il a été **coupé sans avertissement**. Après un import, descendez jusqu'à **la dernière ligne dans la zone de saisie** avant d'appuyer sur « Envoyer à l'écran », et repartez d'un `.docx` léger. |
-| **L'écran de la régie n'affiche pas l'étiquette jaune « SPECTATEUR »** | Il a été ouvert en écran principal. Refermez cette page et rouvrez-la par le bouton **« Écran secondaire »** de la page d'accueil (chapitre 11). |
+| **L'écran de la régie n'affiche pas le mot « SPECTATEUR » tout en haut** | Il a ouvert la vue Journaliste au lieu de la vue Spectateur. Refermez cette page et ouvrez `http://10.42.0.1:5000/spectateur`, ou le bouton **Spectateur** de la page Settings (chapitre 11). |
 | **Rien de tout cela ne marche** | **Éteignez** : débranchez l'alimentation du boîtier. Attendez **10 secondes**. **Rallumez** : écran d'abord, boîtier ensuite. Attendez **une minute complète** sans rien toucher. Si l'écran reste définitivement noir ou si le réseau « Prompteur » n'apparaît jamais : **passez à votre plan B** (votre texte imprimé en gros caractères, ou ouvert en très grand sur une tablette) pour que le tournage ait lieu quand même, **remplacez la carte mémoire par celle de secours** si l'installateur vous en a préparé une, et **appelez la personne qui a installé le boîtier** (coordonnées sur la fiche au dos). Ne démontez rien. |
 
 ---
@@ -1153,10 +1168,10 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
       J'ai attendu **une minute complète**, et le texte est apparu tout seul.
 - [ ] Le boîtier est posé **à l'écart du micro** (son ventilateur souffle légèrement).
 - [ ] Le **pédalier est bien orienté** (câble vers le boîtier) et **calé** pour ne pas glisser.
-- [ ] Mon téléphone est connecté au réseau **Prompteur** et la page d'accueil s'ouvre
-      (deux gros boutons, puis trois onglets : Texte, Contrôle, Réglages).
-- [ ] Le bouton **« Écran principal »** porte bien la mention **« déjà utilisé par un autre
-      appareil »** : c'est l'écran du boîtier qui mène, et **il n'y en a qu'un**.
+- [ ] Mon téléphone est connecté au réseau **Prompteur** et la page **Settings** s'ouvre
+      (Settings · Spectateur · Veille, puis « Vue du journaliste » et trois onglets).
+- [ ] Dans **« Vue du journaliste »**, le bouton **Journaliste** est **bleu** : le grand écran
+      affiche bien le prompteur.
 - [ ] J'ai **envoyé mon texte**, j'ai vu le message **« Texte envoyé à l'écran ✓ »**, et le
       **repère jaune a disparu**.
 - [ ] J'ai **testé les deux pédales** : la droite fait monter le texte (`▶︎`), la gauche le fait
@@ -1164,7 +1179,7 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
 - [ ] J'ai vérifié que le mode est bien **« Maintien »** (bouton bleu) et que **les deux
       interrupteurs Miroir** sont dans la bonne position pour mon montage.
 - [ ] J'ai réglé **taille, marges et vitesse** maintenant, et je n'y toucherai plus pendant
-      les prises. *(La vitesse, je l'ai posée avec la barre « Vitesse de lecture ».)*
+      les prises.
 - [ ] Je suis **remonté au tout début** (bouton « Début », ou pédale gauche) avant de lancer
       la première prise.
 
@@ -1216,10 +1231,10 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
 >
 > ---
 >
-> 🖥️ **LA PAGE D'ACCUEIL, DEUX GROS BOUTONS :** **« Écran principal »** = l'écran qu'on lit et
-> qu'on pilote aux pédales ; sur le boîtier il s'ouvre tout seul, et le téléphone indique alors
-> **« déjà utilisé par un autre appareil »** — **c'est normal**.
-> **« Écran secondaire »** = écran de suivi pour la régie, lecture seule, autant qu'on veut.
+> 🖥️ **TROIS VUES :** **Journaliste** = le grand écran, qu'on lit et qu'on pilote aux pédales
+> (il s'ouvre tout seul) · **Settings** = le téléphone : texte et réglages · **Spectateur** =
+> suivi pour la régie, lecture seule. **⏻ Veille** éteint les écrans ; un appui ou une pédale
+> rallume.
 >
 > 📤 **RIEN NE PART À L'ÉCRAN TOUT SEUL.** Un import (Fichier, Clé USB) remplit seulement la
 > zone de texte du téléphone. Tant que le **repère jaune** « Ce texte n'est pas encore à
@@ -1234,9 +1249,10 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
 > est branchée, cliquer une fois sur l'écran noir. Toujours rien : brancher **un clavier USB** —
 > **Flèche bas = avancer, Flèche haut = reculer**, R = retour au début.
 >
-> 🚪 **Sortir de l'écran de lecture :** touche **Échap**, **deux fois** (une pour demander, une
-> pour confirmer). **L'écran du boîtier montre le bureau au lieu du texte ?** Double-cliquer, à
-> la souris, sur l'icône **« Le Prompteur »** de ce bureau.
+> 🚪 **Quitter la vue Journaliste :** touche **Échap**, **deux fois** (une pour demander, une
+> pour confirmer). **Le grand écran ne montre pas le texte ?** Téléphone → **« Vue du
+> journaliste »** → **Journaliste**. Ou, à la souris, double-cliquer sur l'icône
+> **« Le Prompteur »** du bureau.
 >
 > ⛔ **Ne jamais toucher le petit bouton sombre marqué d'une croix rouge ✕**
 > (il efface un texte définitivement).

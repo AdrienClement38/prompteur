@@ -244,7 +244,7 @@ chmod +x "$PROJECT_DIR/install/assistance.sh" 2>/dev/null || true
 echo
 echo "============================================================"
 echo " Installation terminée."
-echo "  • Serveur     : http://localhost:$PORT/display (écran)"
+echo "  • Serveur     : http://localhost:$PORT/journaliste (écran)"
 echo "  • Téléphone   : connecte-toi au WiFi « $WIFI_SSID »"
 echo "                  (mot de passe : $WIFI_PASS)"
 echo "                  puis ouvre http://10.42.0.1:$PORT"

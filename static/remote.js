@@ -1,17 +1,19 @@
-/* Prompteur — logique de la télécommande (téléphone).
+/* Prompteur — logique de la vue Settings (téléphone, petit écran, PC de régie).
    Envoie le texte, les réglages et les commandes au serveur du boîtier. */
 
 (() => {
   "use strict";
 
   const $ = (id) => document.getElementById(id);
+  const Commun = window.Commun;
   const toastEl = $("toast");
   let toastTimer = null;
   function toast(msg) {
     toastEl.textContent = msg;
     toastEl.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1600);
+    // Assez long pour lire un message d'erreur d'une phrase.
+    toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2600);
   }
 
   async function api(path, opts) {
@@ -38,15 +40,21 @@
     try { return JSON.parse(err && err.message).error; } catch { return null; }
   }
 
-  // Lien pour l'écran régie / spectateur (affiché dans l'onglet Contrôle)
-  async function loadViewLink() {
+  // Adresses des trois vues, montrées dans la fenêtre Info de « Vue du
+  // journaliste ». On écrit dans le gabarit lui-même : chaque ouverture de la
+  // fenêtre en fait une copie, déjà à jour.
+  async function loadAddresses() {
+    let base = "http://10.42.0.1:5000";
     try {
       const info = await api("/api/info");
-      const ip = (info.addresses || [])[0] || "10.42.0.1";
-      $("viewLink").textContent = `http://${ip}:${info.port || 5000}/view`;
+      base = `http://${(info.addresses || [])[0] || "10.42.0.1"}:${info.port || 5000}`;
     } catch {
-      $("viewLink").textContent = "http://10.42.0.1:5000/view";
+      /* l'adresse du WiFi du boîtier reste la bonne dans l'immense majorité des cas */
     }
+    document.querySelectorAll("template").forEach((gabarit) =>
+      gabarit.content.querySelectorAll("[data-adresse]").forEach((n) => {
+        n.textContent = base + n.dataset.adresse;
+      }));
   }
 
   let settings = {};
@@ -57,6 +65,10 @@
   let textDirty = false;
   // Texte reellement a l'ecran, pour savoir si la zone de saisie en differe.
   let sentText = null;
+  let sentMarks = "[]"; // mise en forme réellement à l'écran (JSON)
+  // Empreinte du texte ET de la mise en forme du boîtier, lus en dernier.
+  let contenuBoitier = null;
+  const signature = (st) => (st.title || "") + "\u0000" + (st.text || "") + "\u0000" + JSON.stringify(st.marks || []);
 
   // --- Onglets --------------------------------------------------------------
   document.querySelectorAll(".tabbtns button").forEach((btn) => {
@@ -78,6 +90,7 @@
     }
     settings = s.settings || {};
     knownVersion = s.version;
+    contenuBoitier = signature(s);
     $("title").value = s.title || "";
     // Les marques AVANT setText : c'est setText qui redessine la zone de saisie,
     // et il lit « marks ». Dans l'autre ordre, l'editeur affichait la mise en forme
@@ -85,6 +98,7 @@
     marks = Array.isArray(s.marks) ? s.marks : [];
     setText(s.text || "");
     sentText = s.text || "";
+    sentMarks = JSON.stringify(marks);
     texteAvant = s.text || "";
     textDirty = false;
     reflectSettings();
@@ -98,7 +112,9 @@
   // voit rien changer, et on croit que le boîtier ne répond plus — une bizarrerie
   // signalée serait devenue une panne perçue, en plein tournage.
   function refreshUnsent() {
-    const differe = sentText !== null && getText() !== sentText;
+    // Le texte OU sa mise en forme : une couleur ajoutée sans toucher au texte
+    // n'est pas encore à l'écran non plus.
+    const differe = sentText !== null && (getText() !== sentText || JSON.stringify(marks) !== sentMarks);
     $("unsent").classList.toggle("hide", !differe);
   }
 
@@ -116,6 +132,7 @@
     } catch {
       return; // liaison perdue : on réessaiera au tour suivant
     }
+    Commun.veille.maj(v.veille);
     // La bibliothèque a son propre compteur : un texte enregistré ou supprimé
     // ailleurs doit apparaître ou disparaître ici sans recharger la page, mais
     // sans perturber pour autant les écrans de lecture.
@@ -134,7 +151,15 @@
     }
     settings = st.settings || {};
     reflectSettings();
+    // Un simple réglage (la vitesse posée au pied, la taille…) fait aussi
+    // avancer la version : on ne touche à la zone de saisie QUE si le texte ou sa
+    // mise en forme ont réellement changé. Sinon on effacerait une sélection en
+    // cours, et l'on crierait « le texte a changé » à tort.
+    const contenu = signature(st);
+    if (contenu === contenuBoitier) return;
+    contenuBoitier = contenu;
     sentText = st.text || "";
+    sentMarks = JSON.stringify(Array.isArray(st.marks) ? st.marks : []);
     if (textDirty) {
       // Quelqu'un a envoyé un autre texte pendant qu'on écrivait : on prévient,
       // mais on n'écrase pas la saisie en cours.
@@ -146,6 +171,7 @@
     marks = Array.isArray(st.marks) ? st.marks : []; // avant setText : voir plus haut
     setText(st.text || "");
     sentText = st.text || "";
+    sentMarks = JSON.stringify(marks);
     texteAvant = st.text || "";
     refreshLibrary();
     refreshUnsent();
@@ -166,11 +192,6 @@
     // Le réglage de montée n'a de sens qu'en mode dynamique : on le masque ailleurs
     // plutôt que d'offrir un curseur sans effet.
     $("rampRow").classList.toggle("hide", (settings.mode || "hold") !== "dyn");
-    // Une seule explication a l'ecran : celle du mode choisi. Les trois ensemble
-    // faisaient un pave que plus personne ne lisait.
-    document.querySelectorAll(".modeHelp").forEach((p) =>
-      p.classList.toggle("hide", p.dataset.mode !== (settings.mode || "hold")));
-    renderSwatches();
   }
 
   function setSlider(id, raw, fmt) {
@@ -330,10 +351,11 @@
   // éléments un par un. Un texte sans plages s'affiche exactement comme avant.
   let marks = [];
 
+  // Le mode d'emploi est dans la fenêtre Info : ici, seulement l'état.
   function refreshFmtInfo() {
     $("fmtInfo").textContent = marks.length
       ? marks.length + (marks.length > 1 ? " passages mis en forme." : " passage mis en forme.")
-      : "Sélectionnez un passage, puis un bouton. Rappuyez dessus pour l'enlever.";
+      : "";
   }
 
   function applyAttr(cle, valeur) {
@@ -426,8 +448,15 @@
   // --- Envoi du texte -------------------------------------------------------
   $("send").addEventListener("click", async () => {
     const envoye = getText();
-    await postJSON("/api/text", { text: envoye, title: $("title").value, marks });
+    try {
+      await postJSON("/api/text", { text: envoye, title: $("title").value, marks });
+    } catch (err) {
+      // Un envoi qui échoue DOIT se voir : sinon on croit le texte à l'écran.
+      toast(errText(err) || "Envoi impossible : le boîtier n'a pas répondu");
+      return;
+    }
     sentText = envoye;
+    sentMarks = JSON.stringify(marks);
     textDirty = false;
     refreshUnsent();
     toast("Texte envoyé à l'écran ✓");
@@ -466,9 +495,13 @@
       const del = mkBtn("✕", "danger");
       load.onclick = async () => {
         // POST : charger un texte modifie ce qui est à l'antenne (voir server.py).
-        const res = await postJSON("/api/library/load", { name: it.name });
-        await loadState();
-        toast("« " + res.title + " » chargé");
+        try {
+          const res = await postJSON("/api/library/load", { name: it.name });
+          await loadState();
+          toast("« " + res.title + " » chargé");
+        } catch (err) {
+          toast(errText(err) || "Chargement impossible");
+        }
       };
       del.onclick = async () => {
         // Suppression definitive : ni corbeille, ni sauvegarde, et le dossier des
@@ -537,7 +570,13 @@
   // --- Import clé USB -------------------------------------------------------
   $("scanUsb").addEventListener("click", async () => {
     toast("Recherche de clés USB…");
-    const files = await api("/api/usb");
+    let files;
+    try {
+      files = await api("/api/usb");
+    } catch {
+      toast("Le boîtier n'a pas répondu");
+      return;
+    }
     const box = $("usbList");
     box.replaceChildren();
     if (!files.length) {
@@ -649,29 +688,6 @@
   bindChoice(".alignBtn", "align", "align");
   bindChoice(".modeBtn", "mode", "mode");
   bindSlider("rampSeconds", "rampSeconds", (v) => v + " s");
-
-  // --- Couleurs -------------------------------------------------------------
-  const FG_COLORS = ["#ffffff", "#ffd400", "#eaeaea", "#00e0ff", "#9dff70", "#000000"];
-  const BG_COLORS = ["#000000", "#101010", "#0a1a2f", "#003300", "#1a1a1a", "#ffffff"];
-  function renderSwatches() {
-    fillSwatches("fgSwatches", FG_COLORS, settings.textColor || "#ffffff", "textColor");
-    fillSwatches("bgSwatches", BG_COLORS, settings.bgColor || "#000000", "bgColor");
-  }
-  function fillSwatches(id, colors, current, key) {
-    const box = $(id);
-    box.replaceChildren();
-    colors.forEach((c) => {
-      const s = document.createElement("div");
-      s.className = "swatch" + (c.toLowerCase() === String(current).toLowerCase() ? " sel" : "");
-      s.style.background = c;
-      s.onclick = () => {
-        settings[key] = c;
-        pousserReglage({ [key]: c });
-        fillSwatches(id, colors, c, key);
-      };
-      box.appendChild(s);
-    });
-  }
 
   // --- Apprentissage des touches de pédale ---------------------------------
   // Deux garanties, apprises d'un incident réel :
@@ -821,11 +837,11 @@
   bindKeyLearn("keyBackward", ["keyForward", "keyCenter"]);
   bindKeyLearn("keyCenter", ["keyForward", "keyBackward"]);
 
-  // --- Ouvrir l'écran principal hors du navigateur --------------------------
-  // Un onglet ordinaire garde sa barre d'adresse et ses onglets : ce n'est pas un
-  // écran de prompteur. On ouvre donc une FENÊTRE dédiée (window.open en mode
-  // « popup »), que le navigateur affiche sans barre d'adresse ni onglets, à la
-  // taille de l'écran.
+  // --- Ouvrir la vue Journaliste sur cet appareil ---------------------------
+  // (pédalier branché sur un ordinateur portable ; bouton dans l'Info de « Vue
+  // du journaliste »). Un onglet ordinaire garde sa barre d'adresse et ses
+  // onglets : ce n'est pas un écran de prompteur. On ouvre donc une FENÊTRE
+  // dédiée (window.open en mode « popup »), sans barre d'adresse ni onglets.
   //
   // Deux bénéfices au passage :
   //   * le plein écran y est demandé depuis un vrai geste utilisateur, donc
@@ -837,106 +853,95 @@
   //
   // Si le navigateur refuse la fenêtre (bloqueur), on retombe sur la navigation
   // classique : mieux vaut un onglet avec barre d'adresse que rien du tout.
-  function openMainScreen(e) {
-    if (e) e.preventDefault();
+  function openMainScreen() {
     const w = Math.max(640, window.screen.availWidth || 1280);
     const h = Math.max(480, window.screen.availHeight || 720);
-    const win = window.open(
-      "/display",
-      "prompteurPrincipal",
-      `popup=yes,width=${w},height=${h},left=0,top=0`
-    );
+    const win = window.open("/journaliste", "prompteurPrincipal", `popup=yes,width=${w},height=${h},left=0,top=0`);
     if (!win) {
-      window.location.href = "/display";
+      window.location.href = "/journaliste";
       return;
     }
     win.focus();
   }
+  // Délégation : le bouton vit dans un gabarit, recopié à chaque ouverture de la
+  // fenêtre Info.
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest('[data-action="journaliste-ici"]')) return;
+    Commun.fermer();
+    openMainScreen();
+  });
 
-  // --- Écran principal déjà pris ? -----------------------------------------
-  // On grise le bouton plutôt que de laisser quelqu'un entrer et bousculer le
-  // défilement de celui qui est en train de lire.
-  async function refreshPresenter() {
-    const btn = document.querySelector(".readbtn.main");
-    if (!btn) return;
-    let info;
-    try {
-      info = await api("/api/presenter");
-    } catch {
-      return;
+  // --- Vue du journaliste : ce que montre le grand écran ---------------------
+  // Trois choix : la vue Journaliste (le prompteur), la vue Settings, ou le
+  // bureau (navigateur fermé). L'état est relu tout seul toutes les quelques
+  // secondes : plus de bouton « Actualiser ».
+  const NOMS_GRAND = { journaliste: "la vue Journaliste", settings: "la vue Settings", bureau: "le bureau" };
+  let grandActuel = null; // "journaliste" | "settings" | "bureau" | null (inconnu)
+  let grandEnCours = false; // un changement est en cours : on ne réécrit pas l'état
+
+  function dessinerGrand(texteEtat, nom) {
+    const etat = $("grandEtat");
+    if (nom) {
+      etat.replaceChildren(document.createTextNode(texteEtat), el("b", null, nom), document.createTextNode("."));
+    } else {
+      etat.textContent = texteEtat;
     }
-    const busy = info.taken && !info.mine;
-    btn.classList.toggle("busy", busy);
-    btn.querySelector(".tiny").textContent = busy
-      ? "déjà utilisé par un autre appareil"
-      : "celui qu'on pilote aux pédales";
+    document.querySelectorAll("[data-grand]").forEach((b) => {
+      b.classList.toggle("actif", b.dataset.grand === grandActuel);
+      b.disabled = grandActuel === null || grandEnCours;
+    });
   }
 
-  // --- Barre « Écran du boîtier » ------------------------------------------
-  // Le prompteur est une application qu'on ouvre et qu'on ferme : plus besoin de
-  // redémarrer le boîtier pour y revenir. Le serveur ne déclare ces commandes
-  // disponibles que si la page est ouverte SUR le boîtier : depuis un téléphone,
-  // elles n'auraient aucun sens (il n'affiche pas le prompteur) et un appui
-  // accidentel fermerait l'écran en pleine prise.
   async function refreshKiosk() {
+    if (grandEnCours) return;
     let info;
     try {
       info = await api("/api/kiosk");
     } catch {
-      return; // serveur muet : on laisse la barre cachée plutôt que d'afficher un état faux
+      return; // serveur muet : on garde le dernier état connu plutôt qu'un état faux
     }
     if (!info.available) return;
-    $("boxbar").classList.remove("hide");
+    $("grand").classList.remove("hide");
     if (info.running === null) {
-      // État indéterminé : on le dit, plutôt que de faire disparaître la barre.
-      $("kioskState").replaceChildren(
-        document.createTextNode("État de l'écran "),
-        el("b", null, "indéterminé"),
-        document.createTextNode(
-          " : le script de lancement n'a pas pu être exécuté ici. " +
-            "Ces boutons ne fonctionnent que sur le boîtier lui-même."
-        )
-      );
-      $("kioskLaunch").disabled = true;
-      $("kioskClose").disabled = true;
+      // État indéterminé : on le dit, plutôt que de faire disparaître la section.
+      grandActuel = null;
+      dessinerGrand("État du grand écran inconnu : ces boutons ne fonctionnent que sur le boîtier lui-même.");
       return;
     }
-    const running = !!info.running;
-    const etat = $("kioskState");
-    etat.replaceChildren(
-      document.createTextNode("Le prompteur est "),
-      el("b", null, running ? "affiché" : "fermé"),
-      document.createTextNode(
-        running ? " sur l'écran du boîtier." : " : l'écran du boîtier montre le bureau."
-      )
-    );
-    $("kioskLaunch").disabled = running;
-    $("kioskClose").disabled = !running;
+    grandActuel = info.running ? info.vue || "journaliste" : "bureau";
+    dessinerGrand("Le grand écran affiche ", NOMS_GRAND[grandActuel]);
   }
 
-  function bindKiosk() {
-    const act = async (btn, path, attente) => {
-      btn.disabled = true;
-      $("kioskState").textContent = attente;
-      try {
-        await postJSON(path, {});
-      } catch (err) {
-        toast(errText(err) || "Commande impossible");
-      }
-      // Chromium met un instant à s'ouvrir ou à se fermer : on relit après.
-      setTimeout(refreshKiosk, 1200);
-    };
-    $("kioskLaunch").addEventListener("click", (e) =>
-      act(e.currentTarget, "/api/kiosk/launch", "Ouverture du prompteur…"));
-    $("kioskClose").addEventListener("click", (e) => {
-      // Confirmation sur ce seul bouton : il est atteignable depuis un téléphone,
-      // et un appui involontaire couperait l'écran en pleine prise.
-      if (!confirm("Fermer le prompteur sur l'écran du boîtier et revenir à son bureau ?")) return;
-      act(e.currentTarget, "/api/kiosk/close", "Fermeture du prompteur…");
-    });
-    $("kioskRefresh").addEventListener("click", refreshKiosk);
+  async function choisirGrand(cible) {
+    if (grandActuel === null || grandEnCours || cible === grandActuel) return;
+    // Quitter la vue Journaliste retire le texte du grand écran : depuis un
+    // téléphone, un appui involontaire couperait la lecture en pleine prise.
+    if (grandActuel === "journaliste") {
+      const oui = await Commun.confirmer({
+        titre: "Retirer le prompteur du grand écran ?",
+        texte: `Le grand écran affichera ${NOMS_GRAND[cible]}. Le texte et la position sont conservés.`,
+        ok: cible === "bureau" ? "Afficher le bureau" : "Afficher Settings",
+        danger: true,
+      });
+      if (!oui) return;
+    }
+    grandEnCours = true;
+    dessinerGrand("Changement en cours…");
+    try {
+      if (cible === "bureau") await postJSON("/api/kiosk/close", {});
+      else await postJSON("/api/kiosk/launch", { vue: cible });
+    } catch (err) {
+      toast(errText(err) || "Commande impossible");
+    }
+    // Chromium met un instant à s'ouvrir ou à se fermer : on relit après.
+    setTimeout(() => {
+      grandEnCours = false;
+      refreshKiosk();
+    }, 1500);
   }
-  bindKiosk();
+
+  document.querySelectorAll("[data-grand]").forEach((b) =>
+    b.addEventListener("click", () => choisirGrand(b.dataset.grand)));
 
   // --- Utilitaires ----------------------------------------------------------
   function mkBtn(label, cls) {
@@ -949,10 +954,8 @@
   loadState().catch(() => toast("Erreur de connexion au boîtier"));
   refreshFmtInfo();
   refreshKiosk();
+  pollVersion();
   setInterval(pollVersion, 1500);
-  const mainBtn = document.querySelector(".readbtn.main");
-  if (mainBtn) mainBtn.addEventListener("click", openMainScreen);
-  refreshPresenter();
-  setInterval(refreshPresenter, 3000);
-  loadViewLink();
+  setInterval(refreshKiosk, 3000);
+  loadAddresses();
 })();

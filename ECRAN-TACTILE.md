@@ -1,17 +1,20 @@
 # Le petit écran tactile — les deux montages possibles
 
 Ce document sert à **brancher l'écran tactile de 3,5 pouces** posé sur les broches
-du Raspberry, et à en faire le **tableau de bord du boîtier** : de gros boutons au
-doigt pour ouvrir le prompteur, la télécommande ou l'écran de régie, pendant que
-le grand écran affiche le texte.
+du Raspberry, et à en faire le **petit écran de contrôle du boîtier** : il affiche la
+vue **Settings** (ou **Spectateur**, d'un appui), pendant que le grand écran affiche
+le texte.
 
 - **Écran concerné** : CUQI / Waveshare 3.5″ RPi LCD **(C)** — 480 × 320, tactile
   résistif (il se pilote à l'ongle ou au stylet), raccordé en **SPI** sur les
   broches GPIO. La mention « SPI 125 MHz » et « 60 FPS » de la fiche produit est
   la signature de ce modèle.
-- **Ce document ne concerne que le branchement.** Le tableau de bord, lui, est
-  déjà en place et fonctionne sur n'importe quel appareil : il s'ouvre à
-  l'adresse **`/menu`**, ou depuis la télécommande, barre « Écran du boîtier ».
+- **Ce document ne concerne que le branchement.** Les vues Settings et
+  Spectateur, elles, sont déjà en place et fonctionnent sur n'importe quel
+  appareil : **`/settings`** et **`/spectateur`**.
+- **Écran de 7 pouces à la place ?** Si c'est un écran HDMI, il se branche sur la
+  **seconde prise HDMI** du Raspberry, sans aucun pilote : passez directement à la
+  vérification de la fin du montage A (`xrandr`), puis à `kiosk.sh --menu`.
 
 ---
 
@@ -65,7 +68,7 @@ sudo cp /boot/firmware/config.txt /boot/firmware/config.txt.avant-ecran
 
 ## Montage A — deux écrans indépendants *(celui qu'on vise)*
 
-Le 7″ affiche le prompteur, le 3,5″ affiche le tableau de bord. C'est possible si
+Le grand écran affiche le prompteur, le petit affiche la vue Settings. C'est possible si
 un pilote accepte le suffixe `,drm`, qui fait du petit écran une **sortie
 graphique à part entière** au lieu d'une recopie.
 
@@ -92,13 +95,13 @@ xrandr --query | grep " connected"
 **Ce que vous devez voir :** deux lignes, l'une pour le HDMI, l'autre pour le petit
 écran. S'il n'y en a qu'une, c'est le montage B.
 
-Il ne reste qu'à afficher le tableau de bord dessus :
+Il ne reste qu'à afficher la vue Settings dessus :
 
 ```bash
 ~/prompteur/install/kiosk.sh --menu
 ```
 
-La fenêtre se place toute seule sur le second écran. Pour la fermer :
+La fenêtre se place toute seule sur le second écran, à sa taille exacte. Pour la fermer :
 `~/prompteur/install/kiosk.sh --menu-stop`.
 
 Pour qu'elle revienne à chaque démarrage, ajoutez la même commande au démarrage
@@ -112,35 +115,31 @@ echo "$HOME/prompteur/install/kiosk.sh --menu &" >> "$HOME/.config/labwc/autosta
 
 ## Montage B — recopie de l'écran principal *(si le mode DRM est indisponible)*
 
-Le petit écran ne peut alors que **répéter** ce que montre le grand. Le tableau de
-bord ne peut pas y être affiché seul, et l'afficher en recopie n'aurait pas de
+Le petit écran ne peut alors que **répéter** ce que montre le grand. La vue
+Settings ne peut pas y être affichée seule, et l'afficher en recopie n'aurait pas de
 sens : on verrait le prompteur en tout petit.
 
-**Dans ce cas, on n'installe pas le pilote de l'écran.** Le tableau de bord reste
-parfaitement utilisable — simplement, il s'ouvre sur l'appareil de votre choix :
-
-- depuis le téléphone ou la tablette : **`http://10.42.0.1:5000/menu`** ;
-- depuis la télécommande : barre **« Écran du boîtier »** → **« Tableau de bord »**.
+**Dans ce cas, on n'installe pas le pilote de l'écran.** Les vues Settings et
+Spectateur restent parfaitement utilisables — simplement, elles s'ouvrent sur
+l'appareil de votre choix : **`http://10.42.0.1:5000/settings`** depuis le téléphone,
+la tablette ou le PC de la régie.
 
 Le confort est moindre, rien n'est perdu, et le boîtier reste intact.
 
 ---
 
-## Ce que le tableau de bord affiche
+## Ce que le petit écran affiche
 
-Quatre gros boutons, pensés pour un tactile résistif — cibles larges, bien
-séparées, aucun geste fin :
+La vue **Settings**, comme sur le téléphone, avec tout en haut trois boutons :
 
 | Bouton | Effet |
 |---|---|
-| **Prompteur** | ouvre l'écran de lecture (relance le plein écran sur le boîtier) |
-| **Télécommande** | coller un texte, régler, sans sortir le téléphone |
-| **Écran régie** | l'affichage qui suit, en lecture seule |
-| **Fermer** | ferme le prompteur et rend la main au bureau |
+| **Settings** | texte, réglages, commandes — et la section « Vue du journaliste », qui choisit ce que montre le grand écran |
+| **Spectateur** | le texte qui défile, en direct, en lecture seule |
+| **⏻ Veille** | éteint le grand écran et met le petit au noir ; un appui sur le petit écran rallume tout |
 
-En haut, un voyant et l'état du prompteur ; en bas, l'adresse à taper sur le
-téléphone et le nom du réseau WiFi. Tout tient sans défilement : sur un écran de
-la taille d'une carte bancaire, une barre de défilement est inutilisable.
+Settings et Spectateur passent de l'une à l'autre d'un seul appui : on change un
+réglage, puis on revient au texte aussitôt.
 
 ---
 

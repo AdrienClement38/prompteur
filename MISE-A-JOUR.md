@@ -126,12 +126,18 @@ prompteur revient tout seul**.
 **Le boîtier**
 
 - [ ] Le prompteur s'affiche **tout seul** au démarrage, les **pédales** font défiler
-- [ ] **Échap** demande « Revenir à la page d'accueil ? », un second **Échap** y ramène
+- [ ] **Échap** demande « Quitter la vue Journaliste ? », un second **Échap** affiche la
+      vue Settings sur le grand écran
 - [ ] L'icône **« Le Prompteur »** est sur le bureau du Raspberry
 
 **Le téléphone** *(WiFi `Prompteur`, puis `http://10.42.0.1:5000`)*
 
-- [ ] La page s'ouvre
+- [ ] La page s'ouvre : en haut, **Settings · Spectateur · ⏻ Veille**
+- [ ] **« Vue du journaliste »** → **Journaliste** : le prompteur revient sur le grand écran,
+      et ce bouton devient bleu
+- [ ] Onglet **Contrôle** → **Lecture** : le texte défile ; **Pause** : il s'arrête
+- [ ] **⏻ Veille** → **« Mettre en veille »** : le grand écran s'éteint ; **« Rallumer »** le
+      rallume
 - [ ] Sélectionnez des mots, appuyez sur **G** : ils passent en gras **sous vos yeux**
 - [ ] **« Envoyer à l'écran »** : le gras apparaît aussi sur le grand écran
 - [ ] Tapez une ligne commençant par `- ` *(tiret puis espace)*, envoyez : elle s'affiche

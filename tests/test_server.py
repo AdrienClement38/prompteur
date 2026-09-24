@@ -30,6 +30,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(server, "SCRIPTS_DIR", scripts)
     monkeypatch.setattr(server, "STATE_FILE", tmp_path / "state.json")
     monkeypatch.setattr(server, "STATE", copy.deepcopy(server.DEFAULT_STATE))
+    monkeypatch.setattr(server, "VEILLE", {"on": False})
     server.app.config.update(TESTING=True)
     return server.app.test_client()
 
@@ -46,8 +47,62 @@ def _upload(client, data, name, headers=None):
 
 # --- Fonctionnement de base --------------------------------------------------
 def test_pages_repondent(client):
-    for path in ("/", "/display", "/api/state", "/api/version", "/api/info", "/api/usb", "/api/library"):
+    for path in (
+        "/settings",
+        "/journaliste",
+        "/spectateur",
+        "/api/state",
+        "/api/version",
+        "/api/info",
+        "/api/usb",
+        "/api/library",
+    ):
         assert client.get(path).status_code == 200, path
+
+
+# --- Les trois vues portent le nom de celui qui les regarde -------------------
+# Les anciennes adresses restent valables : un favori, une adresse notée sur une
+# fiche ou un kiosque lancé avant la mise à jour ne doivent jamais tomber sur
+# une erreur.
+@pytest.mark.parametrize(
+    "ancienne,nouvelle",
+    [("/", "/settings"), ("/menu", "/settings"), ("/display", "/journaliste"), ("/view", "/spectateur")],
+)
+def test_anciennes_adresses_redirigent(client, ancienne, nouvelle):
+    r = client.get(ancienne)
+    assert r.status_code == 302
+    assert r.headers["Location"].endswith(nouvelle)
+
+
+def test_redirection_garde_la_chaine_de_requete(client):
+    r = client.get("/display?kiosque=1")
+    assert r.headers["Location"].endswith("/journaliste?kiosque=1")
+
+
+def test_chaque_vue_affiche_son_nom(client):
+    assert 'navnom">Settings' in client.get("/settings").get_data(as_text=True)
+    spectateur = client.get("/spectateur").get_data(as_text=True)
+    assert 'navnom">Spectateur' in spectateur
+    assert 'data-mode="viewer"' in spectateur
+    journaliste = client.get("/journaliste").get_data(as_text=True)
+    assert 'data-mode="presenter"' in journaliste
+    assert 'vuenom">Journaliste' in journaliste
+    # Pas de barre de navigation sur l'écran de la vitre.
+    assert '<nav class="navvues"' not in journaliste
+
+
+def test_manifeste_ouvre_la_vue_journaliste(client):
+    assert client.get("/manifest.webmanifest").get_json()["start_url"] == "/journaliste"
+
+
+def test_raccourci_de_chaque_vue_ouvre_sa_propre_page(client):
+    """Le raccourci posé depuis Settings doit rouvrir Settings, pas la vue
+    Journaliste que le boîtier tient déjà."""
+    for vue in ("settings", "spectateur", "journaliste"):
+        assert client.get(f"/manifest.webmanifest?vue={vue}").get_json()["start_url"] == "/" + vue
+        page = client.get("/" + vue).get_data(as_text=True)
+        assert f"/manifest.webmanifest?vue={vue}" in page
+    assert client.get("/manifest.webmanifest?vue=pirate").get_json()["start_url"] == "/journaliste"
 
 
 def test_entetes_securite(client):
@@ -71,22 +126,38 @@ def test_accents_utf8_preserves(client):
 
 # --- Validation des réglages (correctifs audit #4 / #11) ---------------------
 def test_reglages_valides_acceptes(client):
-    client.post("/api/settings", json={"fontSize": 48, "textColor": "#112233", "mode": "tap"})
+    client.post("/api/settings", json={"fontSize": 48, "margin": 12, "mode": "tap"})
     s = client.get("/api/state").get_json()["settings"]
     assert s["fontSize"] == 48
-    assert s["textColor"] == "#112233"
+    assert s["margin"] == 12
     assert s["mode"] == "tap"
 
 
 def test_reglages_aberrants_rejetes(client):
-    client.post(
-        "/api/settings", json={"fontSize": 10**9, "bgColor": "javascript:alert(1)", "mode": "pirate", "speed": "abc"}
-    )
+    client.post("/api/settings", json={"fontSize": 10**9, "margin": "large", "mode": "pirate", "speed": "abc"})
     s = client.get("/api/state").get_json()["settings"]
     assert s["fontSize"] == 64  # défaut conservé
-    assert s["bgColor"] == "#000000"  # couleur invalide rejetée
+    assert s["margin"] == 10  # type invalide rejeté
     assert s["mode"] == "hold"  # enum invalide rejeté
     assert s["speed"] == 70  # type invalide rejeté
+
+
+# Toujours blanc sur noir : la couleur d'un passage se pose dans l'éditeur.
+def test_couleur_du_texte_et_du_fond_n_existent_plus(client):
+    r = client.post("/api/settings", json={"textColor": "#ffd400", "bgColor": "#ffffff"})
+    assert r.status_code == 400
+    s = client.get("/api/state").get_json()["settings"]
+    assert "textColor" not in s and "bgColor" not in s
+
+
+def test_ancien_state_json_avec_couleurs_se_nettoie(client, tmp_path):
+    (tmp_path / "state.json").write_text(
+        json.dumps({"settings": {"textColor": "#ffd400", "bgColor": "#0a1a2f", "fontSize": 90}}), encoding="utf-8"
+    )
+    server.STATE_FILE = tmp_path / "state.json"
+    st = server.load_state()
+    assert "textColor" not in st["settings"] and "bgColor" not in st["settings"]
+    assert st["settings"]["fontSize"] == 90  # le reste est conservé
 
 
 def test_booleen_refuse_comme_nombre(client):
@@ -150,20 +221,20 @@ def test_upload_txt(client):
 
 # --- Robustesse : un state.json corrompu se répare au chargement -------------
 def test_state_corrompu_se_repare(client, tmp_path):
-    bad = {"settings": {"fontSize": 10**9, "bgColor": "nope", "align": "diagonal"}}
+    bad = {"settings": {"fontSize": 10**9, "margin": "nope", "align": "diagonal"}}
     (tmp_path / "state.json").write_text(json.dumps(bad), encoding="utf-8")
     monkey_file = tmp_path / "state.json"
     server.STATE_FILE = monkey_file
     st = server.load_state()
     assert st["settings"]["fontSize"] == 64
-    assert st["settings"]["bgColor"] == "#000000"
+    assert st["settings"]["margin"] == 10
     assert st["settings"]["align"] == "left"
 
 
 # --- Écrans meneur / spectateur ----------------------------------------------
 def test_routes_ecrans(client):
-    assert client.get("/display").status_code == 200
-    assert client.get("/view").status_code == 200
+    assert client.get("/journaliste").status_code == 200
+    assert client.get("/spectateur").status_code == 200
 
 
 # --- Synchro : position de défilement ----------------------------------------
@@ -221,13 +292,16 @@ def test_upload_fichier_illisible_erreur_claire(client):
 # Toutes les routes qui MODIFIENT l'état, avec un corps par ailleurs valide.
 ROUTES_ECRITURE = [
     ("/api/text", {"text": "injecté par un tiers"}),
-    ("/api/settings", {"fontSize": 8, "textColor": "#000000"}),
+    ("/api/settings", {"fontSize": 8, "margin": 0}),
     ("/api/command", {"cmd": "restart"}),
     ("/api/scroll", {"pos": 10, "vel": 1, "playing": True}),
     ("/api/library/save", {"name": "x", "text": "y", "overwrite": True}),
     ("/api/library/load", {"name": "x"}),
     ("/api/library/delete", {"name": "x"}),
     ("/api/usb/load", {"path": "/tmp/x.txt"}),
+    ("/api/veille", {"on": True}),
+    ("/api/kiosk/launch", {"vue": "settings"}),
+    ("/api/kiosk/close", {}),
 ]
 
 
@@ -387,6 +461,27 @@ def test_document_normal_toujours_accepte(client):
 # ============================================================================
 
 DEPUIS_UN_TELEPHONE = {"REMOTE_ADDR": "10.42.0.57"}
+DEPUIS_LE_BOITIER = {"REMOTE_ADDR": "127.0.0.1"}
+
+
+@pytest.fixture
+def kiosque(monkeypatch):
+    """Kiosque simulé : ce que « kiosk.sh » répondrait, et les lancements demandés."""
+    etat = {"sortie": "stopped", "code": 1, "ok": True, "appels": [], "lancements": []}
+
+    def faux_kiosk(*args):
+        etat["appels"].append(args)
+        if args == ("--status",):
+            return etat["ok"], etat["code"] if etat["ok"] else None, etat["sortie"]
+        return etat["ok"], 0 if etat["ok"] else None, ""
+
+    def faux_lancement(vue):
+        etat["lancements"].append(vue)
+        return True
+
+    monkeypatch.setattr(server, "_kiosk", faux_kiosk)
+    monkeypatch.setattr(server, "_kiosk_launch", faux_lancement)
+    return etat
 
 
 def test_kiosque_propose_depuis_un_telephone(client):
@@ -395,7 +490,7 @@ def test_kiosque_propose_depuis_un_telephone(client):
     assert r.get_json()["available"] is True
 
 
-def test_kiosque_commandes_acceptees_depuis_un_telephone(client):
+def test_kiosque_commandes_acceptees_depuis_un_telephone(client, kiosque):
     for route in ("/api/kiosk/close", "/api/kiosk/launch"):
         r = client.post(route, json={}, environ_base=DEPUIS_UN_TELEPHONE)
         assert r.status_code != 403, route
@@ -435,6 +530,7 @@ def _place_libre():
     """Chaque test part d'une place de meneur libre."""
     server._presenter["holder"] = None
     server._presenter["seen"] = 0.0
+    server._presenter["kiosk"] = False
     yield
 
 
@@ -446,8 +542,10 @@ def test_premier_arrive_obtient_la_place(client):
 
 
 def test_second_ecran_refuse(client):
-    client.post("/api/presenter/claim", json={"token": "ecran-A"})
-    r = client.post("/api/presenter/claim", json={"token": "ecran-B"})
+    # Deux appareils distincts du WiFi (le client de test, par défaut, se
+    # présente comme le boîtier lui-même).
+    client.post("/api/presenter/claim", json={"token": "ecran-A"}, environ_base={"REMOTE_ADDR": "10.42.0.20"})
+    r = client.post("/api/presenter/claim", json={"token": "ecran-B"}, environ_base={"REMOTE_ADDR": "10.42.0.30"})
     assert r.status_code == 409
     assert r.get_json()["taken"] is True
 
@@ -990,7 +1088,7 @@ def test_changer_la_vitesse_fait_bien_avancer_la_version(client):
 
 
 def test_entetes_de_securite_du_contenu(client):
-    r = client.get("/display")
+    r = client.get("/journaliste")
     csp = r.headers.get("Content-Security-Policy", "")
     assert "script-src 'self'" in csp
     assert "frame-ancestors 'none'" in csp
@@ -1002,7 +1100,7 @@ def test_pas_de_script_en_ligne_dans_les_pages(client):
     plus en rester, sinon l'ecran ne demarrerait pas du tout."""
     import re as _re
 
-    for chemin in ("/", "/display", "/view"):
+    for chemin in ("/settings", "/journaliste", "/spectateur"):
         html = client.get(chemin).get_data(as_text=True)
         for balise in _re.findall(r"<script[^>]*>(.*?)</script>", html, _re.S):
             assert balise.strip() == "", chemin
@@ -1022,3 +1120,177 @@ def test_liste_usb_mise_en_cache(client, monkeypatch):
     for _ in range(5):
         client.get("/api/usb")
     assert appels["n"] == 1
+
+
+# ============================================================================
+# Vue du journaliste : ce que montre le grand écran du boîtier
+# ----------------------------------------------------------------------------
+# Trois choix : la vue Journaliste, la vue Settings, ou le bureau (navigateur
+# fermé). Le kiosque relancé ne doit JAMAIS trouver sa place de meneur prise
+# par son propre fantôme.
+# ============================================================================
+
+
+def test_grand_ecran_dit_quelle_vue_il_affiche(client, kiosque):
+    kiosque.update(sortie="running settings\n", code=0)
+    corps = client.get("/api/kiosk").get_json()
+    assert corps["running"] is True and corps["vue"] == "settings"
+    kiosque.update(sortie="stopped\n", code=1)
+    corps = client.get("/api/kiosk").get_json()
+    assert corps["running"] is False and corps["vue"] is None
+
+
+def test_grand_ecran_etat_inconnu_si_le_script_ne_tourne_pas(client, kiosque):
+    kiosque.update(ok=False)
+    assert client.get("/api/kiosk").get_json()["running"] is None
+
+
+def test_grand_ecran_vue_inconnue_refusee(client, kiosque):
+    r = client.post("/api/kiosk/launch", json={"vue": "bureau-de-quelqu-un"})
+    assert r.status_code == 400
+    assert kiosque["lancements"] == []
+
+
+def test_grand_ecran_vue_deja_affichee_ne_relance_rien(client, kiosque):
+    kiosque.update(sortie="running journaliste", code=0)
+    assert client.post("/api/kiosk/launch", json={"vue": "journaliste"}).status_code == 200
+    assert kiosque["lancements"] == []
+
+
+def test_grand_ecran_change_de_vue(client, kiosque):
+    kiosque.update(sortie="running journaliste", code=0)
+    assert client.post("/api/kiosk/launch", json={"vue": "settings"}).status_code == 200
+    assert kiosque["lancements"] == ["settings"]
+
+
+def test_grand_ecran_vue_journaliste_par_defaut(client, kiosque):
+    client.post("/api/kiosk/launch", json={})
+    assert kiosque["lancements"] == ["journaliste"]
+
+
+def _libre():
+    server._presenter.update(holder=None, seen=0.0, kiosk=False)
+
+
+def test_changer_de_vue_rend_la_place_du_kiosque(client, kiosque):
+    """Sans cela, le kiosque relancé trouvait la place prise par son ancien
+    navigateur, et affichait « déjà en cours » au lieu du texte."""
+    _libre()
+    client.post("/api/presenter/claim", json={"token": "kiosque"}, environ_base=DEPUIS_LE_BOITIER)
+    kiosque.update(sortie="running journaliste", code=0)
+    client.post("/api/kiosk/launch", json={"vue": "settings"})
+    assert client.get("/api/presenter").get_json()["taken"] is False
+
+
+def test_fermer_le_grand_ecran_rend_la_place_du_kiosque(client, kiosque):
+    _libre()
+    client.post("/api/presenter/claim", json={"token": "kiosque"}, environ_base=DEPUIS_LE_BOITIER)
+    client.post("/api/kiosk/close", json={})
+    assert client.get("/api/presenter").get_json()["taken"] is False
+
+
+def test_changer_de_vue_ne_vole_pas_la_place_d_un_ordinateur(client, kiosque):
+    """Un ordinateur portable qui pilote aux pédales garde sa place."""
+    _libre()
+    client.post("/api/presenter/claim", json={"token": "portable"}, environ_base=DEPUIS_UN_TELEPHONE)
+    client.post("/api/kiosk/launch", json={"vue": "settings"})
+    client.post("/api/kiosk/close", json={})
+    assert client.get("/api/presenter").get_json()["taken"] is True
+
+
+def test_place_liberee_reprise_par_le_battement(client):
+    """L'écran qui a été écarté reprend la main tout seul quand l'autre part :
+    c'est ce qui retire son voile « un autre appareil a pris la main »."""
+    _libre()
+    client.post("/api/presenter/claim", json={"token": "ecran-A"})
+    client.post("/api/presenter/claim", json={"token": "ecran-B", "force": True})
+    assert client.post("/api/presenter/ping", json={"token": "ecran-A"}).get_json()["ok"] is False
+    client.post("/api/presenter/release", json={"token": "ecran-B"})
+    assert client.post("/api/presenter/ping", json={"token": "ecran-A"}).get_json()["ok"] is True
+    assert client.get("/api/presenter?token=ecran-A").get_json()["mine"] is True
+
+
+def test_battement_sans_jeton_ne_prend_pas_la_place(client):
+    _libre()
+    client.post("/api/presenter/ping", json={"token": ""})
+    assert server._presenter["holder"] is None
+
+
+# ============================================================================
+# Veille du système
+# ----------------------------------------------------------------------------
+# Toutes les vues passent au noir, le grand écran s'éteint. L'état n'est jamais
+# écrit sur la carte : un boîtier qu'on rallume se réveille allumé.
+# ============================================================================
+
+
+def test_veille_annoncee_a_tous_les_ecrans(client, kiosque):
+    assert client.get("/api/version").get_json()["veille"] is False
+    r = client.post("/api/veille", json={"on": True})
+    assert r.status_code == 200
+    assert r.get_json() == {"ok": True, "veille": True, "ecran": True}
+    assert client.get("/api/version").get_json()["veille"] is True
+    assert ("--veille",) in kiosque["appels"]
+    client.post("/api/veille", json={"on": False})
+    assert client.get("/api/version").get_json()["veille"] is False
+    assert ("--reveil",) in kiosque["appels"]
+
+
+def test_veille_marche_meme_si_l_ecran_ne_s_eteint_pas(client, kiosque):
+    """Les pages passent au noir quoi qu'il arrive ; la réponse dit que le
+    grand écran, lui, n'a pas pu être éteint, pour que cela se voie."""
+    kiosque.update(ok=False)
+    corps = client.post("/api/veille", json={"on": True}).get_json()
+    assert corps["veille"] is True and corps["ecran"] is False
+    assert client.get("/api/version").get_json()["veille"] is True
+
+
+def test_veille_valeur_invalide_refusee(client, kiosque):
+    assert client.post("/api/veille", json={"on": "oui"}).status_code == 400
+    assert client.post("/api/veille", json={}).status_code == 400
+    assert client.get("/api/version").get_json()["veille"] is False
+
+
+def test_veille_jamais_ecrite_sur_la_carte(client, kiosque, tmp_path):
+    client.post("/api/veille", json={"on": True})
+    fichier = tmp_path / "state.json"
+    assert not fichier.exists() or "veille" not in fichier.read_text(encoding="utf-8")
+
+
+# ============================================================================
+# Vitesse posée au pied (mode dynamique)
+# ----------------------------------------------------------------------------
+# L'écran Journaliste envoie la vitesse atteinte au relâchement de la pédale :
+# elle devient LA vitesse, et Plus vite / Moins vite partent d'elle.
+# ============================================================================
+
+
+def test_vitesse_posee_au_pied_puis_plus_vite(client):
+    client.post("/api/settings", json={"speed": 237})
+    r = client.post("/api/command", json={"cmd": "faster"}).get_json()
+    assert r["speed"] == 247
+
+
+def test_plus_vite_est_conserve_apres_redemarrage(client, tmp_path):
+    """Plus vite / Moins vite et le curseur règlent la même vitesse : elle doit
+    survivre à l'extinction dans tous les cas, pas seulement au curseur."""
+    client.post("/api/command", json={"cmd": "faster"})
+    client.post("/api/command", json={"cmd": "faster"})
+    server.STATE_FILE = tmp_path / "state.json"
+    assert server.load_state()["settings"]["speed"] == 90
+
+
+def test_kiosque_relance_remplace_son_ancien_navigateur(client):
+    """Même si l'ancienne page a repris la place à son dernier battement."""
+    _libre()
+    client.post("/api/presenter/claim", json={"token": "ancien"}, environ_base=DEPUIS_LE_BOITIER)
+    r = client.post("/api/presenter/claim", json={"token": "nouveau"}, environ_base=DEPUIS_LE_BOITIER)
+    assert r.status_code == 200
+    assert client.get("/api/presenter?token=nouveau").get_json()["mine"] is True
+
+
+def test_un_telephone_ne_prend_pas_la_place_du_kiosque_sans_le_demander(client):
+    _libre()
+    client.post("/api/presenter/claim", json={"token": "kiosque"}, environ_base=DEPUIS_LE_BOITIER)
+    r = client.post("/api/presenter/claim", json={"token": "telephone"}, environ_base=DEPUIS_UN_TELEPHONE)
+    assert r.status_code == 409
