@@ -46,6 +46,12 @@ La session graphique et le service systemd n'ont pas le même `HOME` ni le même
 différents**, donc un état faux en permanence.
 **Parade :** un chemin fixe, `/tmp/prompteur-kiosk-<uid>.pid`.
 
+### 🔴 Le trousseau de mots de passe verrouillé prend le clavier
+Session ouverte automatiquement, donc sans mot de passe : le trousseau du
+système reste verrouillé. Chromium le réclame à chaque démarrage, et une fenêtre
+« Unlock Keyring » passe devant le prompteur — avec le clavier, donc les pédales.
+**Parade :** `--password-store=basic` au lancement de Chromium.
+
 ### `PrivateTmp=yes` casse ce partage
 Excellent réglage de sécurité en général — **ici il isole le service dans son
 propre `/tmp`**, et il perd de vue le navigateur du kiosque.

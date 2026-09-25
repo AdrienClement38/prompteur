@@ -267,6 +267,7 @@ case "$ACTION" in
     TAILLE="${PROMPTEUR_MENU_TAILLE:-${GW:-800},${GH:-480}}"
     echo $$ >"$MENUPID"
     exec "$BROWSER" \
+      --password-store=basic \
       --noerrdialogs \
       --disable-infobars \
       --disable-session-crashed-bubble \
@@ -377,7 +378,13 @@ fi
 
 # exec remplace le shell en conservant le PID : le fichier désigne désormais le
 # navigateur lui-même.
+# --password-store=basic : sans lui, Chromium réclame le trousseau de mots de
+# passe du système, verrouillé quand la session s'ouvre toute seule. Une fenêtre
+# « Unlock Keyring » s'affichait à chaque allumage, par-dessus le prompteur — et
+# prenait le clavier : les pédales ne répondaient plus tant qu'on ne l'avait pas
+# fermée à la souris. Le kiosque n'enregistre aucun mot de passe : rien à perdre.
 exec "$BROWSER" \
+  --password-store=basic \
   --kiosk \
   --start-fullscreen \
   --noerrdialogs \
