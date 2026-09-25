@@ -188,8 +188,9 @@
     $("mirrorH").checked = !!settings.mirrorH;
     $("mirrorV").checked = !!settings.mirrorV;
     $("guide").checked = !!settings.guide;
+    $("numeros").checked = settings.numeros !== false;
+    if (cadreEditeur.classList.contains("avec-numeros") !== (settings.numeros !== false)) planifierNumeros();
     refreshPedals();
-    markSel(".alignBtn", "align", settings.align || "left");
     markSel(".modeBtn", "mode", settings.mode || "hold");
     setSlider("rampSeconds", settings.rampSeconds, (v) => v + " s");
     // Le réglage de montée n'a de sens qu'en mode dynamique : on le masque ailleurs
@@ -218,6 +219,7 @@
         // prochain bouton de mise en forme.
         remapMarks(texteAvant, getText());
         texteAvant = getText();
+        planifierNumeros();
       }
       textDirty = true;
       refreshUnsent();
@@ -247,7 +249,7 @@
       if (m.i && !cls.includes("mi")) cls += " mi";
       if (m.u && !cls.includes("mu")) cls += " mu";
       if (SIZE_CLASS[m.size]) taille = SIZE_CLASS[m.size];
-      if (m.color >= 1 && m.color <= 5) couleur = "c" + m.color;
+      if (m.color >= 1 && m.color <= 6) couleur = "c" + m.color;
     }
     if (taille) cls += " " + taille;
     if (couleur) cls += " " + couleur;
@@ -276,7 +278,79 @@
         editor.appendChild(span);
       }
     }
+    planifierNumeros();
   }
+
+  // --- Numéros de ligne dans la zone de saisie ------------------------------
+  // Les mêmes que sur les écrans de lecture : chaque ligne de texte non vide,
+  // l'alignement « [centre] » / « [droite] » retiré. Un numéro par ligne du
+  // texte, en face de sa première ligne à l'écran si elle passe à la ligne.
+  // Colonne posée par-dessus la marge de gauche de la zone, décalée au défilement.
+  const RE_ALIGNE = /^\[(centre|droite)\][ \t]*/i;
+  const cadreEditeur = editor.parentElement;
+  const numerosContenu = $("numerosContenu");
+  let minuterieNumeros = 0;
+
+  function planifierNumeros() {
+    clearTimeout(minuterieNumeros);
+    minuterieNumeros = setTimeout(numeroterEditeur, 120);
+  }
+
+  // Le nœud de texte qui CONTIENT le caractère n° index, et la place dedans.
+  function caractere(index) {
+    const marcheur = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    let total = 0;
+    let n;
+    while ((n = marcheur.nextNode())) {
+      if (index < total + n.nodeValue.length) return { noeud: n, dec: index - total };
+      total += n.nodeValue.length;
+    }
+    return null;
+  }
+
+  function numeroterEditeur() {
+    const actifs = settings.numeros !== false;
+    cadreEditeur.classList.toggle("avec-numeros", actifs);
+    if (!actifs) {
+      numerosContenu.replaceChildren();
+      return;
+    }
+    const cadre = editor.getBoundingClientRect();
+    if (!cadre.height) return; // onglet caché : on recalculera quand il s'affiche
+    const haut = cadre.top + editor.clientTop - editor.scrollTop;
+    const frag = document.createDocumentFragment();
+    const plage = document.createRange();
+    let offset = 0;
+    let numero = 0;
+    for (const brute of getText().split("\n")) {
+      const sans = brute.replace(RE_ALIGNE, "");
+      if (sans.trim() !== "") {
+        numero++;
+        const p = caractere(offset);
+        if (p) {
+          plage.setStart(p.noeud, p.dec);
+          plage.setEnd(p.noeud, p.dec + 1);
+          const r = plage.getClientRects()[0] || plage.getBoundingClientRect();
+          const span = document.createElement("span");
+          span.textContent = String(numero);
+          span.style.top = r.top - haut + "px";
+          span.style.lineHeight = r.height + "px";
+          frag.appendChild(span);
+        }
+      }
+      offset += brute.length + 1;
+    }
+    numerosContenu.replaceChildren(frag);
+    numerosContenu.style.transform = `translateY(${-editor.scrollTop}px)`;
+  }
+
+  editor.addEventListener("scroll", () => {
+    numerosContenu.style.transform = `translateY(${-editor.scrollTop}px)`;
+  });
+  // Largeur changée, zone agrandie à la main, onglet Texte ré-affiché : les
+  // lignes ne passent plus à la ligne aux mêmes endroits.
+  if (window.ResizeObserver) new ResizeObserver(planifierNumeros).observe(editor);
+  else window.addEventListener("resize", planifierNumeros);
 
   function setText(texte) {
     renderEditor(texte || "");
@@ -421,6 +495,86 @@
   $("fmtXL").addEventListener("click", () => applyAttr("size", "xl"));
   document.querySelectorAll(".swatchBtn").forEach((b) =>
     b.addEventListener("click", () => applyAttr("color", Number(b.dataset.color))));
+  // Alignement de la ligne du curseur, ou de toutes les lignes touchées par la
+  // sélection : on pose, remplace ou retire « [centre] » / « [droite] » en tête
+  // de chacune. C'est la même écriture que dans un fichier importé, donc rien de
+  // nouveau à comprendre pour l'écran.
+  const PREFIXE_ALIGNE = { left: "", center: "[centre] ", right: "[droite] " };
+
+  function alignerLignes(sens) {
+    const sel = selectionCourante();
+    if (!sel) {
+      toast("Placez d'abord le curseur sur une ligne");
+      return;
+    }
+    let texte = getText();
+    const marksAvant = JSON.stringify(marks);
+    // Une sélection qui s'arrête juste au début de la ligne suivante ne la prend pas.
+    const fin = sel.fin > sel.debut && texte[sel.fin - 1] === "\n" ? sel.fin - 1 : sel.fin;
+    const debutLignes = sel.debut === 0 ? 0 : texte.lastIndexOf("\n", sel.debut - 1) + 1;
+    const finLignes = texte.indexOf("\n", fin) === -1 ? texte.length : texte.indexOf("\n", fin);
+    const lignes = texte.slice(debutLignes, finLignes).split("\n");
+    // De la dernière à la première : les lignes du dessus ne bougent pas pendant
+    // qu'on modifie celles du dessous, et les plages sont recalées à chaque ligne.
+    const departs = [];
+    let o = debutLignes;
+    for (const l of lignes) {
+      departs.push(o);
+      o += l.length + 1;
+    }
+    let decalagePremiere = 0;
+    for (let k = lignes.length - 1; k >= 0; k--) {
+      const ligne = lignes[k];
+      const ancien = (RE_ALIGNE.exec(ligne) || [""])[0];
+      const reste = ligne.slice(ancien.length);
+      // Une ligne vide reste vide : un « [centre] » seul n'afficherait rien.
+      const nouveau = reste.trim() === "" ? "" : PREFIXE_ALIGNE[sens];
+      if (nouveau === ancien) continue;
+      const apres = texte.slice(0, departs[k]) + nouveau + texte.slice(departs[k] + ancien.length);
+      marks = window.Plages.recaler(marks, texte, apres);
+      texte = apres;
+      if (k === 0) decalagePremiere = nouveau.length - ancien.length;
+    }
+    const total = texte.length - getText().length;
+    // Un paragraphe importé (Word, LibreOffice, RTF) centré ou à droite porte son
+    // alignement dans une plage, pas dans le texte : sans ce nettoyage, « Gauche »
+    // le laisserait centré. Sur ces lignes, c'est désormais le bouton qui décide.
+    const a = debutLignes;
+    const b = finLignes + total;
+    marks = marks.flatMap((m) => {
+      if (!m.align || m.end <= a || m.start >= b) return [m];
+      const morceaux = [];
+      if (m.start < a) morceaux.push({ ...m, end: a });
+      const milieu = { ...m, start: Math.max(m.start, a), end: Math.min(m.end, b) };
+      delete milieu.align;
+      if (Object.keys(milieu).length > 2) morceaux.push(milieu); // d'autres styles que l'alignement
+      if (m.end > b) morceaux.push({ ...m, start: b });
+      return morceaux;
+    });
+    if (texte === getText() && JSON.stringify(marks) === marksAvant) {
+      editor.focus();
+      return; // déjà aligné ainsi
+    }
+    renderEditor(texte);
+    texteAvant = texte;
+    textDirty = true;
+    refreshUnsent();
+    refreshFmtInfo();
+    editor.focus();
+    if (sel.fin > sel.debut) {
+      // Plusieurs lignes : elles restent sélectionnées, pour enchaîner.
+      replacerSelection(debutLignes, finLignes + total);
+    } else {
+      // Un simple curseur : il reste sur la même lettre.
+      const curseur = Math.max(debutLignes + (PREFIXE_ALIGNE[sens] || "").length, sel.debut + decalagePremiere);
+      replacerSelection(curseur, curseur);
+    }
+  }
+
+  $("alignG").addEventListener("click", () => alignerLignes("left"));
+  $("alignC").addEventListener("click", () => alignerLignes("center"));
+  $("alignD").addEventListener("click", () => alignerLignes("right"));
+
   $("fmtClear").addEventListener("click", () => {
     marks = [];
     textDirty = true;
@@ -605,7 +759,7 @@
   document.querySelectorAll("[data-cmd]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const cmd = btn.dataset.cmd;
-      const labels = { play: "Lecture", pause: "Pause", restart: "Début", faster: "Plus vite", slower: "Moins vite" };
+      const labels = { play: "Lecture", pause: "Pause", faster: "Plus vite", slower: "Moins vite" };
       toast(labels[cmd] || "OK");
       try {
         const res = await postJSON("/api/command", { cmd });
@@ -615,6 +769,32 @@
         toast("Commande impossible");
       }
     });
+  });
+
+  // « Commencer à la ligne » : la ligne choisie vient se placer au début de
+  // l'écran, à l'arrêt. Champ vide = ligne 1, le début du texte.
+  async function allerALaLigne() {
+    const champ = $("ligneDepart");
+    const brut = champ.value.trim();
+    const n = brut === "" ? 1 : Number(brut);
+    if (!Number.isInteger(n) || n < 1 || n > 1000000) {
+      toast("Numéro de ligne invalide");
+      champ.focus();
+      return;
+    }
+    try {
+      await postJSON("/api/command", { cmd: "ligne", ligne: n });
+      toast(n === 1 ? "Début du texte" : "Ligne " + n);
+    } catch (err) {
+      toast(errText(err) || "Commande impossible");
+    }
+  }
+  $("allerLigne").addEventListener("click", allerALaLigne);
+  $("ligneDepart").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      allerALaLigne();
+    }
   });
 
   // --- Réglages : sliders ---------------------------------------------------
@@ -645,8 +825,10 @@
   bindToggle("mirrorH", "mirrorH");
   bindToggle("mirrorV", "mirrorV");
   bindToggle("guide", "guide");
+  bindToggle("numeros", "numeros");
+  $("numeros").addEventListener("change", planifierNumeros);
 
-  // --- Réglages : boutons (align / police / mode) --------------------------
+  // --- Réglages : boutons (mode des pédales) --------------------------------
   // Envoi d'un réglage. Le serveur répond 400 si la valeur est refusée : sans ce
   // traitement, le bouton resterait coloré et l'on croirait avoir changé de mode
   // alors que rien n'aurait bougé sur l'écran. On le dit, et on remet l'interface
@@ -676,7 +858,6 @@
         pousserReglage({ [key]: b.dataset[attr] });
       }));
   }
-  bindChoice(".alignBtn", "align", "align");
   bindChoice(".modeBtn", "mode", "mode");
   bindSlider("rampSeconds", "rampSeconds", (v) => v + " s");
 
@@ -690,7 +871,7 @@
   const PEDAL_LABEL = {
     keyForward: "pédale droite (avancer)",
     keyBackward: "pédale gauche (reculer)",
-    keyCenter: "pédale centrale (lecture/pause)",
+    keyCenter: "pédale centrale (pause, mode dynamique)",
   };
   const RESERVED = {
     " ": "Espace (lecture/pause)",
@@ -868,78 +1049,6 @@
     openMainScreen();
   });
 
-  // --- Vue du journaliste : ce que montre le grand écran ---------------------
-  // Trois choix : la vue Journaliste (le prompteur), la vue Settings, ou le
-  // bureau (navigateur fermé). L'état est relu tout seul toutes les quelques
-  // secondes : plus de bouton « Actualiser ».
-  const NOMS_GRAND = { journaliste: "la vue Journaliste", settings: "la vue Settings", bureau: "le bureau" };
-  let grandActuel = null; // "journaliste" | "settings" | "bureau" | null (inconnu)
-  let grandEnCours = false; // un changement est en cours : on ne réécrit pas l'état
-
-  function dessinerGrand(texteEtat, nom) {
-    const etat = $("grandEtat");
-    if (nom) {
-      etat.replaceChildren(document.createTextNode(texteEtat), el("b", null, nom), document.createTextNode("."));
-    } else {
-      etat.textContent = texteEtat;
-    }
-    document.querySelectorAll("[data-grand]").forEach((b) => {
-      b.classList.toggle("actif", b.dataset.grand === grandActuel);
-      b.disabled = grandActuel === null || grandEnCours;
-    });
-  }
-
-  async function refreshKiosk() {
-    if (grandEnCours) return;
-    let info;
-    try {
-      info = await api("/api/kiosk");
-    } catch {
-      return; // serveur muet : on garde le dernier état connu plutôt qu'un état faux
-    }
-    if (!info.available) return;
-    $("grand").classList.remove("hide");
-    if (info.running === null) {
-      // État indéterminé : on le dit, plutôt que de faire disparaître la section.
-      grandActuel = null;
-      dessinerGrand("État du grand écran inconnu : ces boutons ne fonctionnent que sur le boîtier lui-même.");
-      return;
-    }
-    grandActuel = info.running ? info.vue || "journaliste" : "bureau";
-    dessinerGrand("Le grand écran affiche ", NOMS_GRAND[grandActuel]);
-  }
-
-  async function choisirGrand(cible) {
-    if (grandActuel === null || grandEnCours || cible === grandActuel) return;
-    // Quitter la vue Journaliste retire le texte du grand écran : depuis un
-    // téléphone, un appui involontaire couperait la lecture en pleine prise.
-    if (grandActuel === "journaliste") {
-      const oui = await Commun.confirmer({
-        titre: "Retirer le prompteur du grand écran ?",
-        texte: `Le grand écran affichera ${NOMS_GRAND[cible]}. Le texte et la position sont conservés.`,
-        ok: cible === "bureau" ? "Afficher le bureau" : "Afficher Settings",
-        danger: true,
-      });
-      if (!oui) return;
-    }
-    grandEnCours = true;
-    dessinerGrand("Changement en cours…");
-    try {
-      if (cible === "bureau") await postJSON("/api/kiosk/close", {});
-      else await postJSON("/api/kiosk/launch", { vue: cible });
-    } catch (err) {
-      toast(errText(err) || "Commande impossible");
-    }
-    // Chromium met un instant à s'ouvrir ou à se fermer : on relit après.
-    setTimeout(() => {
-      grandEnCours = false;
-      refreshKiosk();
-    }, 1500);
-  }
-
-  document.querySelectorAll("[data-grand]").forEach((b) =>
-    b.addEventListener("click", () => choisirGrand(b.dataset.grand)));
-
   // --- Utilitaires ----------------------------------------------------------
   function mkBtn(label, cls) {
     const b = document.createElement("button");
@@ -950,9 +1059,7 @@
 
   loadState().catch(() => toast("Erreur de connexion au boîtier"));
   refreshFmtInfo();
-  refreshKiosk();
   pollVersion();
   setInterval(pollVersion, 1500);
-  setInterval(refreshKiosk, 3000);
   loadAddresses();
 })();

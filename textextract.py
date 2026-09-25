@@ -892,9 +892,10 @@ def _from_odt(data):
 #    quelqu'un qui n'a rien demandé.
 _OUVRANTS = "([{«“\"'"
 _FERMANTS = ".,;:!?…)]}»”\"'"
-# Les cinq couleurs du prompteur, nommées. L'ordre suit les pastilles de la
-# télécommande, de gauche à droite.
-COULEURS_NOMMEES = {"jaune": 1, "rouge": 2, "vert": 3, "bleu": 4, "gris": 5}
+# Les six couleurs du prompteur, nommées. L'ordre suit les pastilles de la
+# zone de saisie, de gauche à droite. « blanc » sert à remettre en blanc un mot
+# au milieu d'un passage coloré.
+COULEURS_NOMMEES = {"jaune": 1, "rouge": 2, "vert": 3, "bleu": 4, "gris": 5, "blanc": 6}
 _ALIGNEMENTS_NOMMES = {"centre": "center", "droite": "right"}
 _RE_TXT_INLINE = re.compile(
     r"\[(?P<couleur>" + "|".join(COULEURS_NOMMEES) + r")\](?P<ctexte>.+?)\[/(?P=couleur)\]"

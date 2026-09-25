@@ -130,7 +130,7 @@ prompteur revient tout seul**.
 **Le téléphone** *(WiFi `Prompteur`, puis `http://10.42.0.1:5000`)*
 
 - [ ] La page s'ouvre : en haut, **Settings · Spectateur · ⏻ Veille**
-- [ ] **« Vue du journaliste »** → **Journaliste** : le prompteur revient sur le grand écran,
+- [ ] **« Écran journaliste »** → **Journaliste** : le prompteur revient sur le grand écran,
       et ce bouton devient bleu
 - [ ] Onglet **Contrôle** → **Lecture** : le texte défile ; **Pause** : il s'arrête
 - [ ] **⏻ Veille** → **« Mettre en veille »** : le grand écran s'éteint ; **« Rallumer »** le

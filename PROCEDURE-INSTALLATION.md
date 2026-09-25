@@ -163,7 +163,7 @@ Branchez le **pédalier USB** sur le Pi. **Trois** pédales sont gérées, avec 
 |---|---|---|
 | Droite | `Flèche bas` | avancer |
 | Gauche | `Flèche haut` | reculer |
-| Centrale | `Flèche droite` | lecture / pause — **mode Dynamique uniquement** |
+| Centrale | `Flèche droite` | pause — **mode Dynamique uniquement** |
 
 Deux méthodes, au choix :
 
@@ -177,7 +177,7 @@ Onglet **Réglages** → **Pédales** → **Mode**. Trois choix :
 
 - **Maintien** *(par défaut, recommandé)* : pédale enfoncée = ça défile, relâchée = ça s'arrête. Centrale sans fonction.
 - **Impulsion** : une pression lance le défilement, une seconde pression sur la **même** pédale met en pause ; l'autre pédale change de sens. Centrale sans fonction.
-- **Dynamique** : la **centrale** fait lecture/pause, la droite accélère vers l'avant, la gauche ralentit puis repart en arrière. **La vitesse atteinte est conservée** au relâchement. Le curseur **« Montée en vitesse »** règle les secondes d'appui continu pour atteindre la vitesse maximale (**10 s** par défaut).
+- **Dynamique** : la droite accélère vers l'avant, la gauche ralentit, passe par zéro, puis repart en arrière ; la **centrale** met en pause. **La vitesse atteinte est conservée** au relâchement ; chaque départ repart de zéro. Le curseur **« Montée en vitesse »** règle les secondes d'appui continu pour atteindre la vitesse maximale (**10 s** par défaut).
 
 **Test** (en mode Maintien) : maintenez la pédale droite → le texte défile ; relâchez → il s'arrête ; pédale gauche → il recule.
 
@@ -186,7 +186,7 @@ Onglet **Réglages** → **Pédales** → **Mode**. Trois choix :
 ## 8. Connecter un téléphone / PC et tester
 
 1. Sur le téléphone : rejoignez le WiFi **« Prompteur »** (mot de passe de l'étape 5).
-2. Ouvrez le navigateur sur **http://10.42.0.1:5000** : c'est la vue **Settings** (en haut : Settings · Spectateur · ⏻ Veille, puis la section « Vue du journaliste »).
+2. Ouvrez le navigateur sur **http://10.42.0.1:5000** : c'est la vue **Settings** (en haut : « Écran régie », « Écran journaliste » et ⏻ Veille).
 3. Onglet **Texte** : collez un texte, **ou** importez un fichier (Word `.docx`, PDF, `.odt`, RTF, `.txt`). L'import **remplit la zone de saisie** sans rien diffuser ; **« Envoyer à l'écran »** est le seul geste qui met le texte à l'antenne.
 4. Vérifiez le **défilement aux pédales** et les **réglages** (taille, vitesse, couleurs, miroir).
 
@@ -211,7 +211,7 @@ Elle **suit la vue Journaliste en temps réel** (lecture seule, jamais en miroir
 - [ ] **http://10.42.0.1:5000** s'ouvre depuis le téléphone
 - [ ] Un texte envoyé **apparaît à l'écran**
 - [ ] Pédales : **droite = avance**, **gauche = recule**, relâché = stop
-- [ ] **Échap** (deux fois) passe le grand écran sur la vue Settings, et **« Vue du journaliste »** → **Journaliste** y remet le prompteur
+- [ ] **Échap** (deux fois) passe le grand écran sur la vue Settings, et **« Écran journaliste »** → **Journaliste** y remet le prompteur
 - [ ] Un **.docx** importé garde ses **titres** (gros/gras) et ses paragraphes
 - [ ] **http://10.42.0.1:5000/spectateur** suit la vue Journaliste en direct
 - [ ] **⏻ Veille** éteint le grand écran ; un appui sur « Rallumer » ou une pédale le rallume
@@ -233,11 +233,11 @@ Elle **suit la vue Journaliste en temps réel** (lecture seule, jamais en miroir
 | Changer le mot de passe WiFi | `sudo nmcli connection modify Prompteur wifi-sec.psk "NOUVEAU_MDP"` puis `sudo nmcli connection up Prompteur` |
 | Retrouver l'adresse à l'écran | sur l'écran du boîtier, appuyer sur la touche **i** |
 | **Sortir** de l'écran de lecture | **Échap**, puis **Échap** à nouveau pour confirmer (toute autre touche annule) |
-| Le prompteur a été **fermé** sur le boîtier | Icône **« Le Prompteur »** (bureau ou menu des applications), ou section **« Vue du journaliste »** → **Journaliste**, ou `./install/kiosk.sh` |
+| Le prompteur a été **fermé** sur le boîtier | Icône **« Le Prompteur »** (bureau ou menu des applications), ou **« Écran journaliste »** → **Journaliste**, ou `./install/kiosk.sh` |
 | Fermer / relancer / diagnostiquer le kiosque en ligne de commande | `./install/kiosk.sh --stop` · `--restart` · `--status` (répond `running` ou `stopped`) |
 | **« La vue Journaliste est déjà ouverte ailleurs »** | Une autre vue Journaliste pilote. Prendre **« Ouvrir la vue Spectateur »**, ou **« Prendre la main quand même »**. La place se libère seule ~12 s après la disparition de l'autre appareil, et cet écran la reprend tout seul |
 | Bandeau rouge **« Liaison avec le boîtier perdue »** | L'écran n'atteint plus le serveur ; le texte reste lisible et les pédales fonctionnent. `sudo systemctl status prompteur`, vérifier le WiFi. Tant que le bandeau est là, **Échap refuse** de revenir à l'accueil (c'est voulu) |
-| **« Vue du journaliste »** annonce un état inconnu | Le script `install/kiosk.sh` n'a pas pu s'exécuter : c'est le cas sur un PC de test, jamais sur le boîtier installé |
+| **« Écran journaliste »** annonce un état inconnu | Le script `install/kiosk.sh` n'a pas pu s'exécuter : c'est le cas sur un PC de test, jamais sur le boîtier installé |
 | Une pédale est refusée à l'apprentissage | `F`, `Échap` et une touche déjà prise par une autre pédale sont interdites (étape 7) |
 
 ## Annexe B — Mettre à jour le logiciel plus tard

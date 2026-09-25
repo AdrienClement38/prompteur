@@ -32,14 +32,14 @@ Au quotidien, tout tient en six gestes.
 | **2** | **Attendez une minute complète**, sans rien toucher | L'écran du boîtier devient noir avec du gros texte blanc |
 | **3** | Appuyez sur la **pédale de droite** et gardez le pied appuyé | Le texte monte ; en haut à droite, `⏸` devient `▶︎` |
 | **4** | Sur le téléphone : réseau sans fil **Prompteur** → **restez connecté** malgré le message « pas d'internet » | Le téléphone indique « connecté à Prompteur » |
-| **5** | Dans le navigateur du téléphone : `http://10.42.0.1:5000` | La page **Settings** : en haut, **Settings · Spectateur · ⏻ Veille** ; dessous, **« Vue du journaliste »** puis trois onglets Texte / Contrôle / Réglages |
+| **5** | Dans le navigateur du téléphone : `http://10.42.0.1:5000` | La page **Settings** : en haut, **« Écran régie »** (Settings · Spectateur), **« Écran journaliste »** (Settings · Journaliste · Bureau) et **⏻ Veille** ; dessous, trois onglets Texte / Contrôle / Réglages |
 | **6** | Onglet **Texte** → collez votre texte → **« Envoyer à l'écran »** | Le message **« Texte envoyé à l'écran ✓ »**, et votre texte apparaît en grand |
 
 > 📌 **Trois vues, trois noms.** **Journaliste** = l'écran qu'on lit et qu'on pilote aux
 > pédales : **le grand écran du boîtier l'affiche tout seul au branchement**. **Settings** = la
 > page du téléphone (texte, réglages). **Spectateur** = le suivi en direct pour la régie. Dans
-> **« Vue du journaliste »**, le bouton **Journaliste** en bleu confirme que le grand écran affiche
-> bien le prompteur.
+> l'en-tête, sous **« Écran journaliste »**, le bouton **Journaliste** en bleu confirme que le
+> grand écran affiche bien le prompteur.
 
 > **Et c'est tout.** Pendant la prise, **le téléphone ne sert plus à rien** : vous pilotez
 > uniquement au pied. Pédale droite maintenue = ça avance, pied levé = ça s'arrête.
@@ -155,8 +155,9 @@ sur un plateau.
 > 💡 **Ce qui se passe si le courant est coupé** (un pied dans le câble, une multiprise éteinte) :
 > l'écran devient noir immédiatement, puis le boîtier **redémarre tout seul en une minute
 > environ**. Votre texte, vos réglages et vos textes enregistrés **sont conservés**. En revanche,
-> vous repartez **du tout début du texte** : appuyez sur **« Début »** dans l'onglet **Contrôle**
-> du téléphone, redescendez à votre place aux pédales, et reprenez.
+> vous repartez **du tout début du texte**. Pour retrouver votre place : onglet **Contrôle** du
+> téléphone, tapez le **numéro de votre ligne** (affiché à gauche du texte) dans **« Commencer à la
+> ligne »**, puis **« Aller »**, et reprenez aux pédales.
 
 > ⚠️ **PIÈGE — l'autre chargeur.** N'utilisez **jamais** un autre bloc d'alimentation que celui
 > fourni, même s'il a exactement la même prise. Avec un chargeur trop faible, le boîtier redémarre
@@ -294,7 +295,7 @@ Cochez au fur et à mesure : sur un tournage, on est toujours interrompu au mili
 > 🆘 **Si l'écran du boîtier montre le bureau du Raspberry** (un fond d'écran, des icônes) **au
 > lieu de votre texte** : le prompteur a simplement été fermé, et il se rouvre **sans rien
 > débrancher** — avec la **souris USB**, double-cliquez sur l'icône **« Le Prompteur »** posée
-> sur ce bureau. *(Autre façon, depuis le téléphone : section **« Vue du journaliste »** →
+> sur ce bureau. *(Autre façon, depuis le téléphone : en haut, **« Écran journaliste »** →
 > **Journaliste**, chapitre 13.)*
 
 - [ ] **3. Vérifiez que les pédales répondent.** Appuyez sur la **pédale de droite et gardez le
@@ -345,12 +346,13 @@ Cochez au fur et à mesure : sur un tournage, on est toujours interrompu au mili
 http://10.42.0.1:5000
 ```
 
-*Ce que vous devez voir : tout en haut, le mot **SETTINGS** en petit et trois boutons,
-**Settings**, **Spectateur** et **⏻ Veille** ; en dessous, la section **« Vue du journaliste »**,
-puis **trois onglets** : **Texte**, **Contrôle**, **Réglages**. L'onglet « Texte » est déjà
-ouvert et contient déjà le texte affiché à l'écran.*
+*Ce que vous devez voir : tout en haut, deux groupes de boutons et **⏻ Veille** :
+**« Écran régie »** (**Settings**, en bleu, et **Spectateur**) — ce qu'affiche votre téléphone ;
+**« Écran journaliste »** (**Settings**, **Journaliste**, **Bureau**) — ce qu'affiche le grand
+écran du boîtier. En dessous, **trois onglets** : **Texte**, **Contrôle**, **Réglages**. L'onglet
+« Texte » est déjà ouvert et contient déjà le texte affiché à l'écran.*
 
-> 📌 **Dans « Vue du journaliste », le bouton Journaliste doit être bleu** : c'est le signe que
+> 📌 **Sous « Écran journaliste », le bouton Journaliste doit être bleu** : c'est le signe que
 > le grand écran affiche bien le prompteur. **N'appuyez pas sur les deux autres** : ils changent
 > ce que montre le grand écran du boîtier (chapitre 13), quel que soit l'appareil où l'on appuie.
 >
@@ -390,7 +392,7 @@ ouvert et contient déjà le texte affiché à l'écran.*
 > 💡 **Pour quitter la vue Journaliste sur le boîtier** : appuyez sur la touche **Échap** du
 > clavier USB. Une fenêtre demande confirmation — **appuyez une deuxième fois sur Échap** pour
 > confirmer, **n'importe quelle autre touche** pour rester. Le grand écran passe alors sur la vue
-> **Settings** ; pour y remettre le texte : section **« Vue du journaliste »** → **Journaliste**.
+> **Settings** ; pour y remettre le texte : en haut, **« Écran journaliste »** → **Journaliste**.
 > Le texte et la position sont conservés.
 
 ---
@@ -527,6 +529,8 @@ LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 > L'espace après le signe est **obligatoire** — `3 - 4` ne devient pas une puce. Le signe
 > ne s'affiche pas à l'écran de lecture, mais il **reste dans la zone de saisie** : c'est ce
 > qui vous permet de l'enlever. Ils se cumulent : `[centre] # Le titre`.
+> Dans la zone de saisie, les boutons **Gauche**, **Centré** et **Droite** posent ou retirent
+> `[centre] ` et `[droite] ` pour vous (chapitre 7).
 >
 > **2. Autour d'un mot — pour un texte préparé ailleurs.** `**en gras**`, `*en italique*`,
 > `_souligné_`, `[rouge]une alerte[/rouge]`. Ceux-là s'appliquent **à l'import d'un
@@ -541,8 +545,8 @@ LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 > restent tels quels. Il faut une paire bien fermée, sur une même ligne, collée au mot.
 >
 > **La couleur et l'alignement s'écrivent en toutes lettres** : `[rouge]une alerte[/rouge]`,
-> et `[centre] ` ou `[droite] ` en début de ligne. Les cinq noms sont ceux des pastilles, de
-> gauche à droite : `jaune`, `rouge`, `vert`, `bleu`, `gris`. C'est plus long à taper que
+> et `[centre] ` ou `[droite] ` en début de ligne. Les six noms sont ceux des pastilles, de
+> gauche à droite : `jaune`, `rouge`, `vert`, `bleu`, `gris`, `blanc`. C'est plus long à taper que
 > deux astérisques, et c'est fait exprès — on relit `[rouge]` six mois plus tard sans se
 > demander ce que c'était, et rien ne se déclenche par accident : `[voir encadré]` ou `[1]`
 > restent tels quels. Les signes se combinent : `**[rouge]très urgent[/rouge]**`.
@@ -551,7 +555,7 @@ LibreOffice (`.odt`), RTF, texte simple (`.txt`). **5 Mo maximum par fichier.**
 > servent surtout quand vous préparez votre texte ailleurs, dans un simple fichier.
 >
 
-> **Vos couleurs sont ramenées aux cinq du prompteur.** Votre rouge reste rouge, mais un
+> **Vos couleurs sont ramenées à celles du prompteur.** Votre rouge reste rouge, mais un
 > bleu marine devient un bleu qui se voit : sur fond noir, recopier votre couleur exacte
 > rendrait le passage invisible — au moment précis où vous comptiez dessus.
 >
@@ -659,7 +663,7 @@ passage : un nom propre, une question, une relance. **Trois gestes, toujours les
 | **petit** | Le rend un peu **plus petit** |
 | **Titre** | Le rend **plus gros** |
 | **Grand titre** | Le rend **beaucoup plus gros** |
-| **Les cinq pastilles de couleur** | Colorent le passage : jaune, rouge clair, vert, bleu, gris |
+| **Les six pastilles de couleur** | Colorent le passage : jaune, rouge clair, vert, bleu, gris, blanc — le **blanc** remet en blanc un mot au milieu d'un passage coloré |
 
 - [ ] **3.** Appuyez sur **« Envoyer à l'écran »** : la mise en forme part avec le texte.
 
@@ -674,6 +678,16 @@ Le bouton **« Tout effacer »** retire la mise en forme de **tout** le texte (m
 > sélectionné : les boutons agissent uniquement sur le passage surligné, jamais sur tout le texte.
 
 > 💡 **Restez sobre** : sur un écran de 7 pouces, deux ou trois passages en couleur suffisent.
+
+**Aligner une ligne** : placez le curseur dans la ligne (ou sélectionnez-en plusieurs), puis
+**« ⇤ Gauche »**, **« Centré »** ou **« Droite ⇥ »**, sous les pastilles. **Chaque ligne garde son
+propre alignement** : un titre centré, une signature à droite, le reste à gauche. Dans la zone
+de saisie, la ligne reçoit `[centre] ` ou `[droite] ` au début — c'est normal, ces signes ne
+s'affichent pas à l'écran de lecture.
+
+**Les numéros de ligne**, à gauche de la zone de saisie, sont les mêmes que sur le grand écran
+et sur la vue Spectateur : « reprends ligne 42 » désigne la même ligne partout. Seules les
+lignes de texte sont numérotées, pas les lignes vides.
 
 > 💡 **Astuce des titres.** Une ligne que vous commencez par un **dièse suivi d'un espace**
 > s'affiche **en gros et en gras** sur le grand écran, sans rien sélectionner. Il y a trois
@@ -730,33 +744,39 @@ que fait chacun des trois modes.
 |---|---|---|---|
 | **Maintien** *(réglage d'usine)* | Maintenue : le texte **avance**. Relâchée : il **s'arrête** | Maintenue : le texte **recule** | *Sans fonction* |
 | **Impulsion** | Une pression **lance** le défilement vers l'avant ; **une seconde pression sur la même pédale met en pause** | Une pression lance le défilement **en arrière** ; une seconde pression met en pause | *Sans fonction* |
-| **Dynamique** | Tant qu'on appuie, le texte **accélère** vers l'avant | Tant qu'on appuie, le texte **ralentit**, puis **repart en arrière**, de plus en plus vite | **Lecture / pause** |
+| **Dynamique** | Tant qu'on appuie, le texte **accélère** vers l'avant | Tant qu'on appuie, le texte **ralentit**, puis **repart en arrière**, de plus en plus vite | **Pause** |
 
-**En mode Dynamique, la vitesse atteinte est conservée quand vous relâchez** : vous la posez une
-fois au pied, puis vous lisez sans rien tenir, la pédale centrale servant à partir et à s'arrêter.
+**En mode Dynamique, la vitesse se construit au pied**, et les règles sont simples :
 
-**Après une pause, c'est la pédale qui choisit le sens** : la **droite repart vers l'avant**, la
-**gauche vers l'arrière**, **à la vitesse d'avant la pause**. Gardez le pied appuyé plus d'une
-demi-seconde, et la vitesse se remet à changer. Arrivé en haut ou en bas du texte, le défilement
-se met en pause tout seul : l'autre pédale repart aussitôt dans l'autre sens.
+- **À l'arrêt, on part toujours de zéro** : la pédale droite démarre **lentement**, puis accélère
+  tant que vous la tenez. La gauche fait de même, en arrière.
+- **Relâchée, la pédale arrête d'accélérer, mais la vitesse reste** : vous lisez sans rien tenir.
+- **Pour ralentir, la pédale opposée** : un petit coup de gauche en avançant **ralentit**, sans
+  jamais faire reculer d'un coup. Gardez-la appuyée : la vitesse **passe par zéro**, puis le texte
+  repart doucement en arrière.
+- **La pédale centrale met en pause**, c'est tout. Au départ suivant, on repart de zéro.
+
+Arrivé en haut ou en bas du texte, le défilement s'arrête tout seul ; l'autre pédale repart dans
+l'autre sens.
 Un réglage apparaît alors sous les trois boutons, **« Montée en vitesse (mode dynamique) »** :
 c'est le nombre de **secondes d'appui continu pour atteindre la vitesse maximale**, **10 s** au
 départ. Plus le nombre est petit, plus la pédale est nerveuse.
 **La pédale centrale ne sert que dans ce mode** ; ailleurs, elle ne fait rien. Un pédalier à deux
-pédales fonctionne aussi en Dynamique, mais sans bouton lecture/pause.
+pédales fonctionne aussi en Dynamique : pour s'arrêter, la pédale opposée ramène à zéro.
 
 > ⚠️ **En « Impulsion » et en « Dynamique », lever le pied n'arrête plus le texte.** Le défilement
 > continue jusqu'à la pression suivante. C'est confortable pour une longue lecture, mais cela
 > vous prive de l'arrêt d'urgence au pied.
 > **Parade : restez en « Maintien » le jour du tournage, sauf si vous avez répété avec un autre
-> mode.** Et dans tous les cas, le bouton **« Début »** de l'onglet **Contrôle** remet tout au
-> repos, dans les trois modes.
+> mode.** Et dans tous les cas, le bouton **« Pause »** de l'onglet **Contrôle** arrête tout,
+> dans les trois modes.
 
 ### Si le texte monte trop vite (ou trop lentement)
 
 En mode **Maintien** et en mode **Impulsion**, le pied commande le **départ** et l'**arrêt** ;
-la **vitesse** se règle sur le téléphone. En mode **Dynamique**, elle se pose au pied — et le
-téléphone la suit, et peut la corriger.
+la **vitesse** se règle sur le téléphone. En mode **Dynamique**, elle se construit au pied ;
+**« Plus vite »** et **« Moins vite »** du téléphone la corrigent d'un cran, et la barre de vitesse
+donne celle du bouton **« Lecture »**.
 
 1. **Sur le moment, le plus simple : relâchez la pédale.** Le texte s'arrête tout de suite.
 2. Sur le téléphone, onglet **Contrôle**, carte **« Vitesse »** : appuyez sur **« − Moins vite »**
@@ -774,8 +794,7 @@ soit la façon dont vous l'avez réglée.
 > ⚠️ **PIÈGE — le bouton « Lecture ».** L'onglet **Contrôle** contient un bouton **« Lecture »**
 > qui fait défiler le texte **tout seul**, en continu. Dans ce cas, **relâcher la pédale n'arrête
 > plus rien.** **Parade** : appuyez sur **« Pause »** sur le téléphone. En tournage, on n'utilise
-> **pas** « Lecture » : on pilote au pied. *(Lecture, Pause et Début marchent dans les trois
-> modes.)*
+> **pas** « Lecture » : on pilote au pied. *(Lecture et Pause marchent dans les trois modes.)*
 
 ### Réapprendre les touches des pédales
 
@@ -812,19 +831,23 @@ nom de la touche s'affiche.* Les pédales refonctionnent immédiatement.
 
 Le défilement s'arrête tout seul à la dernière ligne : impossible d'aller plus loin. Les
 dernières lignes se figent vers le haut de l'écran et le bas devient noir. **C'est normal, ce
-n'est pas une panne.** Pour revenir au début, appuyez sur **« Début »** dans l'onglet **Contrôle**
-du téléphone — attention, ce bouton remet aussi en pause.
+n'est pas une panne.** Pour revenir au début : onglet **Contrôle** du téléphone, **« Commencer à
+la ligne »** laissé vide (ou `1`), puis **« Aller »** — le texte revient en haut, à l'arrêt.
 
 ---
 
 ## 9. Travailler par séquences
 
-Le prompteur **ne sait pas sauter à un endroit précis** du texte, et il **n'affiche ni minuteur
-ni indication d'avancement**. Les seuls retours en arrière possibles sont le bouton « Début »
-(qui remonte tout en haut) et de petits coups de pédale gauche.
+**Reprendre à une ligne précise** : chaque ligne du texte porte un **numéro**, dans la marge
+de gauche du grand écran, de la vue Spectateur et de la zone de saisie. Onglet **Contrôle**,
+tapez ce numéro dans **« Commencer à la ligne »**, puis **« Aller »** : la ligne vient se placer
+en haut de l'écran, **à l'arrêt**, et vous repartez au pied. Champ vide = le début du texte.
 
-Sur un texte de dix minutes, chercher sa place à l'aveugle entre deux prises est un enfer.
-**La bonne méthode, à préparer la veille :**
+> 💡 Les numéros se masquent dans l'onglet **Réglages**, carte **« Affichage »**, interrupteur
+> **« Numéros de ligne »**.
+
+Le prompteur **n'affiche ni minuteur ni indication d'avancement**. Sur un texte de dix minutes,
+**la méthode la plus sûre reste de préparer la veille :**
 
 - **Découpez votre texte en plusieurs textes courts**, un par séquence.
 - **Enregistrez-les avec des titres numérotés** : `Seq 1 intro`, `Seq 2 interview`,
@@ -840,22 +863,22 @@ Sur un texte de dix minutes, chercher sa place à l'aveugle entre deux prises es
 
 ## 10. Régler le confort de lecture
 
-La **taille**, l'**interligne**, les **marges** et l'**alignement** sont dans l'onglet **Texte**,
-carte **« Mise en page »** ; le **miroir** et la **ligne de repère**, dans l'onglet **Réglages**,
+La **taille**, l'**interligne** et les **marges** sont dans l'onglet **Texte**, carte **« Mise
+en page »** ; l'**alignement** se règle ligne par ligne, dans la carte « Texte » (chapitre 7) ;
+le **miroir**, la **ligne de repère** et les **numéros de ligne**, dans l'onglet **Réglages**,
 carte **« Affichage »**. Ces réglages sont **mémorisés** et survivent à l'extinction du boîtier.
 **Ils s'appliquent tout de suite à toutes les pages ouvertes**, sans rien recharger ni envoyer.
 
-> 💡 **Comment savoir qu'un réglage est pris en compte.** Les réglages en boutons (Alignement,
-> Mode) se contentent de **devenir bleus**. Les barres à faire
+> 💡 **Comment savoir qu'un réglage est pris en compte.** Les réglages en boutons (Mode des
+> pédales) se contentent de **devenir bleus**. Les barres à faire
 > glisser, elles, n'affichent **rien du tout** : la seule preuve, c'est **le grand écran qui
 > change** — et seulement **au moment où vous retirez le doigt**.
 > Glissez, lâchez, PUIS regardez l'écran.
 
 ### La taille du texte, l'interligne et les marges
 
-Onglet **Texte**, carte **« Mise en page »** : trois barres à faire glisser — **Taille du texte**, **Interligne**,
-**Marges latérales** — plus le choix de l'**Alignement** (Gauche / Centré). Le choix actif est
-celui dont le bouton est bleu.
+Onglet **Texte**, carte **« Mise en page »** : trois barres à faire glisser — **Taille du texte**,
+**Interligne**, **Marges latérales**.
 
 > 💡 **Réglez la taille en vous plaçant à la distance exacte où vous serez pendant le tournage**,
 > jamais le nez sur l'écran. **Attendez-vous à ne voir que deux ou trois lignes à la fois** :
@@ -921,8 +944,9 @@ tablette de la régie, ou le petit écran du boîtier), pour que quelqu'un suive
 2. Dans son navigateur, ouvrez `http://10.42.0.1:5000`, puis appuyez sur **Spectateur**, tout
    en haut. *(Ou tapez directement `http://10.42.0.1:5000/spectateur`.)*
 
-*Ce que vous devez voir : tout en haut, le mot **SPECTATEUR** en petit et les boutons
-**Settings · Spectateur · ⏻ Veille** ; en dessous, le texte qui défile en même temps que le vôtre.*
+*Ce que vous devez voir : tout en haut, le même en-tête que Settings (**« Écran régie »**, où
+**Spectateur** est en bleu, **« Écran journaliste »** et **⏻ Veille**) ; en dessous, le texte qui
+défile en même temps que le vôtre.*
 
 **La vue Spectateur est une réplique du grand écran, à la taille de sa fenêtre** : mêmes
 coupures de lignes, même phrase sous la ligne rouge — sur un téléphone, en plus petit. Si l'on
@@ -964,7 +988,7 @@ boîtier fait exactement le même travail** — et même davantage.
 |---|---|
 | **Flèche bas** (maintenue) | Le texte **avance** — remplace la pédale droite |
 | **Flèche haut** (maintenue) | Le texte **recule** — remplace la pédale gauche |
-| **Flèche droite** | Lecture / pause en mode **Dynamique** — remplace la pédale centrale |
+| **Flèche droite** | Pause en mode **Dynamique** — remplace la pédale centrale |
 | **Espace** | Lecture / pause, dans les trois modes |
 | **R** | Revient au tout début du texte (et met en pause) |
 | **+** / **−** | Plus vite / moins vite, d'un cran (comme sur le téléphone) |
@@ -1011,8 +1035,8 @@ position et réglages ne bougent pas.
 
 ### Choisir ce que montre le grand écran
 
-En haut de la page Settings, la section **« Vue du journaliste »** a trois boutons. **Le bleu est
-ce que montre le grand écran en ce moment** :
+En haut des pages Settings et Spectateur, le groupe **« Écran journaliste »** a trois boutons.
+**Le bleu est ce que montre le grand écran en ce moment** :
 
 | Le bouton | Le grand écran affiche |
 |---|---|
@@ -1026,7 +1050,19 @@ aussi rouvrir le prompteur en double-cliquant, avec la souris USB, sur l'icône
 **« Le Prompteur »** posée sur le bureau du boîtier.
 
 > 📌 **Ces boutons agissent sur le grand écran du boîtier, pas sur l'appareil que vous tenez**,
-> et ils **n'éteignent pas** la machine.
+> et ils **n'éteignent pas** la machine. Pour changer ce qu'affiche l'appareil que vous tenez,
+> c'est le groupe **« Écran régie »** (Settings ou Spectateur).
+
+### Le petit écran du boîtier
+
+Si un **second écran** est branché sur le boîtier (le petit écran de la régie, sur la **seconde
+prise HDMI**), il affiche **tout seul la page Settings**, dès l'allumage : **pas besoin du
+WiFi**. On y passe de Settings à Spectateur d'un appui, comme sur un téléphone. S'il est
+tactile, le toucher vise bien ce petit écran.
+
+> 📌 **Le grand écran, celui qu'on lit, reste sur la prise HDMI collée à l'alimentation.** Si
+> les deux écrans sont inversés (le texte sur le petit, Settings sur le grand), intervertissez
+> les deux câbles côté boîtier et redémarrez.
 
 ### Éteindre
 
@@ -1060,9 +1096,9 @@ Faites-le vérifier une fois par l'installateur et notez la réponse (chapitre 2
 > d'abîmer la mémoire du boîtier. Attendez que tout soit calme.
 
 **Ce que vous ne perdez pas** (tout est conservé dans la mémoire du boîtier) : votre texte
-affiché, son titre, **sa mise en forme**, tous vos réglages (taille, interligne, marges,
-alignement, miroir, ligne de repère, mode et touches des pédales), la **vitesse**, et toute votre
-bibliothèque « Mes textes enregistrés ».
+affiché, son titre, **sa mise en forme** (alignement des lignes compris), tous vos réglages
+(taille, interligne, marges, miroir, ligne de repère, numéros de ligne, mode et touches des
+pédales), la **vitesse**, et toute votre bibliothèque « Mes textes enregistrés ».
 
 **Ce que vous perdez, et c'est normal** : la position dans le texte. Au rallumage, **on repart
 toujours du tout début**.
@@ -1088,7 +1124,7 @@ toujours du tout début**.
 | **Rien ne s'allume du tout (ni l'écran, ni le boîtier)** | C'est un problème **de courant**, pas de prompteur. Vérifiez que la **multiprise est allumée** (son interrupteur lumineux), essayez **une autre prise murale**, et vérifiez que **chaque bloc d'alimentation est bien enfoncé aux deux bouts**. |
 | **L'écran reste noir alors que le boîtier est alimenté** | Vérifiez que l'écran est **allumé** et que **sa propre** alimentation est branchée. Puis que le câble d'image est branché, côté boîtier, sur **la prise plate collée à la prise du courant**. Puis débranchez le boîtier, attendez 10 secondes, rebranchez **écran allumé en premier**, et attendez **une minute complète**. |
 | **L'écran affiche « pas de signal », ou reste bleu** | C'est l'écran, pas le boîtier. Cherchez les **petits boutons de menu sur sa tranche** et vérifiez qu'il est réglé sur l'entrée **HDMI** (et non AV, ni HDMI 2). Vérifiez aussi que la **luminosité n'est pas au minimum**. |
-| **L'écran du boîtier affiche un bureau, des icônes ou une barre de navigateur au lieu du texte** | Le prompteur a été fermé : **plus besoin de redémarrer**. Avec la **souris USB**, double-cliquez sur l'icône **« Le Prompteur »** sur ce bureau. Ou, depuis le téléphone : page Settings → section **« Vue du journaliste »** → **Journaliste**. *(Si seule une barre de navigateur dépasse et qu'un clavier est branché, la touche **F** remet le plein écran.)* |
+| **L'écran du boîtier affiche un bureau, des icônes ou une barre de navigateur au lieu du texte** | Le prompteur a été fermé : **plus besoin de redémarrer**. Avec la **souris USB**, double-cliquez sur l'icône **« Le Prompteur »** sur ce bureau. Ou, depuis le téléphone : page Settings → en haut, **« Écran journaliste »** → **Journaliste**. *(Si seule une barre de navigateur dépasse et qu'un clavier est branché, la touche **F** remet le plein écran.)* |
 | **Le grand écran est tout noir, et le téléphone affiche un fond noir avec « ⏻ Rallumer »** | Le système est **en veille** (quelqu'un a appuyé sur ⏻ Veille). Touchez **« Rallumer »**, ou appuyez sur une pédale. Tout revient à l'arrêt, là où vous en étiez. |
 | **Un écran annonce « La vue Journaliste est déjà ouverte ailleurs. »** ou **« Un autre appareil a pris la main. »** | Deux vues Journaliste se disputent le pilotage. Celle qui affiche ce message **continue de montrer le texte, mais ses pédales ne pilotent plus rien**. **Refermez celle de trop** (touche **Échap**, deux fois) : **l'autre reprend la main toute seule** en quelques secondes. Sur les autres appareils, prenez **« Ouvrir la vue Spectateur »**. Si c'est au contraire cet écran-ci qui doit mener tout de suite, appuyez sur **« Prendre la main quand même »**. |
 | **Un bandeau rouge annonce « Liaison avec le boîtier perdue »** | Le téléphone ne peut plus parler au boîtier. **Le texte affiché reste lisible et les pédales continuent de fonctionner** : vous pouvez terminer la prise. Vérifiez ensuite le courant, puis débranchez le boîtier, attendez 10 secondes et rebranchez (écran allumé en premier). |
@@ -1096,8 +1132,8 @@ toujours du tout début**.
 | **Les pédales ne répondent plus** | Dans cet ordre : **1)** débranchez le câble USB du pédalier et rebranchez-le **sur une autre prise USB** du boîtier, attendez 5 secondes ; **2)** appuyez sur la pédale en regardant le repère en haut à droite de l'écran — s'il ne bouge pas, l'appui n'arrive pas au boîtier ; **3)** si une **souris USB** est branchée (ou si votre écran est tactile), cliquez **une fois** sur l'écran noir et réessayez ; **4)** débranchez l'alimentation du boîtier, attendez 10 secondes, rebranchez, attendez une minute ; **5)** branchez un **clavier USB** : Flèche bas = avancer, Flèche haut = reculer (chapitre 12). |
 | **La pédale de droite fait reculer le texte au lieu d'avancer** | Le **pédalier est posé à l'envers**. Tournez-le d'un demi-tour (le câble doit partir vers le boîtier) et refaites l'essai. **Aucun réglage n'est à modifier.** Si l'inversion persiste, notez-le, faites l'inverse pour la journée, et signalez-le à l'installateur après le tournage. |
 | **Le pédalier ne fonctionne plus du tout (câble arraché, pédale cassée)** | Branchez un **clavier USB ordinaire** sur le boîtier : **Flèche bas** remplace la pédale droite, **Flèche haut** la pédale gauche. Voir chapitre 12. |
-| **Le texte défile tout seul, et lever le pied ne l'arrête plus** | Deux causes. Soit quelqu'un a appuyé sur **« Lecture »** : onglet **Contrôle**, appuyez sur **« Pause »**. Soit le mode est passé sur **« Impulsion »** ou **« Dynamique »**, où le défilement continue pied levé : onglet **Réglages**, carte **Pédales**, appuyez sur **« Maintien »** (il doit devenir bleu). Dans tous les cas, **« Début »** (onglet Contrôle) remet tout au repos. |
-| **Le texte s'est figé, ça ne défile plus** | Vous êtes arrivé à la fin du texte : c'est normal, on ne peut pas aller plus loin. Appuyez sur **« Début »** dans l'onglet **Contrôle** (attention, ça remet aussi en pause). |
+| **Le texte défile tout seul, et lever le pied ne l'arrête plus** | Deux causes. Soit quelqu'un a appuyé sur **« Lecture »** : onglet **Contrôle**, appuyez sur **« Pause »**. Soit le mode est passé sur **« Impulsion »** ou **« Dynamique »**, où le défilement continue pied levé : onglet **Réglages**, carte **Pédales**, appuyez sur **« Maintien »** (il doit devenir bleu). Dans tous les cas, **« Pause »** (onglet Contrôle) arrête tout. |
+| **Le texte s'est figé, ça ne défile plus** | Vous êtes arrivé à la fin du texte : c'est normal, on ne peut pas aller plus loin. Onglet **Contrôle**, **« Commencer à la ligne »** vide (ou `1`), puis **« Aller »** : retour en haut, à l'arrêt. |
 | **J'ai importé un document et le grand écran ne change pas** | **C'est normal** : l'import remplit seulement la zone de saisie du téléphone. Le **repère jaune** « Ce texte n'est pas encore à l'écran » vous le rappelle. Appuyez sur **« Envoyer à l'écran »**. |
 | **Le repère jaune « Ce texte n'est pas encore à l'écran » ne disparaît pas** | Appuyez sur **« Envoyer à l'écran »** et attendez le message **« Texte envoyé à l'écran ✓ »**. Pas de message = le téléphone a perdu le réseau du boîtier : reconnectez-le à **Prompteur**, rechargez la page, recommencez. |
 | **Le mot de passe du réseau est refusé, ou la fiche du boîtier est vide** | Recopiez-le **exactement, majuscules et minuscules comprises**. Regardez la copie que vous aviez faite dans les notes de votre téléphone (chapitre 2). S'il n'existe nulle part : **il n'y a pas de solution sur place**, appelez la personne qui a installé le boîtier (numéro sur la fiche). |
@@ -1166,8 +1202,8 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
 - [ ] Le boîtier est posé **à l'écart du micro** (son ventilateur souffle légèrement).
 - [ ] Le **pédalier est bien orienté** (câble vers le boîtier) et **calé** pour ne pas glisser.
 - [ ] Mon téléphone est connecté au réseau **Prompteur** et la page **Settings** s'ouvre
-      (Settings · Spectateur · Veille, puis « Vue du journaliste » et trois onglets).
-- [ ] Dans **« Vue du journaliste »**, le bouton **Journaliste** est **bleu** : le grand écran
+      (en haut « Écran régie », « Écran journaliste » et Veille, puis trois onglets).
+- [ ] Sous **« Écran journaliste »**, le bouton **Journaliste** est **bleu** : le grand écran
       affiche bien le prompteur.
 - [ ] J'ai **envoyé mon texte**, j'ai vu le message **« Texte envoyé à l'écran ✓ »**, et le
       **repère jaune a disparu**.
@@ -1177,7 +1213,7 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
       interrupteurs Miroir** sont dans la bonne position pour mon montage.
 - [ ] J'ai réglé **taille, marges et vitesse** maintenant, et je n'y toucherai plus pendant
       les prises.
-- [ ] Je suis **remonté au tout début** (bouton « Début », ou pédale gauche) avant de lancer
+- [ ] Je suis **remonté au tout début** (« Commencer à la ligne » → « Aller », ou pédale gauche) avant de lancer
       la première prise.
 
 > ⚠️ **Les trois réflexes les plus importants pendant le tournage :**
@@ -1247,7 +1283,7 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
 > **Flèche bas = avancer, Flèche haut = reculer**, R = retour au début.
 >
 > 🚪 **Quitter la vue Journaliste :** touche **Échap**, **deux fois** (une pour demander, une
-> pour confirmer). **Le grand écran ne montre pas le texte ?** Téléphone → **« Vue du
+> pour confirmer). **Le grand écran ne montre pas le texte ?** Téléphone → **« Écran
 > journaliste »** → **Journaliste**. Ou, à la souris, double-cliquer sur l'icône
 > **« Le Prompteur »** du bureau.
 >
@@ -1255,8 +1291,8 @@ Cinq minutes, la veille et sur place. Elles évitent l'essentiel des mauvaises s
 > (il efface un texte définitivement).
 >
 > 🔁 **Si ça coince :** débrancher le boîtier, attendre 10 secondes, rebrancher.
-> **Compter une minute. Votre texte est conservé, mais il repart du début** : appuyer sur
-> « Début », puis redescendre aux pédales.
+> **Compter une minute. Votre texte est conservé, mais il repart du début** : onglet Contrôle,
+> « Commencer à la ligne » → numéro de la ligne → « Aller ».
 >
 > ☎️ **En cas de problème, appeler :** `_________________________________`
 

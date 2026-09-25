@@ -34,7 +34,7 @@ function banc(reglages, options = {}) {
 
   function elt() {
     const e = {
-      style: {}, dataset: {}, childNodes: [], className: "", textContent: "",
+      style: { setProperty() {} }, dataset: {}, childNodes: [], className: "", textContent: "",
       classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
       appendChild(c) { this.childNodes.push(c); return c; },
       append(...c) { this.childNodes.push(...c); },
@@ -65,6 +65,7 @@ function banc(reglages, options = {}) {
     scroller.childNodes = lignes;
   };
   Object.defineProperty(scroller, "children", { get: () => scroller.childNodes });
+  scroller.querySelectorAll = () => scroller.childNodes.filter((c) => c.dataset && c.dataset.n);
   Object.defineProperty(scroller, "scrollHeight", {
     get: () => options.hauteur || margeHaut() + scroller.childNodes.length * hauteurLigne() + HAUT_ECRAN * 0.8,
   });
@@ -96,7 +97,7 @@ function banc(reglages, options = {}) {
     if (url === "/api/command") {
       if (corps.cmd === "faster") { etat.settings.speed += 10; etat.version++; }
       if (corps.cmd === "slower") { etat.settings.speed -= 10; etat.version++; }
-      etat.control = { cmd: corps.cmd, cmdSeq: etat.control.cmdSeq + 1 };
+      etat.control = { cmd: corps.cmd, ligne: corps.ligne || null, cmdSeq: etat.control.cmdSeq + 1 };
       return reponse({ ok: true, speed: etat.settings.speed });
     }
     if (url === "/api/info") return reponse({ addresses: ["10.42.0.1"], port: 5000 });
@@ -132,9 +133,15 @@ function banc(reglages, options = {}) {
     touche(type, key) {
       for (const f of ecouteurs[type] || []) f({ key, repeat: false, preventDefault() {} });
     },
-    async commande(cmd) {
-      await fetch("/api/command", { method: "POST", body: JSON.stringify({ cmd }) });
+    async commande(cmd, extra) {
+      await fetch("/api/command", { method: "POST", body: JSON.stringify({ cmd, ...extra }) });
       await api.sonder();
+    },
+    vitesse() {
+      // Vitesse instantanée mesurée sur une image : déplacement / durée.
+      const avant = api.pos();
+      api.avancer(16);
+      return (api.pos() - avant) / 0.016;
     },
     pos: () => {
       const m = /translateY\((-?[\d.e+-]+)px\)/.exec(String(scroller.style.transform || ""));
@@ -192,51 +199,90 @@ async function appui(b, key, ms) {
     verifier("Un « Lecture » ancien n'est pas rejoué à l'ouverture", b.pos() === 0, `pos ${b.pos()}`);
   }
 
-  // --- Point 10 : reprise après pause en mode dynamique ----------------------
+  // --- Mode dynamique : les règles du journaliste (retour n° 3) --------------
+  // Vitesse signée ; une pédale maintenue la pousse dans son sens, d'autant plus
+  // qu'on appuie longtemps ; relâchée, elle reste ; un changement de sens passe
+  // TOUJOURS par 0 ; la centrale ne fait que PAUSE ; à l'arrêt, on repart de 0.
   {
-    const b = banc({ mode: "dyn", speed: 100 });
+    const b = banc({ mode: "dyn", speed: 100, rampSeconds: 1 }); // 600 px/s² : chiffres lisibles
+    await b.demarrer();
+    b.avancer(300);
+    await appui(b, "ArrowDown", 150); // appui court
+    const lente = b.vitesse();
+    verifier("À l'arrêt, appui court : avance lente", lente > 40 && lente < 140, `${Math.round(lente)} px/s`);
+    await appui(b, "ArrowDown", 350); // appui plus long : on accélère encore
+    const rapide = b.vitesse();
+    verifier("Appui prolongé : avance plus rapide", rapide > lente + 150, `${Math.round(lente)} -> ${Math.round(rapide)} px/s`);
+    b.avancer(1000);
+    verifier("Pédale relâchée : la vitesse atteinte reste", Math.abs(b.vitesse() - rapide) < 2, `${Math.round(b.vitesse())} px/s`);
+
+    // Le bug signalé : une fois accéléré, on ne pouvait plus ralentir.
+    await appui(b, "ArrowUp", 150);
+    const ralentie = b.vitesse();
+    verifier(
+      "Pédale gauche brève en avançant : on ralentit, sans reculer",
+      ralentie > 0 && ralentie < rapide - 60,
+      `${Math.round(rapide)} -> ${Math.round(ralentie)} px/s`
+    );
+    b.avancer(1000);
+    verifier("Et le ralentissement tient (aucune vitesse ancienne ne revient)", Math.abs(b.vitesse() - ralentie) < 2,
+      `${Math.round(b.vitesse())} px/s`);
+    verifier(
+      "La vitesse au pied n'est plus renvoyée au boîtier",
+      !b.envois.some(([u, c]) => u === "/api/settings" && c && "speed" in c),
+      JSON.stringify(b.envois.filter(([u]) => u === "/api/settings"))
+    );
+
+    // Changement de sens : toujours en passant par 0, jamais d'un coup.
+    const vitesses = [];
+    b.touche("keydown", "ArrowUp");
+    for (let i = 0; i < 60; i++) vitesses.push(b.vitesse());
+    b.touche("keyup", "ArrowUp");
+    const sauts = vitesses.slice(1).map((v, i) => Math.abs(v - vitesses[i]));
+    verifier(
+      "Pédale gauche maintenue : passe par 0 puis recule, sans à-coup",
+      vitesses[0] > 0 && vitesses[vitesses.length - 1] < 0 && Math.max(...sauts) < 15,
+      `${Math.round(vitesses[0])} -> ${Math.round(vitesses[vitesses.length - 1])} px/s, saut max ${Math.max(...sauts).toFixed(1)}`
+    );
+
+    // Pédale centrale : PAUSE seulement ; ensuite, une pédale repart de 0.
+    await appui(b, "ArrowRight", 50);
+    verifier("Pédale centrale : pause (vitesse 0)", Math.abs(b.vitesse()) < 0.01 && b.tag().startsWith("⏸"), b.tag());
+    await appui(b, "ArrowRight", 50);
+    verifier("Pédale centrale à l'arrêt : ne relance rien", Math.abs(b.vitesse()) < 0.01, b.tag());
+    await appui(b, "ArrowDown", 150);
+    const repart = b.vitesse();
+    verifier("Après la pause, la pédale droite repart de 0 (lentement)", repart > 40 && repart < 140, `${Math.round(repart)} px/s`);
+
+    // Depuis Settings : Plus vite agit sur la vitesse en cours, Lecture part à
+    // la vitesse du curseur, Pause arrête.
+    const avant = b.vitesse();
+    await b.commande("faster");
+    verifier("Plus vite (téléphone) : un cran de plus sur la vitesse en cours", Math.abs(b.vitesse() - avant - 10) < 2,
+      `${Math.round(avant)} -> ${Math.round(b.vitesse())} px/s`);
+    await b.commande("pause");
+    await b.commande("play");
+    verifier("Lecture (téléphone) : avance à la vitesse du curseur", Math.abs(b.vitesse() - b.etat.settings.speed) < 2,
+      `${Math.round(b.vitesse())} px/s`);
+    await b.commande("pause");
+    verifier("Pause (téléphone) : arrêt", Math.abs(b.vitesse()) < 0.01);
+  }
+
+  // --- Commencer à une ligne -----------------------------------------------
+  {
+    const b = banc({ mode: "hold", speed: 100 });
     await b.demarrer();
     await b.commande("play");
-    b.avancer(2000); // ~200 px vers l'avant
-    await appui(b, "ArrowRight", 50); // pause (pédale centrale)
-    const pPause = b.pos();
-    b.avancer(500);
-    verifier("Pédale centrale : pause", Math.abs(b.pos() - pPause) < 0.01);
-
-    await appui(b, "ArrowUp", 100); // gauche -> doit RECULER à la même vitesse
-    const pA = b.pos();
     b.avancer(1000);
-    const recul = pA - b.pos();
-    verifier("Après pause, pédale gauche : repart en arrière", recul > 90 && recul < 110, `${Math.round(recul)} px/s vers l'arrière`);
-
-    await appui(b, "ArrowRight", 50); // pause
-    await appui(b, "ArrowDown", 100); // droite -> doit AVANCER à la même vitesse
-    const pB = b.pos();
-    b.avancer(1000);
-    const avance = b.pos() - pB;
-    verifier("Après pause, pédale droite : repart en avant", avance > 90 && avance < 110, `${Math.round(avance)} px/s vers l'avant`);
-
-    // Appui de reprise court : la vitesse ne bouge pas.
-    await appui(b, "ArrowRight", 50);
-    await appui(b, "ArrowDown", 300);
-    verifier("Appui de reprise court : vitesse inchangée", b.tag().endsWith(" 100"), b.tag());
-
-    // Appui maintenu : accélère après le délai, puis la vitesse part au serveur.
-    await appui(b, "ArrowDown", 1400);
-    const envoi = b.envois.filter(([u, c]) => u === "/api/settings" && c.speed).pop();
-    verifier("Pédale maintenue : accélère", Number(b.tag().split(" ")[1]) > 170, b.tag());
-    verifier("Vitesse posée au pied envoyée au boîtier", envoi && envoi[1].speed === Number(b.tag().split(" ")[1]), JSON.stringify(envoi));
-
-    // Plus vite depuis Settings : part de la vitesse posée au pied.
-    await b.sonder();
-    const avant = Number(b.tag().split(" ")[1]);
-    await b.commande("faster");
-    verifier("Plus vite part de la vitesse au pied", Number(b.tag().split(" ")[1]) === avant + 10, `${avant} -> ${b.tag()}`);
-
-    // Début : revient en haut, à l'arrêt, vitesse gardée.
-    await b.commande("restart");
-    b.avancer(500);
-    verifier("Début : en haut et à l'arrêt", b.pos() === 0 && b.tag().startsWith("⏸"), b.tag());
+    await b.commande("ligne", { ligne: 10 });
+    b.avancer(300);
+    // Ligne 10 à la place qu'occupe la ligne 1 au début du texte : 9 lignes plus bas.
+    verifier("Commencer à la ligne 10 : bonne place, à l'arrêt", Math.abs(b.pos() - 9 * b.hauteurLigne()) < 0.5 && b.tag().startsWith("⏸"),
+      `pos ${Math.round(b.pos())}, ${b.tag()}`);
+    await b.commande("ligne", { ligne: 1 });
+    verifier("Ligne 1 = le début du texte", b.pos() === 0, `pos ${b.pos()}`);
+    await b.commande("ligne", { ligne: 99999 });
+    verifier("Numéro trop grand : la dernière ligne", b.pos() > 0, `pos ${Math.round(b.pos())}`);
   }
 
   // --- Butée en bas du texte en mode dynamique -------------------------------
@@ -245,11 +291,11 @@ async function appui(b, key, ms) {
     await b.demarrer();
     await b.commande("play");
     b.avancer(4000);
-    verifier("En bas du texte : pause automatique", b.tag().startsWith("⏸"), b.tag());
-    await appui(b, "ArrowUp", 50);
+    verifier("En bas du texte : arrêt automatique", b.tag().startsWith("⏸"), b.tag());
+    await appui(b, "ArrowUp", 400);
     const p = b.pos();
     b.avancer(500);
-    verifier("Pédale gauche après la butée : repart aussitôt en arrière", p - b.pos() > 100, `${Math.round(p - b.pos())} px`);
+    verifier("Pédale gauche après la butée : repart en arrière", p - b.pos() > 5, `${Math.round(p - b.pos())} px`);
   }
 
   // --- Mise en forme après une ligne « [centre] » ---------------------------
@@ -343,6 +389,15 @@ async function appui(b, key, ms) {
       Math.abs(ligneApres - ligneAvant) < 0.01,
       `ligne ${ligneAvant.toFixed(2)} -> ${ligneApres.toFixed(2)}`
     );
+  }
+
+  // --- Numéros de ligne ------------------------------------------------------
+  {
+    const b = banc({ mode: "hold" }, { texte: "# Titre\n\nPremier paragraphe\n- une puce\n[centre] centré\n\n" });
+    await b.demarrer();
+    const numeros = b.lignes().map((l) => l.dataset.n || "");
+    verifier("Numéros : lignes de texte seulement, pas les lignes vides", JSON.stringify(numeros) === JSON.stringify(["1", "", "2", "3", "4", "", ""]),
+      JSON.stringify(numeros));
   }
 
   // --- Sans commun.js, l'écran de lecture tourne quand même ---------------

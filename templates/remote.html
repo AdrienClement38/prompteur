@@ -81,11 +81,20 @@
     .pedalstat.err{color:var(--danger);}
     .pedal.capture input[type=text]{border-color:var(--accent); color:var(--accent); font-size:13px; font-weight:600;}
     .pedal.pending input[type=text]{border-color:var(--accent2); color:var(--accent2);}
-    /* Vue du journaliste : ce que montre le grand écran. Le choix en cours est
-       en couleur ; les deux autres sont les destinations possibles. */
-    .grand button.actif{background:var(--accent); border-color:var(--accent); color:#fff;}
-    .grand .etat{font-size:13px; color:var(--muted); margin-top:8px; min-height:1.3em;}
-    .grand .etat b{color:var(--fg);}
+    input[type=number]{width:100%; background:var(--card2); color:var(--fg); border:1px solid var(--line);
+      border-radius:10px; padding:10px 12px; font-size:18px; min-height:48px;}
+    /* Numéros de ligne de la zone de saisie : une colonne à gauche, les mêmes
+       numéros que sur les écrans de lecture. */
+    .editeur-cadre{position:relative;}
+    .editeur-cadre.avec-numeros .editor{padding-left:48px;}
+    .numeros-editeur{display:none; position:absolute; left:1px; top:1px; bottom:1px; width:40px;
+      overflow:hidden; pointer-events:none; border-right:1px solid var(--line);}
+    .editeur-cadre.avec-numeros .numeros-editeur{display:block;}
+    #numerosContenu{position:relative;}
+    #numerosContenu span{position:absolute; right:7px; font-size:11px; line-height:1;
+      color:var(--muted); font-variant-numeric:tabular-nums;}
+    /* Alignement ligne par ligne : trois boutons de même largeur. */
+    .fmtbar.alignbar button, .fmtbar.alignbar button:last-child{flex:1; font-size:14px;}
     /* Aide a la saisie : la syntaxe des titres, montree telle qu'on la tape. */
     .synt{display:flex; align-items:center; gap:10px; padding:3px 0;}
     /* Repere « pas encore a l'ecran ». Indispensable des lors qu'un import ne
@@ -118,7 +127,7 @@
     .editor .ms{font-size:.8em;}
     .editor .ml{font-size:1.28em;}
     .editor .mxl{font-size:1.5em;}
-    .c1{color:#ffd400;} .c2{color:#ff7a68;} .c3{color:#5ee08a;} .c4{color:#7cc4ff;} .c5{color:#a9b2c2;}
+    .c1{color:#ffd400;} .c2{color:#ff7a68;} .c3{color:#5ee08a;} .c4{color:#7cc4ff;} .c5{color:#a9b2c2;} .c6{color:#ffffff;}
     .fmtbar button#fmtL{font-size:17px; font-weight:700;}
     .fmtbar button#fmtXL{font-size:19px; font-weight:800;}
     .fmtbar button#fmtS{font-size:12px;}
@@ -128,25 +137,27 @@
   </style>
 </head>
 <body>
-  <!-- Vue du technicien : ce qu'affiche CET appareil. -->
-  <nav class="navvues" aria-label="Vues">
-    <span class="navnom">Settings</span>
-    <a class="navbtn actif" href="/settings" aria-current="page">Settings</a>
-    <a class="navbtn" href="/spectateur">Spectateur</a>
-    <button type="button" class="navbtn veillebtn">⏻ Veille</button>
-  </nav>
-
-  <!-- Vue du journaliste : ce qu'affiche le GRAND ÉCRAN du boîtier, quel que
-       soit l'appareil sur lequel on se trouve. -->
-  <div class="card grand hide" id="grand">
-    <h2><span>Vue du journaliste</span><button type="button" class="infobtn" data-info="info-grand">Info</button></h2>
-    <div class="grid3">
-      <button type="button" data-grand="settings">Settings</button>
-      <button type="button" data-grand="journaliste">Journaliste</button>
-      <button type="button" data-grand="bureau">Bureau</button>
+  <!-- En-tête toujours visible. « Écran régie » : ce qu'affiche CET appareil.
+       « Écran journaliste » : ce qu'affiche le GRAND écran du boîtier. -->
+  <header class="navvues" aria-label="Écrans">
+    <div class="groupe regie">
+      <span class="groupe-nom">Écran régie</span>
+      <div class="boutons">
+        <a class="navbtn actif" href="/settings" aria-current="page">Settings</a>
+        <a class="navbtn" href="/spectateur">Spectateur</a>
+      </div>
     </div>
-    <div class="etat" id="grandEtat">…</div>
-  </div>
+    <div class="groupe journaliste">
+      <span class="groupe-nom">Écran journaliste
+        <button type="button" class="infobtn mini" data-info="info-grand" data-titre="Écran journaliste">Info</button></span>
+      <div class="boutons">
+        <button type="button" class="navbtn" data-grand="settings" disabled>Settings</button>
+        <button type="button" class="navbtn" data-grand="journaliste" disabled>Journaliste</button>
+        <button type="button" class="navbtn" data-grand="bureau" disabled>Bureau</button>
+      </div>
+    </div>
+    <button type="button" class="navbtn veillebtn">⏻ Veille</button>
+  </header>
 
   <div class="tabbtns">
     <button data-tab="texte" class="active">Texte</button>
@@ -161,8 +172,11 @@
       <label for="title">Titre</label>
       <input type="text" id="title" placeholder="Ex : Intro épisode 12">
       <label>Texte du prompteur</label>
-      <div id="text" class="editor" contenteditable="plaintext-only"
-           data-vide="Colle ici ton texte…"></div>
+      <div class="editeur-cadre">
+        <div class="numeros-editeur" aria-hidden="true"><div id="numerosContenu"></div></div>
+        <div id="text" class="editor" contenteditable="plaintext-only"
+             data-vide="Colle ici ton texte…"></div>
+      </div>
       <div class="fmtbar">
         <button id="fmtB" title="Gras"><b>G</b></button>
         <button id="fmtI" title="Italique"><i>I</i></button>
@@ -180,6 +194,14 @@
         <button class="swatchBtn" data-color="3" style="background:#5ee08a" title="vert"></button>
         <button class="swatchBtn" data-color="4" style="background:#7cc4ff" title="bleu"></button>
         <button class="swatchBtn" data-color="5" style="background:#a9b2c2" title="gris"></button>
+        <button class="swatchBtn" data-color="6" style="background:#ffffff" title="blanc"></button>
+      </div>
+      <!-- Alignement de la LIGNE où se trouve le curseur (ou des lignes
+           sélectionnées) : il pose ou retire « [centre] » / « [droite] ». -->
+      <div class="fmtbar alignbar">
+        <button id="alignG" title="Aligner la ligne à gauche">⇤ Gauche</button>
+        <button id="alignC" title="Centrer la ligne">Centré</button>
+        <button id="alignD" title="Aligner la ligne à droite">Droite ⇥</button>
       </div>
       <div class="muted" id="fmtInfo"></div>
 
@@ -200,11 +222,6 @@
       <div class="slider"><input type="range" id="lineHeight" min="10" max="30" step="1"><span class="val" id="lineHeightVal">1.6</span></div>
       <label for="margin">Marges latérales</label>
       <div class="slider"><input type="range" id="margin" min="0" max="40" step="1"><span class="val" id="marginVal">10%</span></div>
-      <label>Alignement</label>
-      <div class="grid2">
-        <button data-align="left" class="alignBtn">Gauche</button>
-        <button data-align="center" class="alignBtn">Centré</button>
-      </div>
     </div>
 
     <div class="card">
@@ -227,10 +244,14 @@
   <section id="tab-controle" class="hide">
     <div class="card">
       <h2><span>Défilement</span><button type="button" class="infobtn" data-info="info-defilement">Info</button></h2>
-      <div class="grid3">
+      <div class="grid2">
         <button class="go" data-cmd="play">Lecture</button>
         <button data-cmd="pause">Pause</button>
-        <button data-cmd="restart">Début</button>
+      </div>
+      <label for="ligneDepart">Commencer à la ligne</label>
+      <div class="row">
+        <input type="number" id="ligneDepart" min="1" step="1" inputmode="numeric" placeholder="1" style="flex:2">
+        <button class="primary" id="allerLigne">Aller</button>
       </div>
     </div>
 
@@ -259,6 +280,8 @@
         <label class="switch"><input type="checkbox" id="mirrorV"><span class="slot"><span class="knob"></span></span></label></div>
       <div class="toggle"><span>Ligne de repère</span>
         <label class="switch"><input type="checkbox" id="guide" checked><span class="slot"><span class="knob"></span></span></label></div>
+      <div class="toggle"><span>Numéros de ligne</span>
+        <label class="switch"><input type="checkbox" id="numeros" checked><span class="slot"><span class="knob"></span></span></label></div>
     </div>
 
     <div class="card">
@@ -300,7 +323,7 @@
         </div>
       </div>
       <div class="pedal" id="pedal-keyCenter" style="margin-top:10px;">
-        <label>Touche pédale centrale (lecture/pause — mode dynamique)</label>
+        <label>Touche pédale centrale (pause — mode dynamique)</label>
         <input type="text" id="keyCenter" readonly placeholder="—">
         <div class="pedalbtns">
           <button class="ghost" id="keyCenterLearn">Réapprendre</button>
@@ -319,7 +342,8 @@
        permanence : on l'ouvre avec le bouton Info du bloc concerné.
        ==================================================================== -->
   <template id="info-grand">
-    <p>Ces trois boutons choisissent ce que montre <b>le grand écran du boîtier</b>,
+    <p><b>Écran régie</b> : ce qu'affiche <b>cet appareil</b> — Settings ou Spectateur.</p>
+    <p><b>Écran journaliste</b> : ce qu'affiche <b>le grand écran du boîtier</b>,
       quel que soit l'appareil sur lequel vous êtes :</p>
     <p><b>Journaliste</b> — le prompteur, piloté aux pédales.<br>
       <b>Settings</b> — cette page-ci, en grand.<br>
@@ -343,7 +367,13 @@
   <template id="info-texte">
     <p><b>Mettre en forme :</b> sélectionnez un passage, puis un bouton (gras,
       italique, souligné, taille, couleur). <b>Rappuyez</b> sur le même bouton pour
-      l'enlever. « Tout effacer » retire toute la mise en forme, pas le texte.</p>
+      l'enlever. « Tout effacer » retire toute la mise en forme, pas le texte.
+      La pastille <b>blanche</b> remet un mot en blanc au milieu d'un passage coloré.</p>
+    <p><b>Aligner :</b> placez le curseur sur une ligne (ou sélectionnez-en
+      plusieurs), puis <b>Gauche</b>, <b>Centré</b> ou <b>Droite</b>. Chaque ligne
+      garde son propre alignement.</p>
+    <p class="muted">Les <b>numéros</b> à gauche sont ceux des écrans de lecture :
+      c'est eux que prend « Commencer à la ligne » (onglet Contrôle).</p>
     <p>Rien ne part à l'écran avant <b>« Envoyer à l'écran »</b>. Tant que ce n'est
       pas fait, un bandeau jaune le rappelle.</p>
     <p><b>Au clavier, en début de ligne</b> — marche partout, tapé ici ou venu d'un
@@ -363,10 +393,11 @@
     <div class="synt"><code>*nuance*</code><span><i>italique</i></span></div>
     <div class="synt"><code>_appuyé_</code><span><u>souligné</u></span></div>
     <div class="synt"><code>[rouge]alerte[/rouge]</code><span class="c2">rouge</span></div>
-    <p class="muted">Les cinq couleurs, dans l'ordre des pastilles :
+    <p class="muted">Les six couleurs, dans l'ordre des pastilles :
       <span class="c1">jaune</span>, <span class="c2">rouge</span>,
       <span class="c3">vert</span>, <span class="c4">bleu</span>,
-      <span class="c5">gris</span>. Le reste du texte est toujours blanc sur fond noir.
+      <span class="c5">gris</span>, <span class="c6">blanc</span>. Le reste du texte
+      est toujours blanc sur fond noir.
       Rien ne se déclenche par accident : <code>3 * 4</code>,
       <code>mon_texte.txt</code> ou <code>[voir encadré]</code> restent tels quels.</p>
   </template>
@@ -375,8 +406,7 @@
     <p>Ces réglages s'appliquent à <b>tout le texte</b>, tout de suite, sur tous
       les écrans (Journaliste et Spectateur). Pas besoin d'appuyer sur « Envoyer ».</p>
     <p class="muted"><b>Marges latérales</b> : la place laissée vide à gauche et à
-      droite. <b>Alignement</b> : pour tout le texte ; une ligne précise se centre
-      avec <code>[centre] </code> en début de ligne.</p>
+      droite. L'alignement, lui, se règle ligne par ligne, dans le bloc Texte.</p>
   </template>
 
   <template id="info-importer">
@@ -390,15 +420,18 @@
   <template id="info-defilement">
     <p>En direct, on pilote surtout avec les <b>pédales</b>. Ces boutons sont un
       secours, ou un réglage à distance.</p>
-    <p><b>Lecture</b> fait défiler vers l'avant, <b>Pause</b> arrête, <b>Début</b>
-      revient en haut du texte et met en pause. Ils marchent dans les trois modes
-      de pédales.</p>
+    <p><b>Lecture</b> fait défiler vers l'avant, <b>Pause</b> arrête. Ils marchent
+      dans les trois modes de pédales.</p>
+    <p><b>Commencer à la ligne</b> : tapez un numéro, puis <b>Aller</b>. Cette ligne
+      se place au début de l'écran, à l'arrêt. Les numéros sont ceux affichés à
+      gauche du texte ; <b>1</b> (ou le champ vide) = le début du texte.</p>
   </template>
 
   <template id="info-vitesse">
     <p>Le curseur et les deux boutons règlent la même vitesse de défilement.</p>
-    <p class="muted">En mode <b>Dynamique</b>, les pédales la changent aussi : le
-      curseur suit la vitesse posée au pied.</p>
+    <p class="muted">En mode <b>Dynamique</b>, la vitesse se construit au pied, en
+      repartant de 0 à chaque départ. Le curseur donne alors la vitesse de
+      « Lecture » ; Plus vite / Moins vite ajustent d'un cran la vitesse en cours.</p>
   </template>
 
   <template id="info-affichage">
@@ -408,7 +441,8 @@
     <p class="muted">Le téléphone, le petit écran et la vue Spectateur restent toujours
       à l'endroit.</p>
     <p class="muted">La <b>ligne de repère</b> est la ligne rouge à hauteur de
-      laquelle on lit.</p>
+      laquelle on lit. Les <b>numéros de ligne</b> s'affichent dans la marge de
+      gauche, sur tous les écrans.</p>
   </template>
 
   <template id="info-pedales">
@@ -416,11 +450,11 @@
       Pédale centrale sans fonction.</p>
     <p><b>Impulsion</b> : une pression lance le défilement, une seconde pression
       sur la <b>même</b> pédale met en pause. Pédale centrale sans fonction.</p>
-    <p><b>Dynamique</b> : la <b>centrale</b> fait lecture/pause. La droite accélère
-      vers l'avant tant qu'on appuie ; la gauche ralentit, puis repart en arrière.
-      La vitesse atteinte est <b>conservée</b> quand on relâche. Après une pause,
-      la pédale droite <b>repart vers l'avant</b> et la gauche <b>vers l'arrière</b>,
-      à la vitesse d'avant la pause.</p>
+    <p><b>Dynamique</b> : la pédale <b>droite</b> maintenue fait avancer, de plus en
+      plus vite ; la <b>gauche</b>, de même, vers l'arrière. <b>Relâchée, la vitesse
+      atteinte reste.</b> Pour changer de sens, la vitesse repasse toujours par 0 :
+      la gauche ralentit d'abord, puis fait reculer si on la garde. La <b>centrale</b>
+      met en <b>pause</b> ; ensuite, une pédale repart de 0, lentement.</p>
     <p class="muted"><b>Montée en vitesse</b> (mode dynamique) : le nombre de
       secondes d'appui continu pour atteindre la vitesse maximale.</p>
     <p><b>Changer la touche d'une pédale :</b> « Réapprendre » → appuyez <b>une

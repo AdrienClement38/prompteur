@@ -729,14 +729,14 @@ Faites ces gestes **avec le clavier branché sur le boîtier**.
 **Sortir de l'écran de lecture**
 
 - [ ] **1.** Appuyez sur **Échap**. **✅ Ce que vous devez voir :** une fenêtre au milieu de l'écran : **« Quitter la vue Journaliste ? »**, et en dessous « Échap pour confirmer · n'importe quelle autre touche pour rester ».
-- [ ] **2.** Appuyez **une seconde fois** sur **Échap**. **✅ Ce que vous devez voir :** en quelques secondes, la **vue Settings** en plein écran : tout en haut le mot **SETTINGS** et les boutons Settings · Spectateur · ⏻ Veille, puis la section **« Vue du journaliste »** (le bouton **Settings** y est bleu). **Le texte reste en place ; en revanche la lecture repartira du début du texte.** *(Ne comptez jamais retrouver votre ligne en pleine prise.)*
+- [ ] **2.** Appuyez **une seconde fois** sur **Échap**. **✅ Ce que vous devez voir :** en quelques secondes, la **vue Settings** en plein écran : tout en haut les groupes **« Écran régie »** et **« Écran journaliste »**, et le bouton ⏻ Veille (sous « Écran journaliste », le bouton **Settings** est bleu). **Le texte reste en place ; en revanche la lecture repartira du début du texte.** *(Ne comptez jamais retrouver votre ligne en pleine prise.)*
 
 *(Cette confirmation en deux temps est voulue : une touche unique couperait
 l'écran en pleine prise si quelqu'un effleurait le clavier.)*
 
 **Revenir à l'écran de lecture**
 
-- [ ] Dans la section **« Vue du journaliste »**, cliquez sur **Journaliste**. **✅ En quelques secondes, l'écran de lecture revient, plein écran, avec le dernier texte.**
+- [ ] Sous **« Écran journaliste »**, cliquez sur **Journaliste**. **✅ En quelques secondes, l'écran de lecture revient, plein écran, avec le dernier texte.**
 
 > **⚠️ Échap refuse parfois de partir — et c'est une protection.** Si la liaison
 > avec le boîtier est perdue (bandeau rouge en bas de l'écran), la fenêtre affiche
@@ -748,14 +748,14 @@ l'écran en pleine prise si quelqu'un effleurait le clavier.)*
 système…)
 
 - [ ] **1.** Depuis l'écran de lecture : **Échap**, puis **Échap**. **✅ La vue Settings s'affiche.**
-- [ ] **2.** Dans la section **« Vue du journaliste »**, cliquez sur **Bureau**. **✅ Le bureau réapparaît, avec sa barre en haut.**
+- [ ] **2.** Sous **« Écran journaliste »**, cliquez sur **Bureau**. **✅ Le bureau réapparaît, avec sa barre en haut.**
 
 **Faire revenir le prompteur depuis le bureau**
 
 - [ ] **Double-cliquez sur l'icône « Le Prompteur »**, posée sur le bureau par l'installation *(si rien ne se passe, essayez un simple clic)*. **✅ En quelques secondes, l'écran de lecture revient, plein écran, avec le dernier texte.**
 
 *(La même entrée existe dans le **menu des applications**, et le bouton
-**Journaliste** de la section « Vue du journaliste » fait exactement la même chose
+**Journaliste** du groupe « Écran journaliste » fait exactement la même chose
 à distance, depuis le téléphone.)*
 
 > **✅ Le démarrage automatique, lui, n'a pas bougé.** Quoi que vous fassiez ici,
@@ -795,7 +795,7 @@ jamais se contenter de débrancher** : une coupure brutale pendant que l'apparei
 **Si le bouton n'est pas accessible sur votre boîtier**, la méthode de
 remplacement est celle-ci, avec le clavier et la souris de la sacoche :
 
-- [ ] **1.** Revenez au bureau : **Échap**, **Échap**, puis **« Vue du journaliste »** → **Bureau** (voir l'étape G bis).
+- [ ] **1.** Revenez au bureau : **Échap**, **Échap**, puis **« Écran journaliste »** → **Bureau** (voir l'étape G bis).
 - [ ] **2.** **Menu framboise, en haut à gauche → Shutdown**, et confirmez.
 - [ ] **3.** Attendez que **l'écran soit éteint**, comptez 20 secondes, puis débranchez.
 
@@ -857,14 +857,14 @@ http://10.42.0.1:5000
 > téléphones croient à une recherche Google… qui échoue, puisqu'il n'y a pas
 > d'Internet. **Tapez l'adresse en entier**, `http://` compris.
 
-**✅ Ce que vous devez voir :** la vue **Settings** : tout en haut le mot
-**SETTINGS** en petit et trois boutons, **Settings**, **Spectateur** et
-**⏻ Veille** ; en dessous la section **« Vue du journaliste »**, où le bouton
-**Journaliste** est bleu ; puis **trois onglets : Texte, Contrôle, Réglages**. La
+**✅ Ce que vous devez voir :** la vue **Settings** : tout en haut, le groupe
+**« Écran régie »** (**Settings** en bleu, **Spectateur**), le groupe
+**« Écran journaliste »** (**Settings**, **Journaliste** en bleu, **Bureau**) et
+**⏻ Veille** ; puis **trois onglets : Texte, Contrôle, Réglages**. La
 grande zone de texte **n'est pas vide** : elle contient déjà le texte de bienvenue,
 ce qui prouve que le téléphone a bien parlé au boîtier.
 
-> **ℹ️ Les trois boutons de « Vue du journaliste » agissent sur le GRAND écran du
+> **ℹ️ Les trois boutons de « Écran journaliste » agissent sur le GRAND écran du
 > boîtier**, pas sur le téléphone. Le bleu est ce qu'il affiche : **Journaliste**,
 > c'est exactement ce qu'il faut. La seule preuve qu'un texte est réellement
 > parti, c'est la **bulle de confirmation** décrite au point H7.
@@ -947,7 +947,7 @@ Le prompteur sait « apprendre » quelle touche envoie chaque pédale. Cet
 apprentissage se fait dans l'onglet **Réglages**, tout en bas, dans la carte
 **« Pédales »**. On y trouve **trois blocs** : **« Touche pédale droite
 (avancer) »**, **« Touche pédale gauche (reculer) »** et **« Touche pédale
-centrale (lecture/pause — mode dynamique) »**.
+centrale (pause — mode dynamique) »**.
 
 > **📌 Rien n'est enregistré sans votre accord — vous pouvez explorer sans crainte.**
 > L'apprentissage se fait en **trois temps** : **« Réapprendre »**, puis l'appui
@@ -989,7 +989,7 @@ qu'une touche, et aucun redémarrage.
 - [ ] Le clavier **et la souris** étant branchés sur le boîtier, appuyez **deux fois sur Échap** (voir l'étape G bis). **✅ La vue Settings s'affiche.** *(Tout le reste se fait à la souris : sans elle, vous ne pourrez pas appuyer sur « Réapprendre » ni sur « Enregistrer ».)*
 - [ ] Sur cette même page, plus bas : onglet **Réglages** → carte **Pédales**.
 - [ ] Faites l'apprentissage comme dans la méthode 1, le pédalier branché sur le boîtier.
-- [ ] **Pour faire revenir le prompteur :** remontez en haut de la page, section **« Vue du journaliste »** → **Journaliste**. **✅ L'écran de lecture revient en quelques secondes, avec le dernier texte.**
+- [ ] **Pour faire revenir le prompteur :** remontez en haut de la page, **« Écran journaliste »** → **Journaliste**. **✅ L'écran de lecture revient en quelques secondes, avec le dernier texte.**
 
 > **✍️ À NOTER SUR PAPIER :** les noms exacts des touches apprises. Les valeurs
 > d'origine sont **`ArrowDown`** pour la pédale droite (avancer), **`ArrowUp`**
@@ -1018,12 +1018,13 @@ journaliste.
 |---|---|---|---|
 | **Maintien** *(d'usine)* | enfoncée, le texte avance ; relâchée, il s'arrête | enfoncée, le texte recule, plus vite | sans fonction |
 | **Impulsion** | une pression lance le défilement ; **une seconde pression sur la même pédale met en pause** | pareil, dans l'autre sens (elle change aussi le sens en cours de route) | sans fonction |
-| **Dynamique** | tant qu'on appuie, le défilement **accélère** vers l'avant | tant qu'on appuie, il **ralentit**, puis repart en arrière de plus en plus vite | **lecture / pause** |
+| **Dynamique** | tant qu'on appuie, le défilement **accélère** vers l'avant | tant qu'on appuie, il **ralentit**, passe par zéro, puis repart en arrière de plus en plus vite | **pause** |
 
 > **ℹ️ Le mode « Dynamique » conserve la vitesse atteinte** quand on relâche la
-> pédale : on la pose une fois au pied, puis on lit sans rien tenir. C'est le seul
-> mode qui réclame **trois pédales** — sans la centrale, plus moyen de mettre en
-> pause au pied. Il a son propre réglage, qui **n'apparaît qu'une fois le mode
+> pédale : on la construit au pied, puis on lit sans rien tenir. À chaque départ
+> (après une pause), on repart de zéro, lentement. La pédale opposée ralentit
+> sans jamais inverser d'un coup. La centrale met en pause — sans elle, on
+> s'arrête en ramenant la vitesse à zéro avec la pédale opposée. Il a son propre réglage, qui **n'apparaît qu'une fois le mode
 > « Dynamique » choisi**, juste au-dessus des trois blocs de pédales :
 > **« Montée en vitesse (mode dynamique) »**, **10 s** d'usine, c'est-à-dire le
 > nombre de secondes d'appui continu pour atteindre la vitesse maximale. Plus
@@ -1040,7 +1041,8 @@ pédales.** C'est à dire au journaliste, et à faire essayer une fois.
 
 - Sur le téléphone, onglet **Contrôle** : le bouton **« Lecture »** lance le
   défilement **automatique**, la carte **« Vitesse »** l'ajuste, et **« Pause »**
-  l'arrête. Le bouton **« Début »** revient au tout début (et met en pause).
+  l'arrête. **« Commencer à la ligne »** (champ vide = le début) replace le texte
+  à la ligne voulue, à l'arrêt.
 - Ce repli marche **dans les trois modes** de pédalier.
 - ⚠️ Dans ce défilement automatique, **la pédale ne coupe plus le défilement** :
   c'est « Pause » qu'il faut appuyer.
@@ -1081,8 +1083,8 @@ catastrophe en direct.
 - [ ] Je rebranche. **Sans toucher à rien**, au bout d'une minute, le prompteur revient tout seul avec **le dernier texte envoyé**.
 - [ ] **Je refais ce test d'extinction/rallumage une deuxième fois.** (Oui, vraiment.)
 - [ ] **Le test des 15 minutes :** je laisse le boîtier allumé **un quart d'heure sans y toucher**, avec un texte affiché. **L'écran doit rester allumé et le texte visible.** S'il devient noir tout seul, voir la partie « Si ça ne marche pas ».
-- [ ] **Échap**, puis **Échap** sur le clavier du boîtier → la **vue Settings** s'affiche. **« Vue du journaliste »** → **Journaliste** → l'écran de lecture revient, avec son texte.
-- [ ] Depuis le téléphone, **« Vue du journaliste »** → **Bureau** (je confirme) → le bureau apparaît sur le boîtier. Je **double-clique sur l'icône « Le Prompteur »** → le prompteur revient, **sans redémarrer**.
+- [ ] **Échap**, puis **Échap** sur le clavier du boîtier → la **vue Settings** s'affiche. **« Écran journaliste »** → **Journaliste** → l'écran de lecture revient, avec son texte.
+- [ ] Depuis le téléphone, **« Écran journaliste »** → **Bureau** (je confirme) → le bureau apparaît sur le boîtier. Je **double-clique sur l'icône « Le Prompteur »** → le prompteur revient, **sans redémarrer**.
 - [ ] **⏻ Veille** (je confirme) → le grand écran s'éteint, le téléphone passe au noir. **« Rallumer »** → tout revient, à l'arrêt.
 
 **Le téléphone**
@@ -1145,7 +1147,7 @@ dernier test est donc le seul qui prouve vraiment quelque chose.
 - [ ] Le téléphone retrouve le réseau `Prompteur` et ouvre la télécommande depuis son raccourci.
 - [ ] J'envoie un texte : il s'affiche en moins d'une seconde.
 - [ ] Les deux pédales répondent (▶︎ et ◀︎).
-- [ ] J'enchaîne une « prise » complète : texte envoyé, défilement à la pédale, arrêt, retour au début (bouton **« Début »**), nouvelle prise. Tout répond.
+- [ ] J'enchaîne une « prise » complète : texte envoyé, défilement à la pédale, arrêt, retour au début (**« Commencer à la ligne »** → **« Aller »**), nouvelle prise. Tout répond.
 
 > **Si un seul de ces points échoue, l'installation n'est pas terminée.**
 > Reprenez la partie « Si ça ne marche pas » avant de remettre le matériel.
@@ -1183,7 +1185,7 @@ clavier, une souris, un écran, un câble Ethernet et Internet.
 
 > **🔑 Deux gestes reviennent souvent dans ce tableau :** quitter la vue
 > Journaliste (**Échap**, puis **Échap**) et retrouver le bureau du boîtier
-> (depuis la vue Settings : **« Vue du journaliste »** → **Bureau**). Les deux sont détaillés dans la partie
+> (depuis la vue Settings : **« Écran journaliste »** → **Bureau**). Les deux sont détaillés dans la partie
 > **« Sortir du prompteur, et y revenir »**. Ils demandent un **clavier branché
 > sur le boîtier** : c'est la raison pour laquelle le clavier reste dans la
 > sacoche.
@@ -1198,12 +1200,12 @@ clavier, une souris, un écran, un câble Ethernet et Internet.
 | **L'écran devient noir tout seul au bout de quelques minutes** | C'est la mise en veille. Refaites le **réglage n° 3 de l'étape E** (Display Options → Screen Blanking → NON), puis redémarrez. Vérifiez aussi la mise en veille **propre à l'écran 7 pouces**, s'il en a une dans ses propres boutons. |
 | **Le réseau WiFi `Prompteur` n'apparaît pas sur le téléphone** | Attendez d'abord **une minute complète** après l'allumage. Toujours rien : sur le boîtier, ouvrez la fenêtre noire (**Ctrl + Alt + T**) et tapez la ligne ci-dessous, qui rallume le réseau du boîtier. Attendez 30 secondes et regardez à nouveau la liste des WiFi du téléphone.<br>`sudo nmcli connection up Prompteur`<br>Si le réseau n'apparaît toujours pas, **alors seulement** : rebranchez le câble Ethernet et relancez la **ligne F7** de l'étape F. *(Attention : voir l'adresse s'afficher sur l'écran du boîtier ne prouve PAS que le WiFi fonctionne — la seule preuve valable est de voir le réseau dans la liste du téléphone.)* |
 | **Le téléphone refuse le mot de passe WiFi** | La cause la plus courante est la **majuscule automatique** ajoutée par le clavier du téléphone à la première lettre, ou un **espace** en fin de saisie. Appuyez sur le petit **œil** pour afficher le mot de passe en clair et relisez-le caractère par caractère. En dernier recours : demandez au téléphone d'**« oublier ce réseau »**, puis reconnectez-vous. |
-| **Le mot de passe WiFi est perdu** | Regardez d'abord la **feuille de l'installateur**, dans la sacoche, et la **fiche collée sur le boîtier**, puis la **photo du cadre final** prise à l'étape F7 : il y figure. Si tout cela manque, il se relit sur le boîtier : **Échap**, **Échap**, puis **« Vue du journaliste »** → **Bureau** pour retrouver le bureau ; fenêtre noire (**Ctrl + Alt + T**), puis la ligne ci-dessous — **une seule ligne, sans accent, tout en minuscules ; les tirets sont ceux de la touche à droite du 0**. Le mot de passe s'affiche en clair : notez-le, puis double-cliquez sur l'icône **« Le Prompteur »** pour revenir à l'écran.<br>`sudo nmcli -s -g 802-11-wireless-security.psk connection show Prompteur` |
+| **Le mot de passe WiFi est perdu** | Regardez d'abord la **feuille de l'installateur**, dans la sacoche, et la **fiche collée sur le boîtier**, puis la **photo du cadre final** prise à l'étape F7 : il y figure. Si tout cela manque, il se relit sur le boîtier : **Échap**, **Échap**, puis **« Écran journaliste »** → **Bureau** pour retrouver le bureau ; fenêtre noire (**Ctrl + Alt + T**), puis la ligne ci-dessous — **une seule ligne, sans accent, tout en minuscules ; les tirets sont ceux de la touche à droite du 0**. Le mot de passe s'affiche en clair : notez-le, puis double-cliquez sur l'icône **« Le Prompteur »** pour revenir à l'écran.<br>`sudo nmcli -s -g 802-11-wireless-security.psk connection show Prompteur` |
 | **La vue Settings ne s'ouvre pas sur le téléphone** | Vérifiez que le téléphone est bien sur le WiFi `Prompteur` (et pas en 4G), puis tapez l'adresse **en entier** : `http://10.42.0.1:5000` |
 | **« Erreur de connexion au boîtier » sur le téléphone** | Le téléphone a quitté le réseau du boîtier. Reconnectez-le, refaites les réglages du point **H3** de l'étape H, puis rechargez la page. |
 | **J'appuie sur « Envoyer à l'écran » et il ne se passe rien du tout** | Pas de bulle de confirmation = rien n'est parti. Le téléphone a perdu le WiFi. Reconnectez-le, **rechargez la page**, recommencez. |
 | **Les pédales ne répondent plus** | L'écran du boîtier n'écoute plus le clavier (quelque chose est passé devant). **Si une souris est branchée :** cliquez une fois n'importe où sur l'écran du boîtier, puis réessayez la pédale — le badge en haut à droite doit repasser sur ▶︎. **Sinon — et c'est le cas normal en tournage :** éteignez le boîtier avec son bouton d'alimentation et rallumez-le ; une minute plus tard tout est revenu, avec le dernier texte envoyé. **Prévoyez toujours ces deux minutes de marge avant une prise.** *(Ce geste de la souris explique pourquoi une petite souris filaire doit toujours rester dans la sacoche.)* |
-| **Le texte s'est figé, ça ne défile plus** | Vous êtes probablement arrivé à la fin du texte : l'appareil refuse d'aller plus loin, c'est normal. Appuyez sur le bouton **« Début »** du téléphone pour revenir en haut — il met aussi le défilement en pause, dans tous les modes. *(La touche **R** du clavier du boîtier fait de même.)* |
+| **Le texte s'est figé, ça ne défile plus** | Vous êtes probablement arrivé à la fin du texte : l'appareil refuse d'aller plus loin, c'est normal. Onglet **Contrôle** du téléphone, **« Commencer à la ligne »** vide (ou `1`), puis **« Aller »** : retour en haut, à l'arrêt, dans tous les modes. *(La touche **R** du clavier du boîtier fait de même.)* |
 | **Le texte démarre trop bas sur l'écran** | C'est voulu : la première ligne est placée sous la ligne rouge de repère, et le texte monte vers elle dès le premier appui sur la pédale. Il n'y a rien à corriger. |
 | **Le grand écran est éteint, et le téléphone affiche un fond noir avec « ⏻ Rallumer »** | Le système est **en veille** (bouton ⏻ Veille). Touchez **« Rallumer »**, ou appuyez sur une pédale : tout revient, à l'arrêt, là où l'on en était. |
 | **Le texte est à l'envers** | Sur le téléphone, onglet **Réglages** → **Affichage** : éteignez l'interrupteur « Miroir horizontal » (ou « Miroir vertical », si le texte a la tête en bas). Avec un clavier branché au boîtier, la touche **M** fait la même chose. |
@@ -1214,7 +1216,7 @@ clavier, une souris, un écran, un câble Ethernet et Internet.
 | **La clé USB n'est pas détectée** | Branchez la clé **sur le boîtier** (jamais sur le téléphone), **avant** d'appuyer sur le bouton « Clé USB », attendez 5 secondes, réessayez. Utilisez **une clé USB ordinaire, du type de celles que l'on achète en supermarché** — évitez les disques durs externes et les clés chiffrées. Le plus sûr est de placer le document **à la racine de la clé, c'est-à-dire visible dès l'ouverture de la clé**. Sur une clé contenant des milliers de photos, la recherche s'arrête avant d'avoir tout parcouru et le document peut ne jamais apparaître. |
 | **Dans la liste de la clé USB, un fichier commence par `._`** | Ce sont des doublons invisibles créés par les Mac. Choisissez la ligne dont le nom **ne commence pas** par un point. |
 | **Un texte enregistré a disparu** | La petite croix rouge de la liste « Mes textes enregistrés » supprime **immédiatement, sans confirmation et sans corbeille**. Aucune récupération n'est possible : c'est pourquoi il faut toujours garder une copie des textes ailleurs. |
-| **Le défilement part tout seul et ne s'arrête pas quand je relâche la pédale** | Deux causes. (1) Le **mode** des pédales n'est plus « Maintien » : en « Impulsion » et en « Dynamique », le défilement continue après le relâchement — c'est normal. Onglet **Réglages** → carte **Pédales** → bouton **« Maintien »**. (2) Quelqu'un a appuyé sur **« Lecture »** du téléphone, qui lance un défilement automatique que la pédale n'arrête pas : appuyez sur **« Pause »** ou **« Début »**, ou sur la **barre d'espace** du clavier branché au boîtier. |
+| **Le défilement part tout seul et ne s'arrête pas quand je relâche la pédale** | Deux causes. (1) Le **mode** des pédales n'est plus « Maintien » : en « Impulsion » et en « Dynamique », le défilement continue après le relâchement — c'est normal. Onglet **Réglages** → carte **Pédales** → bouton **« Maintien »**. (2) Quelqu'un a appuyé sur **« Lecture »** du téléphone, qui lance un défilement automatique que la pédale n'arrête pas : appuyez sur **« Pause »**, ou sur la **barre d'espace** du clavier branché au boîtier. |
 | **La télécommande affiche un texte qui n'est plus celui de l'écran** | **Normalement, toutes les pages se mettent à jour seules.** Le cas le plus fréquent : la zone de saisie contient un texte tapé ou importé **qui n'a pas encore été diffusé** — le repère jaune **« Ce texte n'est pas encore à l'écran »** le dit. Appuyez sur **« Envoyer à l'écran »**, ou effacez votre saisie. Si le repère n'apparaît pas et que la page reste vraiment en arrière, c'est qu'elle a perdu le réseau du boîtier : reconnectez le téléphone au WiFi `Prompteur`, puis rechargez la page — **mais envoyez ou enregistrez d'abord ce que vous êtes en train d'écrire**, un rechargement perd la saisie en cours. |
 | **Le boîtier redémarre tout seul, ou un petit éclair apparaît en haut de l'écran** | C'est un problème d'**alimentation**. Utilisez **l'alimentation d'origine** du kit (pas un chargeur de téléphone), et **n'alimentez rien d'autre sur les ports USB du boîtier** — surtout pas l'écran, qui doit avoir sa propre alimentation secteur. |
 | **Le boîtier ne démarre plus du tout : la framboise tourne en boucle, ou des messages d'erreur défilent au démarrage** | La carte mémoire est probablement abîmée. **Éteignez, échangez la carte mémoire contre la carte de secours** (voir l'étape L), rallumez, et prévenez la personne qui a installé le boîtier. Sans carte de secours, il n'y a pas de réparation possible sur un plateau. |
@@ -1237,7 +1239,7 @@ vous le dire.
 La marche à suivre, dans l'ordre :
 
 - [ ] **N1.** Rebranchez le **câble Ethernet** (sans Internet, la mise à jour échoue dès la première ligne) et le **clavier**.
-- [ ] **N2.** Retrouvez le bureau : **Échap**, **Échap**, puis **« Vue du journaliste »** → **Bureau** (voir l'étape G bis). Ouvrez ensuite la fenêtre noire (**Ctrl + Alt + T**).
+- [ ] **N2.** Retrouvez le bureau : **Échap**, **Échap**, puis **« Écran journaliste »** → **Bureau** (voir l'étape G bis). Ouvrez ensuite la fenêtre noire (**Ctrl + Alt + T**).
 - [ ] **N3.** Entrez dans le dossier du logiciel :
 
 ```
@@ -1300,9 +1302,9 @@ Manuscrite, et **distincte de la fiche collée sur le boîtier**, elle doit port
 - Le **nom du WiFi** : `Prompteur` — et son **mot de passe**.
 - L'**adresse à taper** : `http://10.42.0.1:5000` — elle ouvre la vue **Settings**. *(Pour un dépanneur : les deux autres vues répondent aux adresses `…:5000/journaliste` et `…:5000/spectateur`.)*
 - Le **nom d'utilisateur et le mot de passe du boîtier** (informations n° 1 et n° 2) — utiles uniquement à un dépanneur, mais indispensables le jour où.
-- **Comment éteindre** : le geste exact constaté sur ce boîtier (appui court sur le petit bouton rond près de la prise d'alimentation, écran éteint, 20 secondes, puis débrancher) — et, si ce bouton n'est pas accessible : **Échap**, **Échap** → **« Vue du journaliste »** → **Bureau**, puis **menu framboise → Shutdown**.
+- **Comment éteindre** : le geste exact constaté sur ce boîtier (appui court sur le petit bouton rond près de la prise d'alimentation, écran éteint, 20 secondes, puis débrancher) — et, si ce bouton n'est pas accessible : **Échap**, **Échap** → **« Écran journaliste »** → **Bureau**, puis **menu framboise → Shutdown**.
 - Les **touches des pédales** : `ArrowDown` à droite, `ArrowUp` à gauche, `ArrowRight` au centre (ou celles que vous avez apprises), et le **mode** en service : « Maintien ».
-- **Sortir du prompteur et y revenir** : **Échap**, **Échap** → vue Settings ; **« Vue du journaliste »** → **Journaliste** pour revenir. Et sur le bureau du boîtier, l'icône **« Le Prompteur »** relance l'écran sans redémarrer.
+- **Sortir du prompteur et y revenir** : **Échap**, **Échap** → vue Settings ; **« Écran journaliste »** → **Journaliste** pour revenir. Et sur le bureau du boîtier, l'icône **« Le Prompteur »** relance l'écran sans redémarrer.
 - Les **réglages de confort** notés pendant la répétition (taille, interligne, marges, vitesse).
 - **Si une page du téléphone reste en arrière** : *« les pages se mettent à jour toutes seules ; si l'une reste en arrière, c'est qu'elle a perdu le réseau du boîtier — se reconnecter au WiFi Prompteur, puis recharger la page, mais après avoir envoyé ou enregistré le texte en cours d'écriture »*.
 - La **solution de repli** : *« n'importe quel autre téléphone, tablette ou ordinateur connecté au WiFi Prompteur ouvre la même vue Settings à la même adresse »*.
@@ -1356,7 +1358,7 @@ six règles, qui résument tout ce qui peut mal tourner :
 1. **« Envoyer à l'écran » = ça passe à l'antenne. « Enregistrer » = ça range dans la bibliothèque.** Ce sont deux gestes différents : envoyer n'enregistre pas, enregistrer n'affiche rien.
 2. **Pas de bulle de confirmation = ce n'est pas parti.** C'est la seule preuve qu'un texte a bien été envoyé.
 3. **Ne jamais toucher la petite croix rouge** de la liste des textes enregistrés : elle efface définitivement, après une seule question. Pour rappeler un texte, c'est le bouton **bleu « Charger »**.
-4. **Pendant une prise, on ne touche à rien qui diffuse.** Écrire, corriger ou importer un document **ne change plus l'écran** : le texte attend dans la zone de saisie, avec le repère « Ce texte n'est pas encore à l'écran ». En revanche, **« Envoyer à l'écran »** et le bouton **« Charger »** de la liste « Mes textes enregistrés » remplacent instantanément le texte diffusé et remettent le défilement tout en haut. Et la section **« Vue du journaliste »** — accessible depuis le téléphone aussi bien que depuis le boîtier — **retire le texte du grand écran** (après confirmation) : elle ne sert qu'au dépannage. Même chose pour **⏻ Veille**, entre deux séquences seulement.
+4. **Pendant une prise, on ne touche à rien qui diffuse.** Écrire, corriger ou importer un document **ne change plus l'écran** : le texte attend dans la zone de saisie, avec le repère « Ce texte n'est pas encore à l'écran ». En revanche, **« Envoyer à l'écran »** et le bouton **« Charger »** de la liste « Mes textes enregistrés » remplacent instantanément le texte diffusé et remettent le défilement tout en haut. Et le groupe **« Écran journaliste »** de l'en-tête — accessible depuis le téléphone aussi bien que depuis le boîtier — **retire le texte du grand écran** (après confirmation) : il ne sert qu'au dépannage. Même chose pour **⏻ Veille**, entre deux séquences seulement.
 5. **Les blocs « Pédales » du bas de l'onglet Réglages ne se touchent qu'en cas de besoin** : rien n'est envoyé au boîtier tant qu'on n'a pas appuyé sur « Enregistrer ». **Le mode reste sur « Maintien ».**
 6. **Récupérez toujours vos textes AVANT de rejoindre le réseau `Prompteur`.** Tant que le téléphone est sur ce réseau, **il n'a plus Internet** : ni mail, ni messagerie, ni document en ligne.
    *La manœuvre, quand un texte arrive à la dernière minute :* quitter le réseau `Prompteur` (repasser en 4G) → ouvrir le mail → **copier** le texte → revenir sur le réseau `Prompteur` → ouvrir la vue Settings → **coller** dans la zone de texte → **« Envoyer à l'écran »**.
@@ -1370,7 +1372,7 @@ exécuter, de ses mains :
 - [ ] Coller un texte et l'envoyer à l'écran.
 - [ ] Faire défiler à la pédale, s'arrêter, revenir au début.
 - [ ] Importer un de ses documents Word depuis le téléphone, **et** charger un document depuis la clé USB branchée sur le boîtier.
-- [ ] **Sortir du prompteur et y revenir** : **Échap**, **Échap** → vue Settings, puis **« Vue du journaliste »** → **Journaliste**.
+- [ ] **Sortir du prompteur et y revenir** : **Échap**, **Échap** → vue Settings, puis **« Écran journaliste »** → **Journaliste**.
 - [ ] **Mettre en veille et rallumer** : **⏻ Veille**, puis une pédale.
 - [ ] **Éteindre proprement** le boîtier (le geste du petit bouton), et le rallumer, en constatant que son texte revient tout seul.
 

@@ -6,8 +6,10 @@
 #    * au démarrage automatique de la session (le boîtier affiche le prompteur
 #      tout seul quand on le branche — c'est la garantie à ne jamais perdre) ;
 #    * à l'icône de bureau « Le Prompteur » ;
-#    * à la section « Vue du journaliste » et au bouton « Veille », via les
-#      routes /api/kiosk/* et /api/veille du serveur.
+#    * aux boutons « Écran journaliste » et « Veille » de l'en-tête, via les
+#      routes /api/kiosk/* et /api/veille du serveur ;
+#    * au petit écran de la régie (le 7 pouces) : s'il est branché, il affiche
+#      la vue Settings tout seul, sans passer par le WiFi.
 #  Un seul comportement à maintenir, donc, au lieu de trois.
 #
 #  Usage :
@@ -20,8 +22,12 @@
 #      kiosk.sh --status          « running <vue> » ou « stopped » (code 0 / 1)
 #      kiosk.sh --veille          éteint les écrans (veille du système)
 #      kiosk.sh --reveil          les rallume
-#      kiosk.sh --menu            ouvre la vue Settings sur le PETIT écran
+#      kiosk.sh --menu            ouvre la vue Settings sur le PETIT écran (fait
+#                                 d'office à chaque lancement du prompteur quand
+#                                 deux écrans sont branchés)
 #      kiosk.sh --menu-stop       la ferme
+#      kiosk.sh --ecrans          dit quels écrans sont vus, lequel est le grand,
+#                                 lequel le petit, et quelle dalle tactile
 #      kiosk.sh --reprendre       rouvre la vue qu'un redémarrage du serveur a
 #                                 fermée (appelé par le serveur à son démarrage)
 #      kiosk.sh --miroir MODE     retourne tout le grand écran : normal, x
@@ -58,6 +64,7 @@ LOCKFILE="/tmp/prompteur-kiosk-$(id -u).lock"
 # Fichier PID distinct pour le petit écran : les deux fenêtres vivent leur vie,
 # fermer le grand écran ne doit pas faire disparaître celle du technicien.
 MENUPID="/tmp/prompteur-menu-$(id -u).pid"
+MENULOCK="/tmp/prompteur-menu-$(id -u).lock"
 
 # --- État --------------------------------------------------------------------
 kiosk_pid() {
@@ -141,17 +148,107 @@ ecrans() {
   fi
 }
 
-# --- Petit écran (vue Settings pour le technicien) ---------------------------
-# Position et taille de la fenêtre : le petit écran est à droite du grand dans
-# le bureau étendu. On lit sa géométrie réelle avec xrandr plutôt que de la
-# deviner ; à défaut, PROMPTEUR_MENU_POS (« 1920,0 ») et PROMPTEUR_MENU_TAILLE
-# (« 800,480 ») permettent de l'imposer.
-menu_geometry() {
-  # Sortie connectée la plus à droite : c'est le second écran.
-  # Sortie : « X Y LARGEUR HAUTEUR ».
-  xrandr --query 2>/dev/null |
-    sed -n 's/^[^ ]* connected[^0-9]*\([0-9]\+\)x\([0-9]\+\)+\([0-9]\+\)+\([0-9]\+\).*/\3 \4 \1 \2/p' |
-    sort -rn | head -1
+# --- Les deux écrans : le grand (la vitre) et le petit (la régie) --------------
+# Sorties branchées ET allumées, une par ligne :
+#   « NOM X Y LARGEUR HAUTEUR SURFACE_MM2 » (surface 0 si l'écran ne la dit pas).
+sorties() {
+  xrandr --query 2>/dev/null | awk '
+    $2 == "connected" {
+      geo = ""
+      for (i = 3; i <= NF; i++) if ($i ~ /^[0-9]+x[0-9]+[+][0-9]+[+][0-9]+$/) { geo = $i; break }
+      if (geo == "") next
+      split(geo, g, /[x+]/)
+      mm = 0
+      if (match($0, /[0-9]+mm x [0-9]+mm/)) {
+        split(substr($0, RSTART, RLENGTH), d, /mm x |mm/)
+        mm = d[1] * d[2]
+      }
+      print $1, g[3], g[4], g[1], g[2], mm
+    }'
+}
+
+# Toutes les sorties branchées, allumées ou non : un écran branché mais laissé
+# éteint par le système n'a pas encore de position.
+sorties_branchees() {
+  xrandr --query 2>/dev/null | awk '$2 == "connected" { print $1 }'
+}
+
+# Le grand écran (celui qu'on lit) : la prise HDMI 0, la plus proche de
+# l'alimentation — c'est celle que prescrivent toutes les procédures, et deux
+# écrans de 7 pouces ne se distinguent pas autrement. À défaut, l'écran qui a le
+# plus de pixels, puis le premier de la liste. PROMPTEUR_ECRAN permet de l'imposer.
+sortie_grand_ecran() {
+  if [ -n "${PROMPTEUR_ECRAN:-}" ]; then
+    echo "$PROMPTEUR_ECRAN"
+    return
+  fi
+  sorties | awk '
+    $1 ~ /^HDMI-(A-)?1$/ { hdmi0 = $1 }
+    {
+      px = $4 * $5
+      if (!choix || px > bestpx || (px == bestpx && $6 > bestmm)) { choix = $1; bestpx = px; bestmm = $6 }
+    }
+    END { if (hdmi0) print hdmi0; else if (choix) print choix }'
+}
+
+# Le petit écran : une autre sortie branchée. PROMPTEUR_PETIT_ECRAN l'impose.
+sortie_petit_ecran() {
+  if [ -n "${PROMPTEUR_PETIT_ECRAN:-}" ]; then
+    echo "$PROMPTEUR_PETIT_ECRAN"
+    return
+  fi
+  local grand
+  grand="$(sortie_grand_ecran)"
+  sorties_branchees | grep -vxF "${grand:-/}" | head -1
+}
+
+# « X Y LARGEUR HAUTEUR » d'une sortie allumée ; rien sinon.
+geometrie() {
+  sorties | awk -v s="$1" '$1 == s { print $2, $3, $4, $5 }'
+}
+
+# Vrai si les deux sorties ($1, $2) sont allumées et ne se recouvrent pas.
+cote_a_cote() {
+  local gx gy gw gh px py pw ph
+  read -r gx gy gw gh <<<"$(geometrie "$1")"
+  read -r px py pw ph <<<"$(geometrie "$2")"
+  { [ -n "${gx:-}" ] && [ -n "${px:-}" ]; } || return 1
+  ! { [ "$px" -lt $((gx + gw)) ] && [ "$gx" -lt $((px + pw)) ] &&
+    [ "$py" -lt $((gy + gh)) ] && [ "$gy" -lt $((py + ph)) ]; }
+}
+
+# Les deux écrans doivent être CÔTE À CÔTE : en recopie, le petit répète le
+# prompteur au lieu d'afficher la vue Settings. S'ils se recouvrent (ou si le
+# petit est branché mais éteint), le petit est placé à droite du grand.
+# Renvoie 1 s'il n'y a pas de petit écran, ou s'il n'a pas pu être placé : dans
+# ce cas on n'ouvre RIEN, la fenêtre risquerait de couvrir le prompteur.
+disposer_ecrans() {
+  command -v xrandr >/dev/null 2>&1 || return 1
+  local grand petit
+  grand="$(sortie_grand_ecran)"
+  petit="$(sortie_petit_ecran)"
+  { [ -n "$grand" ] && [ -n "$petit" ]; } || return 1
+  cote_a_cote "$grand" "$petit" && return 0
+  xrandr --output "$petit" --auto --right-of "$grand" 2>/dev/null
+  for _ in $(seq 1 10); do
+    cote_a_cote "$grand" "$petit" && return 0
+    sleep 0.3
+  done
+  return 1
+}
+
+# La dalle tactile doit viser le PETIT écran : sans cela, un appui est réparti
+# sur la largeur des deux écrans réunis, et le doigt tombe à côté.
+MOTS_TACTILES='touch|ft5x06|goodix|ilitek|egalax|ads7846|usb2iic|ctp|qdtech|waveshare'
+caler_tactile() {
+  command -v xinput >/dev/null 2>&1 || return 0
+  local petit id
+  petit="$(sortie_petit_ecran)"
+  [ -n "$petit" ] || return 0
+  for id in $(xinput list --short 2>/dev/null | grep -iE 'slave +pointer' | grep -iE "$MOTS_TACTILES" |
+    sed -n 's/.*id=\([0-9]\+\).*/\1/p'); do
+    xinput map-to-output "$id" "$petit" 2>/dev/null || true
+  done
 }
 
 menu_pid() {
@@ -173,18 +270,6 @@ stop_menu() {
   rm -f "$MENUPID"
 }
 
-# Le grand écran : la sortie placée en haut à gauche du bureau étendu (le petit
-# écran de contrôle est à sa droite). PROMPTEUR_ECRAN permet de l'imposer.
-sortie_grand_ecran() {
-  if [ -n "${PROMPTEUR_ECRAN:-}" ]; then
-    echo "$PROMPTEUR_ECRAN"
-    return
-  fi
-  xrandr --query 2>/dev/null |
-    sed -n 's/^\([^ ]*\) connected[^0-9]*[0-9]\+x[0-9]\++\([0-9]\+\)+[0-9]\+.*/\2 \1/p' |
-    sort -n | head -1 | awk '{print $2}'
-}
-
 # $1 = normal | x | y | xy. Renvoie 0 si l'écran a bien été retourné.
 miroir_ecran() {
   local sortie
@@ -200,6 +285,25 @@ miroir_ecran() {
 
 trouver_navigateur() {
   command -v chromium-browser || command -v chromium || true
+}
+
+# Au démarrage du boîtier, le serveur met quelques secondes à répondre.
+attendre_serveur() {
+  for _ in $(seq 1 60); do
+    curl -s "http://localhost:${PORT}/api/state" >/dev/null 2>&1 && return 0
+    sleep 0.5
+  done
+  return 1
+}
+
+# Depuis SSH : on se détache de la session, sinon le navigateur se fermerait à
+# la déconnexion. La copie détachée refait exactement la même demande.
+detacher_si_ssh() {
+  if [ -n "${SSH_CONNECTION:-}" ] && [ -z "${PROMPTEUR_DETACHE:-}" ] && command -v setsid >/dev/null 2>&1; then
+    PROMPTEUR_DETACHE=1 setsid -f /bin/bash "$0" ${ARGS[@]+"${ARGS[@]}"} </dev/null >/dev/null 2>&1
+    echo "$1"
+    exit 0
+  fi
 }
 
 # --- Sous-commandes ----------------------------------------------------------
@@ -218,7 +322,7 @@ while [ $# -gt 0 ]; do
       esac
       shift 2
       ;;
-    --restart | --stop | --status | --veille | --reveil | --menu | --menu-stop | --reprendre)
+    --restart | --stop | --status | --veille | --reveil | --menu | --menu-stop | --reprendre | --ecrans)
       ACTION="$1"
       shift
       ;;
@@ -228,7 +332,7 @@ while [ $# -gt 0 ]; do
       shift 2 || shift
       ;;
     *)
-      echo "Usage : $(basename "$0") [--vue journaliste|settings] [--restart|--stop|--status|--veille|--reveil|--menu|--menu-stop|--reprendre|--miroir MODE]" >&2
+      echo "Usage : $(basename "$0") [--vue journaliste|settings] [--restart|--stop|--status|--veille|--reveil|--menu|--menu-stop|--ecrans|--reprendre|--miroir MODE]" >&2
       exit 2
       ;;
   esac
@@ -252,27 +356,70 @@ case "$ACTION" in
     echo "Petit écran fermé."
     exit 0
     ;;
+  --ecrans)
+    echo "Écrans branchés et allumés (nom, x, y, largeur, hauteur, surface en mm²) :"
+    sorties | sed 's/^/  /'
+    echo "Grand écran (la vitre) : $(sortie_grand_ecran)"
+    echo "Petit écran (la régie) : $(sortie_petit_ecran)"
+    if command -v xinput >/dev/null 2>&1; then
+      echo "Dalles tactiles reconnues :"
+      xinput list --short 2>/dev/null | grep -iE 'slave +pointer' | grep -iE "$MOTS_TACTILES" | sed 's/^/  /'
+    else
+      echo "xinput absent : le tactile ne peut pas être calé sur le petit écran."
+    fi
+    if PID_MENU="$(menu_pid)"; then
+      echo "Vue Settings du petit écran : affichée (PID $PID_MENU)."
+    else
+      echo "Vue Settings du petit écran : non affichée."
+    fi
+    exit 0
+    ;;
   --menu)
+    detacher_si_ssh "Vue Settings demandée sur le petit écran du boîtier."
+    # Un seul petit écran à la fois, même si deux lancements se croisent : on
+    # vérifie ET on réserve la place sous le même verrou.
+    exec 8>"$MENULOCK"
+    flock 8 2>/dev/null || true
     if menu_pid >/dev/null; then
       echo "Petit écran déjà affiché."
       exit 0
+    fi
+    if [ -z "$(sortie_petit_ecran)" ]; then
+      echo "Un seul écran branché : pas de petit écran à remplir."
+      exit 0
+    fi
+    if ! disposer_ecrans; then
+      echo "Le petit écran n'a pas pu être placé à côté du grand : rien n'est ouvert (voir kiosk.sh --ecrans)." >&2
+      exit 1
     fi
     BROWSER="$(trouver_navigateur)"
     if [ -z "$BROWSER" ]; then
       echo "Prompteur: Chromium introuvable." >&2
       exit 1
     fi
-    read -r GX GY GW GH <<<"$(menu_geometry)"
+    echo $$ >"$MENUPID"
+    flock -u 8 2>/dev/null || true
+    exec 8>&-
+    caler_tactile
+    attendre_serveur || true
+    # Position et taille réelles du petit écran ; PROMPTEUR_MENU_POS (« 1920,0 »)
+    # et PROMPTEUR_MENU_TAILLE (« 1024,600 ») permettent de les imposer.
+    read -r GX GY GW GH <<<"$(geometrie "$(sortie_petit_ecran)")"
     POS="${PROMPTEUR_MENU_POS:-${GX:-0},${GY:-0}}"
     TAILLE="${PROMPTEUR_MENU_TAILLE:-${GW:-800},${GH:-480}}"
-    echo $$ >"$MENUPID"
+    # Plein écran (--kiosk) sur le petit écran, avec son propre profil : c'est
+    # un second navigateur, indépendant de celui du grand écran.
     exec "$BROWSER" \
       --password-store=basic \
+      --kiosk \
+      --no-first-run \
+      --no-default-browser-check \
       --noerrdialogs \
       --disable-infobars \
       --disable-session-crashed-bubble \
       --disable-features=Translate \
       --check-for-update-interval=31536000 \
+      --overscroll-history-navigation=0 \
       --window-position="${POS}" \
       --window-size="${TAILLE}" \
       --user-data-dir="/tmp/prompteur-menu-profil-$(id -u)" \
@@ -308,13 +455,7 @@ case "$ACTION" in
     ;;
 esac
 
-# Depuis SSH : on se détache de la session, sinon le navigateur se fermerait à
-# la déconnexion. La copie détachée refait exactement la même demande.
-if [ -n "${SSH_CONNECTION:-}" ] && [ -z "${PROMPTEUR_DETACHE:-}" ] && command -v setsid >/dev/null 2>&1; then
-  PROMPTEUR_DETACHE=1 setsid -f /bin/bash "$0" ${ARGS[@]+"${ARGS[@]}"} </dev/null >/dev/null 2>&1
-  echo "Prompteur relancé sur l'écran du boîtier."
-  exit 0
-fi
+detacher_si_ssh "Prompteur relancé sur l'écran du boîtier."
 
 # --- Lancement (avec ou sans --restart) --------------------------------------
 # Verrou : deux lancements simultanés (démarrage automatique inscrit à deux
@@ -349,14 +490,16 @@ xset s noblank 2>/dev/null || true
 # Masque le curseur au repos (une seule instance)
 pgrep -u "$(id -u)" -x unclutter >/dev/null 2>&1 || unclutter -idle 0.5 -root 2>/dev/null &
 
-# --- Attente du serveur ------------------------------------------------------
-# Au démarrage du boîtier, le service met quelques secondes à répondre.
-for _ in $(seq 1 60); do
-  if curl -s "http://localhost:${PORT}/api/state" >/dev/null 2>&1; then
-    break
-  fi
-  sleep 0.5
-done
+attendre_serveur || true
+
+# --- Petit écran ---------------------------------------------------------------
+# Un second écran branché (le 7 pouces de la régie) affiche la vue Settings,
+# directement sur le boîtier : pas besoin du WiFi. Les deux écrans sont d'abord
+# mis côte à côte, puis la fenêtre du petit est lancée à part : elle vit sa vie,
+# fermer ou changer la vue du grand écran ne la touche pas.
+if disposer_ecrans && ! menu_pid >/dev/null && command -v setsid >/dev/null 2>&1; then
+  PROMPTEUR_DETACHE=1 setsid -f /bin/bash "$0" --menu </dev/null >/dev/null 2>&1 || true
+fi
 
 # --- Miroir de l'écran entier -------------------------------------------------
 # Vue Journaliste : l'écran reste normal, elle se retourne elle-même. Vue
@@ -383,10 +526,16 @@ fi
 # « Unlock Keyring » s'affichait à chaque allumage, par-dessus le prompteur — et
 # prenait le clavier : les pédales ne répondaient plus tant qu'on ne l'avait pas
 # fermée à la souris. Le kiosque n'enregistre aucun mot de passe : rien à perdre.
+# --window-position : le plein écran se fait sur l'écran où s'ouvre la fenêtre ;
+# avec deux écrans, c'est ce qui la met sur le GRAND.
+read -r GX GY _ _ <<<"$(geometrie "$(sortie_grand_ecran)")"
 exec "$BROWSER" \
   --password-store=basic \
   --kiosk \
   --start-fullscreen \
+  --window-position="${GX:-0},${GY:-0}" \
+  --no-first-run \
+  --no-default-browser-check \
   --noerrdialogs \
   --disable-infobars \
   --disable-session-crashed-bubble \

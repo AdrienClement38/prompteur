@@ -56,7 +56,7 @@ support, ~50 à 150 € (voir § 10).
 |---|---|
 | **Flèche bas** = pédale droite | avancer |
 | **Flèche haut** = pédale gauche | reculer |
-| **Flèche droite** = pédale centrale | lecture / pause *(mode Dynamique uniquement)* |
+| **Flèche droite** = pédale centrale | pause *(mode Dynamique uniquement)* |
 | **Espace** | lecture / pause, dans les trois modes, sans toucher aux pédales |
 | **+ / −** | plus vite / moins vite (enregistré, comme sur le téléphone) |
 | **R** | retour au début, à l'arrêt |
@@ -91,9 +91,9 @@ vérifier qu'il fonctionne. **Python 3** doit y être installé.
    c'est le serveur, il s'arrête si vous la fermez. Pour l'arrêter volontairement,
    revenez-y et faites **Ctrl + C**.
 2. Dans un navigateur, ouvrez **http://localhost:5000**. C'est la vue
-   **Settings** : en haut, le mot SETTINGS et les boutons Settings · Spectateur ·
-   ⏻ Veille ; dessous, la section « Vue du journaliste » (état inconnu sur un
-   ordinateur : c'est normal) et les onglets Texte / Contrôle / Réglages.
+   **Settings** : en haut, « Écran régie » (Settings · Spectateur), « Écran
+   journaliste » (Settings · Journaliste · Bureau, grisés sur un ordinateur : c'est
+   normal) et ⏻ Veille ; dessous, les onglets Texte / Contrôle / Réglages.
 3. Ouvrez **http://localhost:5000/journaliste** dans une seconde fenêtre.
    *Ce que vous devez voir* : l'écran de lecture, noir. Tant que rien n'a été
    envoyé, il affiche « Aucun texte. Envoie ton texte depuis le téléphone
@@ -236,11 +236,16 @@ début du texte.** **Échap refuse de partir tant que le bandeau rouge « Liaiso
 boîtier perdue » est affiché**, et l'explique (« Impossible de quitter la vue
 Journaliste. ») : sans serveur, la page suivante serait une impasse.
 
-### Vue du journaliste : ce que montre le grand écran
+### L'en-tête : Écran régie, Écran journaliste, Veille
 
-En haut de Settings, **sur n'importe quel appareil connecté au WiFi du boîtier —
-téléphone compris**, la section **« Vue du journaliste »** a trois boutons. Le bleu
-est ce que montre le grand écran ; l'état se relit tout seul toutes les 3 secondes.
+En haut de Settings et de Spectateur, **sur n'importe quel appareil connecté au
+WiFi du boîtier — téléphone compris** :
+
+- **« Écran régie »** — ce qu'affiche **cet appareil** : **Settings** ou **Spectateur** ;
+- **« Écran journaliste »** — ce qu'affiche **le grand écran du boîtier** (tableau
+  ci-dessous). Le bleu est ce qu'il montre ; l'état se relit tout seul toutes les
+  3 secondes ;
+- **⏻ Veille**, un peu à part.
 
 | Bouton | Le grand écran affiche |
 |---|---|
@@ -252,6 +257,19 @@ est ce que montre le grand écran ; l'état se relit tout seul toutes les 3 seco
 **le grand écran du boîtier**, jamais sur l'appareil depuis lequel on les touche. Sur le
 boîtier lui-même, l'icône **« Le Prompteur »** (bureau et menu des applications)
 relance aussi la vue Journaliste.
+
+### Le petit écran du boîtier
+
+Un **second écran** branché sur le boîtier (le 7 pouces de la régie, seconde prise
+HDMI ou écran DSI) affiche **tout seul la vue Settings**, en plein écran, dès le
+lancement du prompteur : **sans WiFi**. `install/kiosk.sh` s'en charge : il met les
+deux écrans côte à côte s'ils étaient en recopie, cale la dalle tactile sur le petit
+écran (`xinput map-to-output`), puis ouvre un second Chromium, indépendant du premier.
+Le grand écran est la prise **HDMI 0** (collée à l'alimentation) ; à défaut, celui qui
+a le plus de pixels. `kiosk.sh --ecrans` dit ce qui a été reconnu ;
+`PROMPTEUR_ECRAN` / `PROMPTEUR_PETIT_ECRAN` imposent les sorties. Si le petit écran
+ne peut pas être placé à côté du grand, **rien n'est ouvert** : la fenêtre
+couvrirait le prompteur. Détails : **ECRAN-TACTILE.md**.
 
 ### Veille
 
@@ -322,7 +340,13 @@ Sous la zone de saisie, une barre applique un style **au passage sélectionné**
 
 - **G** (gras), **I** (italique), **S** (souligné) ;
 - **petit**, **Titre**, **Grand titre** ;
-- **cinq couleurs**.
+- **six couleurs** (dont le **blanc**, pour remettre un mot en blanc au milieu d'un
+  passage coloré) ;
+- **Gauche**, **Centré**, **Droite** : l'alignement de la **ligne** du curseur (ou des
+  lignes sélectionnées), qui reçoit `[centre] ` ou `[droite] ` en tête.
+
+Les **numéros de ligne**, à gauche de la zone de saisie, sont ceux des écrans de
+lecture : ce sont eux que prend **« Commencer à la ligne »** (onglet Contrôle).
 
 **Rappuyer sur le même bouton retire le style.** **« Tout effacer »** retire toute
 la mise en forme — *ce que vous devez voir* : **« Mise en forme effacée »** ; le
@@ -390,8 +414,8 @@ pas. C'est aussi la forme que prennent les titres d'un document Word importé.
 > ou une adresse `http://x/a_b_c` ressortent intacts.
 >
 > **La couleur et l'alignement s'écrivent en toutes lettres** — `[rouge]alerte[/rouge]`,
-> `[centre] `, `[droite] ` — parce qu'ils n'ont, eux, aucune convention établie. Les cinq
-> noms suivent l'ordre des pastilles : `jaune`, `rouge`, `vert`, `bleu`, `gris`. C'est plus
+> `[centre] `, `[droite] ` — parce qu'ils n'ont, eux, aucune convention établie. Les six
+> noms suivent l'ordre des pastilles : `jaune`, `rouge`, `vert`, `bleu`, `gris`, `blanc`. C'est plus
 > bavard que deux astérisques, et c'est voulu : un marqueur **nommé** se relit six mois plus
 > tard sans rien avoir à retenir, et il ne peut pas se déclencher par accident — seuls ces
 > mots-là comptent, `[voir encadré]` ou `[1]` ne produisent rien. Les marqueurs se
@@ -404,7 +428,7 @@ pas. C'est aussi la forme que prennent les titres d'un document Word importé.
 >
 > **Trois choix assumés, et leur raison.**
 >
-> - **La couleur est ramenée à la palette** (cinq couleurs, toutes lisibles sur fond noir)
+> - **La couleur est ramenée à la palette** (des couleurs toutes lisibles sur fond noir)
 >   au lieu d'être recopiée. Un bleu marine recopié fidèlement serait invisible à l'écran,
 >   au moment précis où l'on compte sur le passage mis en avant. La correspondance se fait
 >   sur la **teinte** : un rouge sombre devient le rouge de la palette, pas le gris qui
@@ -418,9 +442,10 @@ pas. C'est aussi la forme que prennent les titres d'un document Word importé.
 >   permet de les écrire au clavier, et de les retrouver intacts dans un fichier enregistré
 >   puis relu des mois plus tard.
 >
-> L'alignement, lui, n'a pas d'écriture possible au clavier : il voyage comme une plage
-> posée sur la ligne entière, et ne se voit que sur les écrans de lecture — la zone de
-> saisie de la télécommande est une simple ligne de texte, sans blocs.
+> L'alignement d'un paragraphe importé voyage comme une plage posée sur la ligne entière,
+> et ne se voit que sur les écrans de lecture. Les boutons Gauche / Centré / Droite de la
+> zone de saisie le remplacent par l'écriture `[centre] ` / `[droite] ` : sur une ligne
+> touchée par un bouton, c'est lui qui décide.
 >
 > Au-delà de **500 passages** mis en forme, l'écrêtage est **annoncé** (`marksTruncated`) :
 > une limite tue passerait pour un import raté. Et un fichier qui n'est pas un document
@@ -436,7 +461,7 @@ Le mode se choisit dans l'onglet **Réglages**, section **Pédales**.
 |---|---|---|---|
 | **Maintien** *(recommandé)* | enfoncée = avance | enfoncée = recule | sans fonction |
 | **Impulsion** | une pression lance ; une seconde pression **sur la même pédale** met en pause | idem, en arrière | sans fonction |
-| **Dynamique** | accélère vers l'avant tant qu'on appuie | ralentit, puis repart en arrière de plus en plus vite | **lecture / pause** |
+| **Dynamique** | accélère vers l'avant tant qu'on appuie | ralentit, passe par zéro, puis repart en arrière de plus en plus vite | **pause** |
 
 - **Maintien** : pédale enfoncée = ça défile, relâchée = ça s'arrête.
 - **Impulsion** : le pied n'a plus à rester posé. Appuyer sur l'**autre** pédale
@@ -445,19 +470,24 @@ Le mode se choisit dans l'onglet **Réglages**, section **Pédales**.
   un curseur **« Montée en vitesse (mode dynamique) »** apparaît juste en dessous,
   réglé sur **10 s** — c'est la durée d'appui continu pour atteindre la vitesse
   maximale. **La vitesse atteinte est conservée** quand on relâche : on la pose une
-  fois au pied, puis on lit. **Après une pause**, la pédale **droite repart vers
-  l'avant** et la **gauche vers l'arrière**, **à la vitesse d'avant la pause** ;
-  maintenue plus d'une demi-seconde, elle se remet à accélérer. En haut ou en bas du
-  texte, le défilement se met en pause tout seul. La vitesse posée au pied devient
-  celle de la carte **« Vitesse »** du téléphone, qui peut la corriger.
+  fois au pied, puis on lit. Les règles : vitesse **signée** ; une pédale tenue la
+  pousse dans son sens, d'autant plus qu'on la tient longtemps ; relâchée, la vitesse
+  **reste** ; un changement de sens **passe toujours par zéro** (la gauche ralentit
+  d'abord, puis fait reculer si on la garde) ; la **centrale** ne fait que **pause** ;
+  **chaque départ repart de zéro**. En haut ou en bas du texte, le défilement
+  s'arrête tout seul. La vitesse au pied reste **sur l'écran** : elle n'est plus
+  renvoyée au boîtier (voir PIEGES.md). La carte **« Vitesse »** du téléphone donne
+  celle du bouton **« Lecture »** ; **Plus vite / Moins vite** corrigent d'un cran la
+  vitesse en cours.
 
-> **Lecture**, **Pause** et **Début** (onglet Contrôle), comme la touche **Espace**,
-> marchent dans les **trois** modes.
+> **Lecture** et **Pause** (onglet Contrôle), comme la touche **Espace**, marchent dans
+> les **trois** modes. **« Commencer à la ligne »** place la ligne voulue en haut de
+> l'écran, à l'arrêt (champ vide = le début).
 
 ### Apprendre leurs touches aux pédales
 
 Trois pédales sont réglables : **droite (avancer)**, **gauche (reculer)** et
-**centrale (lecture/pause — mode Dynamique)**. Pour chacune :
+**centrale (pause — mode Dynamique)**. Pour chacune :
 **« Réapprendre »** → appuyez **une fois** sur la pédale → la touche s'affiche →
 **« Enregistrer »**.
 
@@ -473,18 +503,21 @@ collisions avec un raccourci de l'écran sont signalées.
 
 ## 7. Réglages disponibles (depuis le téléphone)
 
-- **Mise en page** (onglet **Texte**) : taille, interligne, marges latérales,
-  alignement (**Gauche** ou **Centré**).
+- **Mise en page** (onglet **Texte**) : taille, interligne, marges latérales.
+  L'alignement se pose **ligne par ligne**, dans la carte Texte.
 - Le texte est **toujours blanc sur fond noir** ; la couleur d'un passage se pose
   avec les pastilles de l'éditeur.
 - **Vitesse** (onglet **Contrôle**) : le curseur et **« − Moins vite »** / **« Plus
-  vite + »**, regroupés. En mode **Dynamique**, ils suivent la vitesse posée au pied.
+  vite + »**, regroupés. En mode **Dynamique**, le curseur donne la vitesse de
+  « Lecture » ; les boutons corrigent la vitesse en cours.
 - **Miroir horizontal / vertical**, pour la vitre sans tain face caméra.
   **Le miroir retourne tout le grand écran** — la vue Journaliste se retourne
   elle-même ; la vue Settings et le bureau, eux, sont retournés par le système
   (`xrandr --reflect`, souris comprise). La vue Spectateur reste toujours à
   l'endroit, on la lit directement.
 - **Ligne de repère** de lecture.
+- **Numéros de ligne**, dans la marge gauche de toutes les vues (interrupteur dans
+  Affichage) : seules les lignes de texte sont numérotées, pas les lignes vides.
 - **Pédales** : mode, montée en vitesse, apprentissage des touches (§ 6).
 
 > Il n'y a **plus de choix de police** : une seule subsiste, sans empattement
@@ -567,8 +600,8 @@ les faire exécuter par quelqu'un qui n'est pas technicien.
 
 | Problème | Que faire, dans cet ordre |
 |---|---|
-| **L'écran du boîtier reste noir** | 0. Le système est peut-être **en veille** : touchez un écran ou appuyez sur une pédale. 1. Sur le boîtier : double-cliquez sur l'icône **« Le Prompteur »** du bureau. 2. Depuis le téléphone : **« Vue du journaliste »** → **Journaliste**. 3. Si l'écran ne revient pas, faites vérifier le service : `sudo systemctl status prompteur` — la réponse doit contenir **active (running)** en vert. |
-| **Le prompteur a été fermé sur le boîtier** | Icône **« Le Prompteur »** du bureau, ou **« Vue du journaliste »** → **Journaliste**. |
+| **L'écran du boîtier reste noir** | 0. Le système est peut-être **en veille** : touchez un écran ou appuyez sur une pédale. 1. Sur le boîtier : double-cliquez sur l'icône **« Le Prompteur »** du bureau. 2. Depuis le téléphone : **« Écran journaliste »** → **Journaliste**. 3. Si l'écran ne revient pas, faites vérifier le service : `sudo systemctl status prompteur` — la réponse doit contenir **active (running)** en vert. |
+| **Le prompteur a été fermé sur le boîtier** | Icône **« Le Prompteur »** du bureau, ou **« Écran journaliste »** → **Journaliste**. |
 | **« La vue Journaliste est déjà ouverte ailleurs »** | Une vue Journaliste est déjà ouverte. En service, c'est celle du boîtier : prenez **« Ouvrir la vue Spectateur »**. Si l'autre a disparu, cet écran reprend la main tout seul en une douzaine de secondes ; **« Prendre la main quand même »** le fait tout de suite — l'écran du boîtier cesserait alors de piloter. |
 | L'écran affiche **« Un autre appareil a pris la main. »** | Quelqu'un a ouvert une vue Journaliste ailleurs : le texte reste affiché, mais les pédales de cet écran ne font plus rien. Il reprend la main tout seul quand l'autre se ferme. |
 | **Les pédales ne font rien** | 0. Système en veille ? La première pression rallume, la suivante pilote. 1. Vérifiez que le pédalier est branché sur l'appareil qui affiche la **vue Journaliste** (§ 8). 2. Onglet **Réglages** → **Pédales** → réapprenez les touches (§ 6). 3. Vérifiez la programmation du pédalier lui-même. |

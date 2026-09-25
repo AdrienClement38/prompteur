@@ -12,9 +12,44 @@ le texte.
 - **Ce document ne concerne que le branchement.** Les vues Settings et
   Spectateur, elles, sont déjà en place et fonctionnent sur n'importe quel
   appareil : **`/settings`** et **`/spectateur`**.
-- **Écran de 7 pouces à la place ?** Si c'est un écran HDMI, il se branche sur la
-  **seconde prise HDMI** du Raspberry, sans aucun pilote : passez directement à la
-  vérification de la fin du montage A (`xrandr`), puis à `kiosk.sh --menu`.
+- **Écran de 7 pouces à la place ?** Voir juste en dessous : il n'y a **rien à
+  installer**.
+
+---
+
+## Écran de 7 pouces HDMI : rien à faire
+
+Branchez-le sur la **seconde prise HDMI** du Raspberry — le grand écran, celui qu'on
+lit, reste sur la prise **collée à l'alimentation** — et redémarrez. **C'est tout** : à
+chaque lancement du prompteur, le boîtier
+
+1. repère les deux écrans ; s'ils affichent la même chose (recopie), il place le petit
+   **à côté** du grand ;
+2. cale la **dalle tactile** sur le petit écran (sans cela, un appui y tomberait à
+   côté) ;
+3. y ouvre la **vue Settings en plein écran** — une copie de `http://10.42.0.1:5000`,
+   **sans passer par le WiFi**.
+
+Pour vérifier ce que le boîtier a reconnu, dans la fenêtre noire du boîtier (ou en
+SSH) :
+
+```bash
+~/prompteur/install/kiosk.sh --ecrans
+```
+
+**Ce que vous devez voir :** le **grand écran** et le **petit écran** avec leur nom
+(`HDMI-1`, `HDMI-2`…), la dalle tactile reconnue, et « Vue Settings du petit écran :
+affichée ».
+
+> 📌 **Le texte s'affiche sur le petit écran, et Settings sur le grand ?** Les câbles
+> sont inversés côté boîtier : intervertissez-les et redémarrez.
+
+> 📌 **Le petit écran reste sur le bureau** : lancez `~/prompteur/install/kiosk.sh --menu`
+> et lisez le message. « Un seul écran branché » = le système ne le voit pas (câble,
+> alimentation de l'écran). « n'a pas pu être placé à côté du grand » = il refuse la
+> disposition : rien n'est ouvert, pour ne jamais couvrir le prompteur.
+
+Les sections suivantes ne concernent **que le petit écran de 3,5 pouces** sur broches.
 
 ---
 
@@ -95,21 +130,9 @@ xrandr --query | grep " connected"
 **Ce que vous devez voir :** deux lignes, l'une pour le HDMI, l'autre pour le petit
 écran. S'il n'y en a qu'une, c'est le montage B.
 
-Il ne reste qu'à afficher la vue Settings dessus :
-
-```bash
-~/prompteur/install/kiosk.sh --menu
-```
-
-La fenêtre se place toute seule sur le second écran, à sa taille exacte. Pour la fermer :
-`~/prompteur/install/kiosk.sh --menu-stop`.
-
-Pour qu'elle revienne à chaque démarrage, ajoutez la même commande au démarrage
-automatique de la session :
-
-```bash
-echo "$HOME/prompteur/install/kiosk.sh --menu &" >> "$HOME/.config/labwc/autostart"
-```
+La vue Settings s'y affiche alors **toute seule** à chaque lancement du prompteur,
+en plein écran, à sa taille exacte. Pour la fermer : `~/prompteur/install/kiosk.sh
+--menu-stop` ; pour la rouvrir : `~/prompteur/install/kiosk.sh --menu`.
 
 ---
 
@@ -130,13 +153,13 @@ Le confort est moindre, rien n'est perdu, et le boîtier reste intact.
 
 ## Ce que le petit écran affiche
 
-La vue **Settings**, comme sur le téléphone, avec tout en haut trois boutons :
+La vue **Settings**, comme sur le téléphone, avec tout en haut :
 
-| Bouton | Effet |
-|---|---|
-| **Settings** | texte, réglages, commandes — et la section « Vue du journaliste », qui choisit ce que montre le grand écran |
-| **Spectateur** | le texte qui défile, en direct, en lecture seule |
-| **⏻ Veille** | éteint le grand écran et met le petit au noir ; un appui sur le petit écran rallume tout |
+| Groupe | Boutons | Effet |
+|---|---|---|
+| **Écran régie** | **Settings** · **Spectateur** | ce qu'affiche **ce petit écran** : texte, réglages, commandes — ou le texte qui défile, en direct, en lecture seule |
+| **Écran journaliste** | **Settings** · **Journaliste** · **Bureau** | ce qu'affiche **le grand écran** |
+| | **⏻ Veille** | éteint le grand écran et met le petit au noir ; un appui sur le petit écran rallume tout |
 
 Settings et Spectateur passent de l'une à l'autre d'un seul appui : on change un
 réglage, puis on revient au texte aussitôt.

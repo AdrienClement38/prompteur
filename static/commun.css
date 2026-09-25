@@ -2,17 +2,20 @@
    et de confirmation, fond de veille. Les couleurs reprennent celles de la vue
    Settings, pour que tout se ressemble d'un écran à l'autre. */
 
-/* --- Barre de navigation (Settings / Spectateur / Veille) ----------------- */
+/* --- En-tête : Écran régie / Écran journaliste / Veille ---------------------- */
 .navvues {
-  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  display: flex; align-items: flex-end; gap: 8px 16px; flex-wrap: wrap;
   font: 600 14px/1 system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
 }
-/* Le nom de la vue, tout en haut et en petit : on sait toujours où l'on est. */
-.navvues .navnom {
-  margin-right: auto; padding: 0 2px;
-  font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+.navvues .groupe { display: flex; flex-direction: column; gap: 4px; }
+/* Le nom de chaque partie, en petit : on sait toujours quel écran on commande. */
+.navvues .groupe-nom {
+  display: flex; align-items: center; gap: 6px; min-height: 20px; padding-left: 2px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
   color: #9aa3b2;
 }
+.navvues .boutons { display: flex; gap: 5px; }
+.navvues .infobtn.mini { margin-left: 2px; padding: 2px 7px; font-size: 10.5px; letter-spacing: 0; }
 .navvues .navbtn {
   appearance: none; cursor: pointer; text-decoration: none;
   display: inline-flex; align-items: center; justify-content: center;
@@ -21,14 +24,19 @@
   font: inherit;
 }
 .navvues .navbtn.actif { background: #4f8cff; border-color: #4f8cff; color: #fff; }
-.navvues .navbtn.veillebtn { margin-left: 8px; color: #ffb4ac; border-color: #4a2b2e; }
+.navvues .navbtn:disabled { opacity: .45; cursor: default; }
+/* La Veille, un peu à part : elle concerne tout le système. */
+.navvues .navbtn.veillebtn { margin-left: auto; color: #ffb4ac; border-color: #4a2b2e; }
 .navvues .navbtn:active { transform: translateY(1px); }
-/* Téléphone : le nom de la vue passe sur sa propre petite ligne, au-dessus, et
-   les trois boutons tiennent sur une seule rangée. */
-@media (max-width: 480px) {
-  .navvues .navnom { flex-basis: 100%; margin: 0 0 2px; }
-  .navvues .navbtn { flex: 1 1 auto; padding: 0 10px; }
-  .navvues .navbtn.veillebtn { flex: 0 0 auto; margin-left: 4px; }
+/* Téléphone : l'Écran régie sur une rangée, l'Écran journaliste et la Veille
+   sur la suivante ; les boutons se partagent la largeur. */
+@media (max-width: 560px) {
+  .navvues { gap: 6px 8px; font-size: 13px; }
+  .navvues .groupe.regie { flex: 1 1 100%; }
+  .navvues .groupe.journaliste { flex: 1 1 auto; }
+  .navvues .boutons .navbtn { flex: 1 1 0; padding: 0 6px; }
+  .navvues .navbtn { min-height: 36px; }
+  .navvues .navbtn.veillebtn { padding: 0 8px; }
 }
 
 /* --- Bouton « Info », en haut à droite de chaque bloc --------------------- */

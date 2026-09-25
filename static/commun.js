@@ -1,6 +1,7 @@
 /* Prompteur — éléments communs aux vues Settings, Spectateur et Journaliste.
 
-   - la barre de navigation (Settings / Spectateur / Veille) ;
+   - l'en-tête : « Écran régie » (cet appareil), « Écran journaliste » (le
+     grand écran du boîtier) et la Veille ;
    - les fenêtres « Info » : les explications ne sont plus affichées en
      permanence, on les ouvre à la demande (écran de 7 pouces oblige) ;
    - la fenêtre de confirmation, grande et tactile, à la place de celle du
@@ -197,6 +198,76 @@
   }
 
   document.querySelectorAll(".veillebtn").forEach((b) => b.addEventListener("click", mettreEnVeille));
+
+  // --- Écran journaliste : ce que montre le grand écran du boîtier -----------
+  // Trois choix : la vue Journaliste (le prompteur), la vue Settings, ou le
+  // bureau (navigateur fermé). Les mêmes boutons sont dans l'en-tête de Settings
+  // et de Spectateur ; l'état est relu tout seul toutes les 3 secondes.
+  const boutonsGrand = document.querySelectorAll("[data-grand]");
+  const NOMS_GRAND = { journaliste: "la vue Journaliste", settings: "la vue Settings", bureau: "le bureau" };
+  const grand = { actuel: null, enCours: false }; // actuel = null : état inconnu
+
+  function dessinerGrand() {
+    boutonsGrand.forEach((b) => {
+      const actif = b.dataset.grand === grand.actuel;
+      b.classList.toggle("actif", actif);
+      b.setAttribute("aria-pressed", actif ? "true" : "false");
+      b.disabled = grand.actuel === null || grand.enCours;
+      b.title =
+        grand.actuel === null ? "État du grand écran inconnu : ces boutons ne marchent que sur le boîtier." : "";
+    });
+  }
+
+  async function relireGrand() {
+    if (grand.enCours) return;
+    let etat;
+    try {
+      const r = await fetch("/api/kiosk", { cache: "no-store" });
+      etat = await r.json();
+    } catch {
+      return; // serveur muet : on garde le dernier état connu plutôt qu'un état faux
+    }
+    if (grand.enCours) return;
+    if (!etat.available || etat.running === null || etat.running === undefined) grand.actuel = null;
+    else grand.actuel = etat.running ? etat.vue || "journaliste" : "bureau";
+    dessinerGrand();
+  }
+
+  async function choisirGrand(cible) {
+    if (grand.actuel === null || grand.enCours || cible === grand.actuel) return;
+    // Quitter la vue Journaliste retire le texte du grand écran : depuis un
+    // téléphone, un appui involontaire couperait la lecture en pleine prise.
+    if (grand.actuel === "journaliste") {
+      const oui = await confirmer({
+        titre: "Retirer le prompteur du grand écran ?",
+        texte: `Le grand écran affichera ${NOMS_GRAND[cible]}. Le texte et la position sont conservés.`,
+        ok: cible === "bureau" ? "Afficher le bureau" : "Afficher Settings",
+        danger: true,
+      });
+      if (!oui) return;
+    }
+    grand.enCours = true;
+    dessinerGrand();
+    try {
+      if (cible === "bureau") await poster("/api/kiosk/close", {});
+      else await poster("/api/kiosk/launch", { vue: cible });
+      grand.actuel = cible; // tout de suite en couleur ; la relecture confirmera
+    } catch (err) {
+      avertir("Changement impossible", "Le grand écran n'a pas changé (" + err.message + ").");
+    }
+    // Chromium met un instant à s'ouvrir ou à se fermer : on relit après.
+    setTimeout(() => {
+      grand.enCours = false;
+      dessinerGrand();
+      relireGrand();
+    }, 1500);
+  }
+
+  if (boutonsGrand.length) {
+    boutonsGrand.forEach((b) => b.addEventListener("click", () => choisirGrand(b.dataset.grand)));
+    relireGrand();
+    setInterval(relireGrand, 3000);
+  }
 
   window.Commun = {
     el,

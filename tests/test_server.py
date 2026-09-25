@@ -80,15 +80,36 @@ def test_redirection_garde_la_chaine_de_requete(client):
 
 
 def test_chaque_vue_affiche_son_nom(client):
-    assert 'navnom">Settings' in client.get("/settings").get_data(as_text=True)
-    spectateur = client.get("/spectateur").get_data(as_text=True)
-    assert 'navnom">Spectateur' in spectateur
-    assert 'data-mode="viewer"' in spectateur
+    """En-tête de Settings et Spectateur : « Écran régie » (cet appareil, la vue
+    en cours en couleur), « Écran journaliste » (les trois choix du grand écran)
+    et la Veille, à part. L'écran de la vitre, lui, n'a pas d'en-tête."""
+    for vue, autre in (("settings", "spectateur"), ("spectateur", "settings")):
+        page = client.get("/" + vue).get_data(as_text=True)
+        assert "Écran régie" in page and "Écran journaliste" in page
+        assert f'class="navbtn actif" href="/{vue}" aria-current="page"' in page
+        assert f'class="navbtn" href="/{autre}"' in page
+        for choix in ("settings", "journaliste", "bureau"):
+            assert f'data-grand="{choix}"' in page
+        assert 'class="navbtn veillebtn"' in page
+    assert 'data-mode="viewer"' in client.get("/spectateur").get_data(as_text=True)
     journaliste = client.get("/journaliste").get_data(as_text=True)
     assert 'data-mode="presenter"' in journaliste
     assert 'vuenom">Journaliste' in journaliste
-    # Pas de barre de navigation sur l'écran de la vitre.
-    assert '<nav class="navvues"' not in journaliste
+    # Pas d'en-tête sur l'écran de la vitre.
+    assert 'class="navvues"' not in journaliste
+    assert "data-grand" not in journaliste
+
+
+def test_settings_sans_bouton_debut_avec_commencer_a_la_ligne(client):
+    page = client.get("/settings").get_data(as_text=True)
+    assert 'data-cmd="restart"' not in page
+    assert 'id="ligneDepart"' in page and 'id="allerLigne"' in page
+    # Alignement ligne par ligne dans le bloc Texte, plus de réglage global.
+    assert 'id="alignG"' in page and 'id="alignC"' in page and 'id="alignD"' in page
+    assert "alignBtn" not in page
+    # La pastille blanche, et l'interrupteur des numéros de ligne.
+    assert 'data-color="6"' in page
+    assert 'id="numeros"' in page
 
 
 def test_manifeste_ouvre_la_vue_journaliste(client):
@@ -228,7 +249,7 @@ def test_state_corrompu_se_repare(client, tmp_path):
     st = server.load_state()
     assert st["settings"]["fontSize"] == 64
     assert st["settings"]["margin"] == 10
-    assert st["settings"]["align"] == "left"
+    assert "align" not in st["settings"]  # l'alignement se règle désormais ligne par ligne
 
 
 # --- Écrans meneur / spectateur ----------------------------------------------
@@ -1501,3 +1522,36 @@ def test_ouvrir_settings_en_grand_transmet_le_miroir(client, monkeypatch):
     server.STATE["settings"]["mirrorV"] = True
     assert _LANCEMENT_REEL("settings") is True
     assert vus["miroir"] == "xy" and vus["args"][-2:] == ["--vue", "settings"]
+
+
+# ============================================================================
+# Retour n° 3 : commencer à une ligne, couleur blanche, alignement par ligne
+# ============================================================================
+
+
+def test_commencer_a_la_ligne(client):
+    r = client.post("/api/command", json={"cmd": "ligne", "ligne": 42})
+    assert r.status_code == 200
+    control = client.get("/api/state").get_json()["control"]
+    assert control["cmd"] == "ligne" and control["ligne"] == 42
+
+
+@pytest.mark.parametrize("n", [0, -3, "12", 1.5, True, None, 10**7])
+def test_commencer_a_une_ligne_invalide(client, n):
+    assert client.post("/api/command", json={"cmd": "ligne", "ligne": n}).status_code == 400
+
+
+def test_couleur_blanche_acceptee(client):
+    client.post("/api/text", json={"text": "un mot blanc", "marks": [{"start": 3, "end": 6, "color": 6}]})
+    assert client.get("/api/state").get_json()["marks"][0]["color"] == 6
+
+
+def test_plus_d_alignement_global(client):
+    """Il se pose ligne par ligne ([centre], [droite]) dans la zone de texte."""
+    assert client.post("/api/settings", json={"align": "center"}).status_code == 400
+
+
+def test_numeros_de_ligne_reglables(client):
+    assert client.get("/api/state").get_json()["settings"]["numeros"] is True
+    client.post("/api/settings", json={"numeros": False})
+    assert client.get("/api/state").get_json()["settings"]["numeros"] is False

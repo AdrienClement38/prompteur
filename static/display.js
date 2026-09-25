@@ -50,12 +50,8 @@
     // la phrase sous la ligne rouge AVANT, pour y revenir APRÈS. Sans cela, la
     // lecture sautait ailleurs, voire sur un écran vide.
     const repereAvant = !isViewer && lastText !== null && text === lastText ? repereDepuisPosition(pos) : null;
-    const vitesseAvant = settings ? Number(settings.speed) || 70 : null;
     settings = s;
     speed = Number(s.speed) || 70;
-    // Une vitesse changée ailleurs (curseur, Plus vite / Moins vite) s'applique
-    // aussi à la vitesse posée au pied en mode dynamique.
-    if (!isViewer && vitesseAvant !== null && speed !== vitesseAvant) adopterVitesse(speed);
 
     const fontMap = {
       "sans-serif": "system-ui, 'Segoe UI', Roboto, Arial, sans-serif",
@@ -65,7 +61,11 @@
     scroller.style.fontFamily = fontMap[s.font] || fontMap["sans-serif"];
     scroller.style.fontSize = Math.max(8, Math.min(400, Number(s.fontSize) || 64)) + "px";
     scroller.style.lineHeight = String(Math.max(0.8, Math.min(4, Number(s.lineHeight) || 1.6)));
-    scroller.style.textAlign = s.align === "center" ? "center" : "left";
+    // Plus d'alignement global : il se règle ligne par ligne ([centre], [droite]).
+    scroller.style.textAlign = "left";
+    // Numéros de ligne : leur taille suit celle du texte, sans suivre les titres.
+    scroller.classList.toggle("numeros", s.numeros !== false);
+    scroller.style.setProperty("--taille-numero", tailleNumero() + "px");
 
     mettreEnPage();
 
@@ -136,7 +136,7 @@
       if (m.u && !cls.includes("mu")) cls += " mu";
       // Taille et couleur ne s'additionnent pas : la derniere plage l'emporte.
       if (SIZE_CLASS[m.size]) taille = SIZE_CLASS[m.size];
-      if (m.color >= 1 && m.color <= 5) couleur = "c" + m.color;
+      if (m.color >= 1 && m.color <= 6) couleur = "c" + m.color;
     }
     if (taille) cls += " " + taille;
     if (couleur) cls += " " + couleur;
@@ -189,7 +189,17 @@
   const RE_PUCE = /^[-*•][ \t]+(.*)$/;
   const RE_ALIGNE = /^\[(centre|droite)\][ \t]*/i;
 
+  // Numéros de ligne : une ligne de TEXTE en porte un (titre, puce, paragraphe),
+  // une ligne vide non. Le même compte partout — vue Journaliste, vue Spectateur,
+  // zone de saisie de Settings — et c'est ce numéro que prend « Commencer à la
+  // ligne ». Une ligne de texte, et non une ligne à l'écran : sur un autre écran,
+  // les retours à la ligne tombent ailleurs, le numéro, lui, ne bouge pas.
+  function tailleNumero() {
+    return Math.max(12, Math.round((Number((settings || {}).fontSize) || 64) * 0.3));
+  }
+
   function renderScript(text, marks) {
+    let numero = 0;
     const plages = Array.isArray(marks) ? marks : [];
     const bornes = [];
     for (const m of plages) bornes.push(m.start, m.end);
@@ -241,6 +251,7 @@
         else div.textContent = line;
       }
       div.className += classeAligne;
+      if (div.className !== "ln blank" + classeAligne) div.dataset.n = String(++numero);
       const aligne = alignementAt(alignements, offset);
       if (aligne && !classeAligne) div.className += " " + aligne;
       frag.appendChild(div);
@@ -260,7 +271,7 @@
   // désormais par ces fonctions, qui connaissent les trois modes.
   function enMouvement() {
     const mode = currentMode();
-    if (mode === "dyn") return !dynPaused && Math.abs(dynVel) >= 1;
+    if (mode === "dyn") return Math.abs(dynVel) >= 1;
     if (mode === "tap") return tapDir !== 0;
     return autoPlay || keys.forward || keys.backward;
   }
@@ -268,9 +279,9 @@
   function lecture() {
     const mode = currentMode();
     if (mode === "dyn") {
-      // Vers l'avant, à la vitesse posée au pied ; à défaut, à celle du réglage.
-      dynVel = Math.abs(dynVel) >= 1 ? Math.abs(dynVel) : speed;
-      dynPaused = false;
+      // Lecture depuis Settings : vers l'avant, à la vitesse du curseur (au pied,
+      // on repart de 0 ; depuis le téléphone, il n'y a pas de pied pour accélérer).
+      dynVel = speed;
     } else if (mode === "tap") {
       tapDir = 1;
     } else {
@@ -278,19 +289,13 @@
     }
   }
 
-  // Pédale centrale (mode dynamique) : repart dans le sens d'avant la pause, à
-  // la même vitesse. Sans vitesse posée, vers l'avant à la vitesse du réglage.
-  function repriseCentrale() {
-    if (Math.abs(dynVel) < 1) dynVel = speed;
-    dynPaused = false;
-  }
-
-  // Tout s'arrête ; la vitesse, elle, est conservée pour la reprise.
+  // Tout s'arrête. En mode dynamique, la vitesse retombe à 0 : la prochaine
+  // lecture au pied repart de 0 (règle du journaliste). Le réglage de vitesse du
+  // curseur, lui, n'est pas touché.
   function arretTout() {
     autoPlay = false;
     tapDir = 0;
-    dynPaused = true;
-    reprise = null;
+    dynVel = 0;
     forceResync();
   }
 
@@ -299,10 +304,34 @@
     arretTout();
   }
 
-  function applyCommand(cmd) {
+  // « Commencer à la ligne n » : la ligne n se présente comme la première ligne
+  // au début du texte, juste sous la ligne rouge, et tout est à l'arrêt.
+  function allerALaLigne(n) {
+    const lignes = scroller.querySelectorAll(".ln[data-n]");
+    if (!lignes.length) return revenirAuDebut();
+    const cible = lignes[Math.max(0, Math.min(lignes.length, Math.round(n) || 1) - 1)];
+    pos = Math.max(0, Math.min(maxScrollPos(), cible.offsetTop - lignes[0].offsetTop));
+    arretTout();
+    placer();
+  }
+
+  function applyCommand(cmd, control) {
     // En veille, rien ne doit se mettre à défiler dans le noir.
     if (Commun && Commun.veille.active() && (cmd === "play" || cmd === "toggle")) return;
     switch (cmd) {
+      case "ligne":
+        allerALaLigne(Number((control || {}).ligne) || 1);
+        break;
+      case "faster":
+      case "slower":
+        // Mode dynamique : Plus vite / Moins vite agissent sur la vitesse en
+        // cours, d'un cran, sans jamais inverser le sens. (Dans les autres
+        // modes, le serveur a ajusté la vitesse du curseur, déjà appliquée.)
+        if (currentMode() === "dyn" && Math.abs(dynVel) >= 1) {
+          const cran = cmd === "faster" ? 10 : -10;
+          dynVel = Math.sign(dynVel) * Math.max(0, Math.min(SPEED_MAX, Math.abs(dynVel) + cran));
+        }
+        break;
       case "play": lecture(); break;
       case "pause": arretTout(); break;
       case "toggle":
@@ -318,25 +347,6 @@
     updateSpeedTag();
   }
 
-  // Vitesse venue d'ailleurs (Settings) : en mode dynamique, elle remplace la
-  // vitesse posée au pied, sens conservé. Pas pendant un appui : la pédale a la
-  // priorité, et sa nouvelle vitesse partira au relâchement.
-  function adopterVitesse(v) {
-    if (keys.forward || keys.backward) return;
-    if (Math.abs(dynVel) >= 1) dynVel = Math.sign(dynVel) * v;
-    renderSpeedTag();
-  }
-
-  // Vitesse posée au pied : on la confie au serveur, qui en fait LA vitesse du
-  // prompteur. Le curseur de Settings la montre, et Plus vite / Moins vite
-  // partent d'elle au lieu d'une valeur périmée.
-  function envoyerVitesse(v) {
-    if (!isLeading || v === Math.round(speed)) return;
-    speed = v;
-    if (settings) settings.speed = v;
-    postJson("/api/settings", { speed: v }).catch(() => {});
-  }
-
   function envoyerCommande(cmd) {
     postJson("/api/command", { cmd }).catch(() => {});
   }
@@ -349,10 +359,9 @@
     let icon = "⏸";
     let valeur = Math.round(speed);
     if (mode === "dyn") {
-      // Sans vitesse posée au pied, c'est celle du réglage qui servira à la reprise.
-      valeur = Math.round(Math.abs(dynVel) >= 1 ? Math.abs(dynVel) : speed);
-      if (!dynPaused && dynVel > 0.5) icon = "▶︎";
-      else if (!dynPaused && dynVel < -0.5) icon = "◀︎";
+      valeur = Math.round(Math.abs(dynVel));
+      if (dynVel > 0.5) icon = "▶︎";
+      else if (dynVel < -0.5) icon = "◀︎";
     } else if (mode === "tap") {
       if (tapDir > 0) icon = "▶︎";
       else if (tapDir < 0) icon = "◀︎";
@@ -395,6 +404,9 @@
     const m = Math.max(0, Math.min(45, Number.isFinite(Number(s.margin)) ? Number(s.margin) : 10));
     const L = replique.largeur;
     const H = replique.hauteur;
+    // Numéros affichés : la marge de gauche leur garde toujours de la place, même
+    // réglée à 0 %.
+    const place = s.numeros !== false ? tailleNumero() * 2.6 : 0;
     if (isViewer && L > 0 && H > 0) {
       // L'échelle qui fait tenir l'écran du journaliste dans cette fenêtre. Une
       // fenêtre plus haute que lui montre simplement plus de lignes au-dessus et
@@ -405,7 +417,7 @@
       scroller.style.left = Math.max(0, (viewport.clientWidth - L * replique.echelle) / 2) + "px";
       // En pixels du grand écran : les pourcentages se rapporteraient ici à la
       // fenêtre, et plus à la largeur du texte.
-      scroller.style.paddingLeft = (L * m) / 100 + "px";
+      scroller.style.paddingLeft = Math.max((L * m) / 100, place) + "px";
       scroller.style.paddingRight = (L * m) / 100 + "px";
       scroller.style.paddingTop = 0.6 * H + "px";
       scroller.style.paddingBottom = 0.8 * H + "px";
@@ -413,7 +425,7 @@
       replique.echelle = 1;
       scroller.style.width = "100%";
       scroller.style.left = "0px";
-      scroller.style.paddingLeft = m + "%";
+      scroller.style.paddingLeft = `max(${m}%, ${place}px)`;
       scroller.style.paddingRight = m + "%";
       scroller.style.paddingTop = "60vh";
       scroller.style.paddingBottom = "80vh";
@@ -511,21 +523,20 @@
     let v = 0;
 
     if (mode === "dyn") {
-      // Rampe intégrée image par image : on atteint la vitesse maximale après
-      // « rampSeconds » d'appui continu. La vitesse traverse zéro sans à-coup,
-      // ce qui donne le passage progressif de l'avant vers l'arrière.
-      // Pas de rampe à l'arrêt, ni au début d'un appui de reprise : reprendre
-      // après une pause se fait à la vitesse d'avant. Maintenu plus longtemps,
-      // l'appui de reprise se remet à accélérer.
+      // La vitesse est une valeur SIGNÉE (> 0 avance, < 0 recule). Tant qu'une
+      // pédale est maintenue, elle pousse la vitesse vers son sens, d'autant
+      // plus loin qu'on appuie longtemps ; relâchée, la vitesse atteinte reste.
+      // Changer de sens passe TOUJOURS par 0 : la vitesse est intégrée image par
+      // image, elle ne saute jamais d'un sens à l'autre. Les deux pédales
+      // ensemble s'annulent. Maximum atteint après « rampSeconds » d'appui.
       const secondes = Math.max(1, Math.min(30, Number((settings || {}).rampSeconds) || 10));
       const accel = SPEED_MAX / secondes; // px/s²
-      const retenue = reprise && now - reprise.depuis < DELAI_REPRISE_MS ? reprise.cle : null;
-      if (!dynPaused) {
-        if (keys.forward && retenue !== "forward") dynVel = Math.min(SPEED_MAX, dynVel + accel * dt);
-        if (keys.backward && retenue !== "backward") dynVel = Math.max(-SPEED_MAX, dynVel - accel * dt);
-        if (keys.forward || keys.backward) renderSpeedTag();
+      const pousse = (keys.forward ? 1 : 0) - (keys.backward ? 1 : 0);
+      if (pousse) {
+        dynVel = Math.max(-SPEED_MAX, Math.min(SPEED_MAX, dynVel + pousse * accel * dt));
+        renderSpeedTag();
       }
-      v = dynPaused ? 0 : dynVel;
+      v = dynVel;
     } else if (mode === "tap") {
       v = tapDir * speed;
     } else {
@@ -545,12 +556,11 @@
         pos = maxPos;
         butee = v > 0;
       }
-      // Mode dynamique : arrivé en haut ou en bas du texte, on se met en pause.
-      // Sans cela la vitesse restait lancée contre la butée, et la pédale
-      // opposée semblait morte le temps de la faire redescendre. La vitesse est
-      // conservée : un appui sur l'autre pédale repart aussitôt dans l'autre sens.
+      // Mode dynamique : arrivé en haut ou en bas du texte, on s'arrête (vitesse
+      // 0). Sans cela la vitesse restait lancée contre la butée, et la pédale
+      // opposée semblait morte le temps de la faire redescendre.
       if (butee && mode === "dyn") {
-        dynPaused = true;
+        dynVel = 0;
         v = 0;
         updateSpeedTag();
       }
@@ -869,24 +879,20 @@
   //             centrale sans fonction.
   // IMPULSION : une pression lance le défilement dans un sens, une seconde
   //             pression sur la MÊME pédale met en pause. Centrale sans fonction.
-  // DYNAMIQUE : la centrale fait lecture/pause ; la droite accélère vers l'avant
-  //             tant qu'on appuie, la gauche ralentit puis repart en arrière, de
-  //             plus en plus vite. La vitesse atteinte est CONSERVÉE au
-  //             relâchement : le présentateur pose la vitesse une fois, puis lit.
+  // DYNAMIQUE : la vitesse est signée. Droite maintenue = elle monte vers
+  //             l'avant, gauche maintenue = elle descend vers l'arrière, d'autant
+  //             plus qu'on appuie longtemps ; relâchée, elle reste. Un changement
+  //             de sens passe toujours par 0. La centrale ne fait que PAUSE (vitesse
+  //             0) ; à l'arrêt, une pédale repart donc de 0, lentement.
   //
-  // Le mode dynamique n'utilise pas le réglage « vitesse » : sa vitesse est
-  // construite au pied. Les événements clavier servent seulement à savoir si une
-  // pédale est enfoncée ; toute la rampe est intégrée image par image dans la
-  // boucle d'animation, avec le même dt borné que le reste.
+  // La vitesse du mode dynamique vit sur cet écran, au pied : elle n'est plus
+  // renvoyée au boîtier. Sa relecture périodique ramenait une vitesse périmée et
+  // annulait un ralentissement (« on ne peut plus ralentir »). Les événements
+  // clavier disent seulement si une pédale est enfoncée ; la rampe est intégrée
+  // image par image dans la boucle d'animation, avec le même dt borné.
   const SPEED_MAX = 600; // même borne que le serveur
   let dynVel = 0; // vitesse signée construite au pied, en px/s
-  let dynPaused = true; // la pédale centrale bascule ce drapeau
   let tapDir = 0; // -1 arrière, 0 pause, +1 avant (mode impulsion)
-  // Reprise après une pause (mode dynamique) : la pédale choisit le SENS, la
-  // vitesse reste celle d'avant la pause. { cle, depuis } tant que la pédale de
-  // reprise est enfoncée.
-  let reprise = null;
-  const DELAI_REPRISE_MS = 400; // au-delà, l'appui de reprise se remet à accélérer
 
   function currentMode() {
     return (settings || {}).mode || "hold";
@@ -942,14 +948,6 @@
         // Deuxième appui sur la MÊME pédale = pause. Sur l'autre = on repart
         // dans l'autre sens.
         tapDir = tapDir === sens ? 0 : sens;
-      } else if (mode === "dyn" && dynPaused) {
-        // Reprise après une pause : droite = vers l'avant, gauche = vers
-        // l'arrière, à la vitesse d'avant la pause (à défaut, celle du réglage).
-        const v = Math.abs(dynVel) >= 1 ? Math.abs(dynVel) : speed;
-        dynVel = sens * v;
-        dynPaused = false;
-        reprise = { cle, depuis: performance.now() };
-        keys[cle] = true;
       } else {
         keys[cle] = true; // maintien et dynamique : pédale enfoncée
       }
@@ -958,12 +956,9 @@
     }
     if (k === kc) {
       e.preventDefault();
-      // Pédale centrale : lecture/pause, et UNIQUEMENT en mode dynamique. Dans
-      // les deux autres modes le client la veut explicitement sans fonction.
-      if (mode === "dyn" && !e.repeat) {
-        if (!dynPaused) arretTout();
-        else repriseCentrale();
-      }
+      // Pédale centrale : PAUSE, et UNIQUEMENT en mode dynamique. Dans les deux
+      // autres modes le client la veut explicitement sans fonction.
+      if (mode === "dyn" && !e.repeat) arretTout();
       updateSpeedTag();
       return;
     }
@@ -1001,12 +996,7 @@
     if (k === (s.keyForward || "ArrowDown")) cle = "forward";
     else if (k === (s.keyBackward || "ArrowUp")) cle = "backward";
     if (!cle) return;
-    keys[cle] = false;
-    if (reprise && reprise.cle === cle) reprise = null;
-    // Mode dynamique : la vitesse posée au pied devient celle du prompteur.
-    if (currentMode() === "dyn" && Math.abs(dynVel) >= 1) {
-      envoyerVitesse(Math.max(10, Math.min(SPEED_MAX, Math.round(Math.abs(dynVel)))));
-    }
+    keys[cle] = false; // la vitesse atteinte reste : seule l'accélération s'arrête
     updateSpeedTag();
   });
 
@@ -1016,14 +1006,11 @@
     // en dynamique, le défilement est en cours SANS qu'aucune touche soit
     // enfoncée : on le met aussi en pause, sinon le texte continuerait de défiler
     // derrière une fenêtre que plus personne ne regarde.
-    const enMouvement = keys.forward || keys.backward || tapDir !== 0 || !dynPaused;
+    const enMouvement = keys.forward || keys.backward || tapDir !== 0 || Math.abs(dynVel) >= 1;
     if (!enMouvement) return;
     keys.forward = false;
     keys.backward = false;
-    tapDir = 0;
-    dynPaused = true; // la vitesse acquise est conservée, on la reprend au pied
-    reprise = null;
-    forceResync();
+    arretTout();
     updateSpeedTag();
   }
   window.addEventListener("blur", releasePedals);
@@ -1081,7 +1068,7 @@
         // dès le démarrage du boîtier.
         const ouverture = lastCmdSeq === -1;
         lastCmdSeq = st.control.cmdSeq;
-        if (!ouverture && !isViewer && st.control.cmd) applyCommand(st.control.cmd);
+        if (!ouverture && !isViewer && st.control.cmd) applyCommand(st.control.cmd, st.control);
       }
     } catch {
       // le serveur peut redémarrer : on réessaie au prochain tick, et on

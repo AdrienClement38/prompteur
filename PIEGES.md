@@ -168,6 +168,21 @@ Pi 5 il n'y a aucun mode de secours derrière — et **force le HDMI en 480×320
 écrasant le grand écran. Il est conçu pour une machine à un seul écran.
 **Parade :** ne pas le lancer. Déclarer l'écran en mode DRM, à la main.
 
+### 🔴 Un second écran branché ne sert à rien tout seul
+Le 7 pouces de la régie, branché sur la seconde prise HDMI, montrait le bureau — ou
+une recopie du prompteur — et jamais la vue Settings : la commande qui l'ouvrait
+(`kiosk.sh --menu`) était documentée, mais personne ne la lançait. Trois pièges de
+plus derrière : deux écrans en **recopie** se recouvrent, et une fenêtre « sur le
+petit » tombe sur le grand ; la dalle tactile vise **toute la largeur** des deux
+écrans, et le doigt tombe à côté ; deux écrans de 7 pouces ne se distinguent pas par
+leur taille.
+**Parade :** le lancement du prompteur ouvre lui-même le petit écran ; il met les
+écrans côte à côte, cale le tactile (`xinput map-to-output`), et désigne le grand par
+sa prise (HDMI 0, celle que prescrivent les procédures). S'il ne peut pas garantir
+que les écrans sont côte à côte, il n'ouvre **rien** : une fenêtre plein écran
+posée sur le prompteur serait pire que pas de fenêtre. `kiosk.sh --ecrans` dit ce
+qui a été reconnu.
+
 ### Les réglages `hdmi_*` sont ignorés sur Pi 5
 Presque tous les tutoriels en ligne datent d'avant le changement d'architecture
 graphique. Les recettes qu'on trouve **ne font rien**, sans le dire.
@@ -268,6 +283,16 @@ laissait la place de meneur à l'ancienne page pendant 12 s. La nouvelle afficha
 « déjà en cours » — et son voile ne partait jamais, même la place libérée.
 **Parade :** le serveur rend la place du kiosque quand il le ferme lui-même ; et un
 écran écarté reprend la main dès que le serveur la lui rend.
+
+### 🔴 La vitesse ancienne qui revient toute seule
+En mode Dynamique, la vitesse posée au pied était renvoyée au boîtier, pour que le
+curseur du téléphone la suive. L'écran relisait l'état toutes les 300 ms… et
+reprenait la vitesse du boîtier : une vitesse **d'avant le ralentissement**, encore
+en route. Le journaliste ralentissait, et le texte réaccélérait aussitôt : « une fois
+accéléré, on ne peut plus ralentir ».
+**Parade :** la vitesse au pied reste sur l'écran qui la construit ; le boîtier ne
+connaît que celle du bouton « Lecture ». Le banc d'essai vérifie qu'aucune vitesse
+n'est plus envoyée, et que le ralentissement tient.
 
 ---
 

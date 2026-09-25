@@ -55,6 +55,21 @@
     #scroller .c3 { color:#5ee08a; }
     #scroller .c4 { color:#7cc4ff; }
     #scroller .c5 { color:#a9b2c2; }
+    #scroller .c6 { color:#ffffff; }
+    /* Numéros de ligne, dans la marge de gauche : de quoi repérer « la ligne 42 »
+       et y aller depuis Settings. Discrets, et retournés avec le texte (miroir). */
+    /* Le numéro est centré sur la PREMIÈRE ligne du paragraphe : sa hauteur de
+       ligne est celle du texte (1lh, figé en pixels sur la ligne elle-même grâce
+       à @property ; un titre, plus grand, a donc la sienne). */
+    @property --hauteur-ligne { syntax:"<length>"; inherits:true; initial-value:0px; }
+    #scroller.numeros .ln[data-n] { position:relative; --hauteur-ligne:1lh; }
+    #scroller.numeros .ln[data-n]::before {
+      content:attr(data-n); position:absolute; right:100%; top:0;
+      margin-right:.6em; font-size:var(--taille-numero, 19px);
+      line-height:max(var(--hauteur-ligne), 2.2em);
+      font-weight:500; font-style:normal; color:#7d838d; text-indent:0;
+      pointer-events:none;
+    }
     /* Alignement venu du document importe. Il porte sur la ligne entiere. */
     /* Puce : retrait pendant, pour qu'une puce qui passe a la ligne reste
        alignee sur son texte et non sous son point. */
@@ -184,12 +199,24 @@
   </div>
 
   {% if mode == "viewer" %}
-  <nav class="navvues" aria-label="Vues">
-    <span class="navnom">Spectateur</span>
-    <a class="navbtn" href="/settings">Settings</a>
-    <a class="navbtn actif" href="/spectateur" aria-current="page">Spectateur</a>
+  <header class="navvues" aria-label="Écrans">
+    <div class="groupe regie">
+      <span class="groupe-nom">Écran régie</span>
+      <div class="boutons">
+        <a class="navbtn" href="/settings">Settings</a>
+        <a class="navbtn actif" href="/spectateur" aria-current="page">Spectateur</a>
+      </div>
+    </div>
+    <div class="groupe journaliste">
+      <span class="groupe-nom">Écran journaliste</span>
+      <div class="boutons">
+        <button type="button" class="navbtn" data-grand="settings" disabled>Settings</button>
+        <button type="button" class="navbtn" data-grand="journaliste" disabled>Journaliste</button>
+        <button type="button" class="navbtn" data-grand="bureau" disabled>Bureau</button>
+      </div>
+    </div>
     <button type="button" class="navbtn veillebtn">⏻ Veille</button>
-  </nav>
+  </header>
   {% endif %}
   <div id="speedTag">▶︎ 70</div>
   <div id="netinfo" class="hidden"></div>

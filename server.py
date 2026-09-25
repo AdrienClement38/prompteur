@@ -99,7 +99,8 @@ DEFAULT_STATE = {
         "mirrorV": False,  # miroir vertical
         "guide": True,  # ligne de repère de lecture
         "guidePos": 42,  # position de la ligne de repère en % depuis le haut
-        "align": "left",  # left | center
+        # Numéros de ligne dans la marge des vues de lecture et de la zone de saisie.
+        "numeros": True,
         "font": "sans-serif",  # sans-serif | serif | monospace
         # "hold" (maintien) | "tap" (impulsion) | "dyn" (dynamique, 3 pédales)
         "mode": "hold",
@@ -140,7 +141,9 @@ SETTING_VALIDATORS = {
     "mirrorH": lambda v: isinstance(v, bool),
     "mirrorV": lambda v: isinstance(v, bool),
     "guide": lambda v: isinstance(v, bool),
-    "align": lambda v: v in ("left", "center"),
+    # Plus d'alignement global : il se pose ligne par ligne ([centre], [droite]).
+    # Un state.json portant encore "align" est nettoyé au chargement.
+    "numeros": lambda v: isinstance(v, bool),
     # Une seule police : les deux autres etaient illisibles sur un prompteur.
     # Un state.json portant encore "serif" ou "monospace" retombe au defaut.
     "font": lambda v: v == "sans-serif",
@@ -271,7 +274,7 @@ MARK_SIZES = ("s", "l", "xl")
 # Palette FERMÉE, toutes lisibles sur fond sombre. Un choix libre permettrait
 # d'écrire en bleu marine sur noir, donc de rendre un passage invisible en
 # tournage — au moment précis où l'on comptait sur lui.
-MARK_COLORS = (1, 2, 3, 4, 5)
+MARK_COLORS = (1, 2, 3, 4, 5, 6)  # jaune, rouge, vert, bleu, gris, blanc
 # L'alignement vient des documents importes. Il porte sur la LIGNE entiere, pas sur
 # des caracteres : l'ecran le lit au premier caractere de la ligne. « left » n'est pas
 # de la liste, c'est deja le comportement normal — une marque de plus pour rien.
@@ -755,9 +758,16 @@ def api_command():
     L'état de pilotage est TRANSITOIRE : on ne l'écrit pas sur la carte SD (usure)."""
     data = _corps()
     cmd = data.get("cmd")
-    allowed = {"play", "pause", "toggle", "restart", "top", "faster", "slower"}
+    allowed = {"play", "pause", "toggle", "restart", "top", "faster", "slower", "ligne"}
     if cmd not in allowed:
         return jsonify({"ok": False, "error": "commande inconnue"}), 400
+    ligne = None
+    if cmd == "ligne":
+        # « Commencer à la ligne n » : un numéro de ligne de texte, à partir de 1.
+        n = data.get("ligne")
+        if not isinstance(n, int) or isinstance(n, bool) or not 1 <= n <= 1_000_000:
+            return jsonify({"ok": False, "error": "numéro de ligne invalide"}), 400
+        ligne = n
     with _lock:
         if cmd in ("faster", "slower"):
             # la vitesse est la source de vérité unique, bornée, côté serveur
@@ -765,6 +775,7 @@ def api_command():
             cur = STATE["settings"].get("speed", 70)
             STATE["settings"]["speed"] = max(SPEED_MIN, min(SPEED_MAX, int(round(float(cur))) + step))
         STATE["control"]["cmd"] = cmd
+        STATE["control"]["ligne"] = ligne
         STATE["control"]["cmdSeq"] = int(STATE["control"].get("cmdSeq", 0)) + 1
         if cmd in ("play", "pause"):
             STATE["control"]["playing"] = cmd == "play"
