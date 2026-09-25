@@ -1206,7 +1206,7 @@ clavier, une souris, un écran, un câble Ethernet et Internet.
 | **Le texte s'est figé, ça ne défile plus** | Vous êtes probablement arrivé à la fin du texte : l'appareil refuse d'aller plus loin, c'est normal. Appuyez sur le bouton **« Début »** du téléphone pour revenir en haut — il met aussi le défilement en pause, dans tous les modes. *(La touche **R** du clavier du boîtier fait de même.)* |
 | **Le texte démarre trop bas sur l'écran** | C'est voulu : la première ligne est placée sous la ligne rouge de repère, et le texte monte vers elle dès le premier appui sur la pédale. Il n'y a rien à corriger. |
 | **Le grand écran est éteint, et le téléphone affiche un fond noir avec « ⏻ Rallumer »** | Le système est **en veille** (bouton ⏻ Veille). Touchez **« Rallumer »**, ou appuyez sur une pédale : tout revient, à l'arrêt, là où l'on en était. |
-| **Le texte est à l'envers** | **Le plus simple :** rappuyez une fois sur la touche **M** du clavier branché au boîtier, le texte se remet à l'endroit. **Si vous n'avez pas de clavier :** sur le téléphone, onglet **Réglages** → **Affichage**, **ALLUMEZ** l'interrupteur « Miroir horizontal » puis **ÉTEIGNEZ-le** (deux appuis) — c'est le deuxième appui qui remet l'écran d'aplomb. *(Un appui sur M à l'insu du téléphone laisse l'interrupteur affiché « éteint » alors que l'écran est en miroir : il n'y a donc rien à éteindre, il faut faire les deux appuis.)* |
+| **Le texte est à l'envers** | Sur le téléphone, onglet **Réglages** → **Affichage** : éteignez l'interrupteur « Miroir horizontal » (ou « Miroir vertical », si le texte a la tête en bas). Avec un clavier branché au boîtier, la touche **M** fait la même chose. |
 | **Un document importé donne un écran vide (« Aucun texte »)** | Le PDF est un **document scanné** : c'est une photo de page, il ne contient aucun texte lisible par la machine. Repartez du document Word d'origine, ou copiez-collez le texte à la main dans la télécommande. |
 | **« Import impossible », sans autre explication** | Le fichier dépasse la taille limite (5 Mo par fichier, 6 Mo pour l'envoi complet). Un PDF avec des photos y arrive très vite. Utilisez plutôt un **.docx**, bien plus léger. |
 | **Un message technique en anglais parle de « decrypted »** | Le document est **protégé par un mot de passe**. Ouvrez-le sur un ordinateur, enregistrez-le sans mot de passe, réessayez. |
@@ -1337,15 +1337,12 @@ Manuscrite, et **distincte de la fiche collée sur le boîtier**, elle doit port
 | **F5** (ou `Ctrl + R`) | Recharger l'écran, s'il affiche une page blanche ou une erreur |
 | **i** | Affiche ou masque les adresses |
 | **H** | Affiche ou masque le bandeau d'aide |
-| **M** | Miroir — **à ne pas toucher par erreur** (rappuyer dessus le remet à l'endroit) |
+| **M** | Miroir — **à ne pas toucher par erreur** (rappuyer dessus le remet à l'endroit ; c'est enregistré, comme sur le téléphone) |
 | **F** | Plein écran — inutile sur le boîtier, qui y est déjà |
 
-> **ℹ️ « Réglage provisoire » veut dire :** les touches **+**, **-** et **M** du
-> clavier ne changent l'affichage **que sur le moment**. Le téléphone n'en sait
-> rien, et tout revient en arrière dès le prochain réglage envoyé depuis le
-> téléphone, ou au redémarrage. **Pour une vitesse et un miroir qui restent,
-> réglez-les depuis le téléphone.** Le miroir, lui, ne concerne que **l'écran
-> principal** : les écrans secondaires restent toujours à l'endroit.
+> **ℹ️ Les touches +, - et M passent par le boîtier**, exactement comme les réglages
+> du téléphone : elles sont enregistrées, et le téléphone les affiche. Le miroir
+> retourne tout le grand écran ; la vue Spectateur reste toujours à l'endroit.
 
 > **Les autres touches n'ont pas d'effet.** Si l'affichage se ferme par erreur
 > (**Alt + F4**, **Ctrl + W**), l'icône **« Le Prompteur »** du bureau le fait

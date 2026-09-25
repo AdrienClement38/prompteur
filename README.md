@@ -68,9 +68,8 @@ support, ~50 à 150 € (voir § 10).
 
 - L'effet exact des flèches dépend du **mode de pédalier** choisi (§ 6) ; à la
   livraison, c'est le mode **Maintien**.
-- **M** n'agit que sur l'écran où l'on appuie et **n'est pas enregistré** : le
-  prochain réglage envoyé depuis le téléphone l'annulera. Pour un miroir durable,
-  passez par le téléphone (§ 7).
+- **M**, **+** et **−** passent par le boîtier, comme les réglages du téléphone :
+  ils sont enregistrés, et l'interrupteur du téléphone reste juste.
 - **Sur la vue Spectateur, seule F (plein écran) répond** : elle ne se pilote pas,
   elle suit. Pour la fermer, fermez simplement sa fenêtre.
 
@@ -481,8 +480,10 @@ collisions avec un raccourci de l'écran sont signalées.
 - **Vitesse** (onglet **Contrôle**) : le curseur et **« − Moins vite »** / **« Plus
   vite + »**, regroupés. En mode **Dynamique**, ils suivent la vitesse posée au pied.
 - **Miroir horizontal / vertical**, pour la vitre sans tain face caméra.
-  **Le miroir ne s'applique qu'à la vue Journaliste** : la vue Spectateur reste
-  toujours à l'endroit, on la lit directement.
+  **Le miroir retourne tout le grand écran** — la vue Journaliste se retourne
+  elle-même ; la vue Settings et le bureau, eux, sont retournés par le système
+  (`xrandr --reflect`, souris comprise). La vue Spectateur reste toujours à
+  l'endroit, on la lit directement.
 - **Ligne de repère** de lecture.
 - **Pédales** : mode, montée en vitesse, apprentissage des touches (§ 6).
 
@@ -514,6 +515,9 @@ bouton **Spectateur** en haut de Settings, ou `http://10.42.0.1:5000/spectateur`
 - Elle est en **lecture seule** : pédales et clavier ignorés, **sauf F** (plein
   écran).
 - On peut en ouvrir **plusieurs** en même temps.
+- C'est une **réplique à l'échelle** du grand écran : même largeur de texte,
+  donc mêmes coupures de lignes, et même phrase sous la ligne rouge, quelle que
+  soit la taille de la fenêtre (elle se réajuste quand on la redimensionne).
 - Le défilement reste **collé** à celui de la vue Journaliste : sa position est
   relue une quinzaine de fois par seconde, et le mouvement est anticipé entre deux
   lectures.

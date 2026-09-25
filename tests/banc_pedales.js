@@ -47,11 +47,15 @@ function banc(reglages, options = {}) {
   const elements = {};
   const scroller = elt();
   const HAUT_ECRAN = options.hautEcran || 800;
-  // Hauteur d'une ligne : proportionnelle à la taille du texte, et à la largeur
-  // de l'écran (un écran plus étroit coupe les lignes plus souvent).
-  const hauteurLigne = () =>
-    (parseFloat(scroller.style.fontSize) || 64) * 1.5625 * (options.facteurLigne || 1);
-  const margeHaut = () => HAUT_ECRAN * 0.6; // paddingTop: 60vh
+  const LARG_ECRAN = options.largEcran || 1024;
+  // Largeur du texte : celle fixée en pixels (réplique), sinon toute la fenêtre.
+  const largeurTexte = () => (/px$/.test(scroller.style.width || "") ? parseFloat(scroller.style.width) : LARG_ECRAN);
+  // Hauteur d'une ligne du texte : proportionnelle à la taille des lettres, et
+  // inversement à la largeur du texte (plus étroit = plus de retours à la ligne).
+  const hauteurLigne = () => ((parseFloat(scroller.style.fontSize) || 64) * 1.5625 * 1024) / largeurTexte();
+  // Marge du haut : « 60vh » (fenêtre), ou en pixels quand elle est fixée (réplique).
+  const margeHaut = () =>
+    /px$/.test(scroller.style.paddingTop || "") ? parseFloat(scroller.style.paddingTop) : HAUT_ECRAN * 0.6;
   scroller.replaceChildren = (...c) => {
     const lignes = c.length === 1 && c[0].childNodes ? c[0].childNodes : c;
     lignes.forEach((ligne, i) => {
@@ -67,6 +71,7 @@ function banc(reglages, options = {}) {
   elements.scroller = scroller;
   const viewport = elt();
   viewport.clientHeight = HAUT_ECRAN;
+  viewport.clientWidth = LARG_ECRAN;
   elements.viewport = viewport;
 
   const document = {
@@ -131,10 +136,22 @@ function banc(reglages, options = {}) {
       await fetch("/api/command", { method: "POST", body: JSON.stringify({ cmd }) });
       await api.sonder();
     },
-    pos: () => -parseFloat(String(scroller.style.transform || "translateY(0px)").replace("translateY(", "")),
+    pos: () => {
+      const m = /translateY\((-?[\d.e+-]+)px\)/.exec(String(scroller.style.transform || ""));
+      return m ? -parseFloat(m[1]) : 0;
+    },
+    echelle: () => {
+      const m = /scale\(([\d.e+-]+)\)/.exec(String(scroller.style.transform || ""));
+      return m ? parseFloat(m[1]) : 1;
+    },
     tag: () => elements.speedTag.textContent,
     lignes: () => scroller.childNodes,
     hauteurLigne,
+    redimensionner(largeur, hauteur) {
+      viewport.clientWidth = largeur;
+      viewport.clientHeight = hauteur;
+      for (const f of ecouteurs.resize || []) f();
+    },
     etat, envois, veille,
   };
   return api;
@@ -248,33 +265,62 @@ async function appui(b, key, ms) {
     verifier("Gras juste après une ligne [centre]", gras && gras.textContent === "suite", gras && gras.textContent);
   }
 
-  // --- Vue Spectateur sur un écran d'une autre taille -----------------------
-  // Elle doit montrer la MÊME ligne du texte sous sa ligne rouge, et non la même
-  // position en pixels, qui y désigne un autre passage.
+  // --- Vue Spectateur : réplique du grand écran ----------------------------
+  // Une fenêtre de téléphone doit montrer la MÊME phrase sous sa ligne rouge,
+  // avec les mêmes coupures de lignes, en plus petit.
   {
     const texte = "Ligne\n".repeat(400);
-    const meneur = banc({ mode: "hold", speed: 100 }, { texte });
+    const meneur = banc({ mode: "hold", speed: 100 }, { texte, largEcran: 1024, hautEcran: 600 });
     await meneur.demarrer();
     await meneur.commande("play");
-    meneur.avancer(4000); // quatre lignes environ
+    meneur.avancer(4000);
     await meneur.commande("pause");
     meneur.avancer(2100); // le meneur renvoie sa position à l'arrêt
     const point = meneur.etat.scroll;
-    verifier("Le meneur envoie la ligne lue", point && Number.isInteger(point.ligne), JSON.stringify(point));
+    verifier(
+      "Le meneur envoie la ligne lue et ses dimensions",
+      point && Number.isInteger(point.ligne) && point.largeur === 1024 && point.hauteur === 600,
+      JSON.stringify(point)
+    );
 
-    // Écran plus petit, lignes coupées autrement (plus hautes d'un tiers).
-    const spectateur = banc({ mode: "hold" }, { texte, spectateur: true, hautEcran: 480, facteurLigne: 4 / 3 });
-    spectateur.etat.scroll = point;
-    await spectateur.demarrer();
-    await spectateur.suivre();
-    spectateur.avancer(1500);
-    const hLigne = spectateur.hauteurLigne();
-    const lue = (spectateur.pos() + 480 * 0.42 - 480 * 0.6) / hLigne; // ligne sous le repère
+    const tel = banc({ mode: "hold" }, { texte, spectateur: true, largEcran: 400, hautEcran: 800 });
+    tel.etat.scroll = point;
+    await tel.demarrer();
+    await tel.suivre();
+    tel.avancer(1500);
+    const e = tel.echelle();
+    verifier("Réplique à l'échelle de la fenêtre", Math.abs(e - 400 / 1024) < 1e-6, `échelle ${e.toFixed(3)}`);
+    // Ligne sous le repère du téléphone (42 % de SA hauteur, en unités du grand écran).
+    const lue = (tel.pos() + (800 / e) * 0.42 - 600 * 0.6) / tel.hauteurLigne();
     const attendue = point.ligne + point.frac;
     verifier(
-      "Spectateur d'une autre taille : même ligne sous le repère",
-      Math.abs(lue - attendue) < 0.02,
+      "Même phrase sous la ligne rouge, en plus petit",
+      Math.abs(lue - attendue) < 0.02 && Math.abs(tel.hauteurLigne() - meneur.hauteurLigne()) < 1e-6,
       `ligne ${lue.toFixed(2)} pour ${attendue.toFixed(2)}`
+    );
+
+    // Fenêtre redimensionnée (tablette posée en paysage) : toujours la même phrase.
+    tel.redimensionner(1200, 500);
+    tel.avancer(1500);
+    const e2 = tel.echelle();
+    const lue2 = (tel.pos() + (500 / e2) * 0.42 - 600 * 0.6) / tel.hauteurLigne();
+    verifier(
+      "Fenêtre redimensionnée : réplique réajustée, même phrase",
+      Math.abs(e2 - 500 / 600) < 1e-6 && Math.abs(lue2 - attendue) < 0.02,
+      `échelle ${e2.toFixed(3)}, ligne ${lue2.toFixed(2)}`
+    );
+
+    // Sans dimensions du meneur (version antérieure) : mise en page à sa taille.
+    const ancien = banc({ mode: "hold" }, { texte, spectateur: true, largEcran: 400, hautEcran: 800 });
+    ancien.etat.scroll = { seq: 3, pos: 300, vel: 0, ligne: point.ligne, frac: point.frac, h: point.h };
+    await ancien.demarrer();
+    await ancien.suivre();
+    ancien.avancer(1500);
+    const lueAncien = (ancien.pos() + 800 * 0.42 - 800 * 0.6) / ancien.hauteurLigne();
+    verifier(
+      "Meneur d'une version antérieure : suivi par la ligne, sans réplique",
+      ancien.echelle() === 1 && Math.abs(lueAncien - attendue) < 0.02,
+      `ligne ${lueAncien.toFixed(2)}`
     );
   }
 

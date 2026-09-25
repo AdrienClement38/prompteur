@@ -891,9 +891,10 @@ l'avance, pour qu'il redevienne parfaitement lisible **dans la vitre**.
   interrupteurs éteints.**
 - **Vous lisez le reflet dans une vitre** : **activez le miroir horizontal**, et lui seul.
 
-> 📌 **Le miroir ne s'applique qu'à la vue Journaliste**, celle que vous lisez. **La vue
-> Spectateur (régie) reste toujours à l'endroit**, donc lisible par tout le monde : il n'y a
-> rien à régler pour cela.
+> 📌 **Le miroir retourne tout le grand écran** : la vue Journaliste, mais aussi la vue
+> Settings et le bureau quand ils y sont affichés — la souris s'y déplace alors dans le bon
+> sens à travers la vitre. **Le téléphone et la vue Spectateur (régie) restent toujours à
+> l'endroit** : il n'y a rien à régler pour cela.
 
 *Ce que vous devez voir quand le miroir est actif : sur le grand écran, le texte apparaît à
 l'envers, illisible de face — mais le **repère en haut à droite**, lui, reste lisible à l'endroit.
@@ -923,8 +924,9 @@ tablette de la régie, ou le petit écran du boîtier), pour que quelqu'un suive
 *Ce que vous devez voir : tout en haut, le mot **SPECTATEUR** en petit et les boutons
 **Settings · Spectateur · ⏻ Veille** ; en dessous, le texte qui défile en même temps que le vôtre.*
 
-**La vue Spectateur montre la même phrase que vous, même sur un écran d'une autre taille**
-(les lignes s'y coupent autrement : c'est la phrase qui est suivie, pas la position).
+**La vue Spectateur est une réplique du grand écran, à la taille de sa fenêtre** : mêmes
+coupures de lignes, même phrase sous la ligne rouge — sur un téléphone, en plus petit. Si l'on
+redimensionne la fenêtre, elle se réajuste d'elle-même.
 **Plusieurs vues Spectateur peuvent être ouvertes en même temps, sans aucun risque** : elles ne
 font que regarder, elles ne pilotent rien et elles restent toujours à l'endroit, même si vous
 lisez en miroir. **Settings** et **Spectateur** passent de l'une à l'autre d'un seul appui :
@@ -1103,7 +1105,7 @@ toujours du tout début**.
 | **Le téléphone n'ouvre pas la page, ou affiche « Erreur de connexion au boîtier »** | Votre téléphone est reparti sur la 4G. Retournez dans ses réglages sans fil, resélectionnez **Prompteur**, acceptez de rester connecté malgré l'absence d'internet, puis **rechargez la page**. |
 | **La page du téléphone semble figée (le texte ou les réglages n'y suivent plus)** | Normalement, **toutes les pages se mettent à jour toutes seules**. Si l'une reste en arrière, c'est qu'elle a perdu le réseau du boîtier : reconnectez le téléphone à **Prompteur**, puis **rechargez la page** — c'est le geste de secours universel côté téléphone. |
 | **L'écran affiche « Aucun texte. »** | Trois cas. **Au premier allumage : c'est normal**, le boîtier fonctionne et attend votre texte. **Juste après un envoi** : la zone de saisie du téléphone était **vide** au moment de l'envoi — rechargez votre texte depuis « Mes textes enregistrés », ou recollez-le. **Après un import qui n'a rien rempli** : le document n'était pas lisible (typiquement un **PDF scanné**) — repartez du `.docx` ou copiez-collez. |
-| **Le texte est à l'envers, ou la tête en bas** | Onglet **Réglages**, carte **Affichage** : vérifiez **les DEUX interrupteurs**, « Miroir horizontal » et « Miroir vertical », et éteignez celui qui est allumé à tort. *(Si vous lisez dans une vitre sans tain, seul l'horizontal doit être allumé. Le miroir ne touche que la vue Journaliste : la vue Spectateur est toujours à l'endroit.)* |
+| **Le texte est à l'envers, ou la tête en bas** | Onglet **Réglages**, carte **Affichage** : vérifiez **les DEUX interrupteurs**, « Miroir horizontal » et « Miroir vertical », et éteignez celui qui est allumé à tort. *(Si vous lisez dans une vitre sans tain, seul l'horizontal doit être allumé. Le miroir touche tout le grand écran, jamais la vue Spectateur.)* |
 | **Le texte démarre trop bas sur l'écran** | C'est voulu : la première ligne est placée sous la ligne rouge, et le texte monte vers elle dès la première pression sur la pédale. |
 | **La clé USB n'est pas détectée, ou mon document n'apparaît pas dans la liste** | Retirez la clé, rebranchez-la **sur le boîtier**, attendez 5 secondes, réappuyez sur **« Clé USB »**. Un document **marqué « trop lourd »** dépasse 5 Mo : utilisez un `.docx` léger. Sur une clé pleine de photos, posez vos documents **à la racine** d'une petite clé ordinaire. |
 | **Un import échoue, ou ne remplit rien** | Le document n'est pas lisible (PDF scanné, document protégé, fichier trop lourd) ; un format qui n'est pas un document texte, lui, est refusé avec un message. N'envoyez pas à l'écran : repartez du document Word d'origine, ou **copiez-collez le texte** dans la télécommande — cette voie marche toujours. |

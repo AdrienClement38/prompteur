@@ -24,6 +24,13 @@
 #      kiosk.sh --menu-stop       la ferme
 #      kiosk.sh --reprendre       rouvre la vue qu'un redémarrage du serveur a
 #                                 fermée (appelé par le serveur à son démarrage)
+#      kiosk.sh --miroir MODE     retourne tout le grand écran : normal, x
+#                                 (gauche-droite), y (haut-bas) ou xy
+#
+#  Le miroir de la vitre : la vue Journaliste se retourne elle-même (c'est fluide
+#  et éprouvé), le grand écran reste donc « normal » pendant qu'elle est affichée.
+#  Pour la vue Settings et le bureau, c'est l'écran ENTIER qui est retourné,
+#  pointeur de la souris compris, selon PROMPTEUR_MIROIR (donné par le serveur).
 #
 #  Utilisable aussi depuis une session SSH : l'écran du boîtier est désigné
 #  d'office, et le navigateur est détaché de la session, pour ne pas se fermer
@@ -166,6 +173,31 @@ stop_menu() {
   rm -f "$MENUPID"
 }
 
+# Le grand écran : la sortie placée en haut à gauche du bureau étendu (le petit
+# écran de contrôle est à sa droite). PROMPTEUR_ECRAN permet de l'imposer.
+sortie_grand_ecran() {
+  if [ -n "${PROMPTEUR_ECRAN:-}" ]; then
+    echo "$PROMPTEUR_ECRAN"
+    return
+  fi
+  xrandr --query 2>/dev/null |
+    sed -n 's/^\([^ ]*\) connected[^0-9]*[0-9]\+x[0-9]\++\([0-9]\+\)+[0-9]\+.*/\2 \1/p' |
+    sort -n | head -1 | awk '{print $2}'
+}
+
+# $1 = normal | x | y | xy. Renvoie 0 si l'écran a bien été retourné.
+miroir_ecran() {
+  local sortie
+  case "${1:-}" in
+    normal | x | y | xy) ;;
+    *) return 2 ;;
+  esac
+  command -v xrandr >/dev/null 2>&1 || return 1
+  sortie="$(sortie_grand_ecran)"
+  [ -n "$sortie" ] || return 1
+  xrandr --output "$sortie" --reflect "$1"
+}
+
 trouver_navigateur() {
   command -v chromium-browser || command -v chromium || true
 }
@@ -173,6 +205,7 @@ trouver_navigateur() {
 # --- Sous-commandes ----------------------------------------------------------
 ACTION=""
 VUE="journaliste"
+MIROIR_DEMANDE=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --vue)
@@ -189,14 +222,23 @@ while [ $# -gt 0 ]; do
       ACTION="$1"
       shift
       ;;
+    --miroir)
+      ACTION="$1"
+      MIROIR_DEMANDE="${2:-}"
+      shift 2 || shift
+      ;;
     *)
-      echo "Usage : $(basename "$0") [--vue journaliste|settings] [--restart|--stop|--status|--veille|--reveil|--menu|--menu-stop|--reprendre]" >&2
+      echo "Usage : $(basename "$0") [--vue journaliste|settings] [--restart|--stop|--status|--veille|--reveil|--menu|--menu-stop|--reprendre|--miroir MODE]" >&2
       exit 2
       ;;
   esac
 done
 
 case "$ACTION" in
+  --miroir)
+    miroir_ecran "$MIROIR_DEMANDE"
+    exit $?
+    ;;
   --veille)
     ecrans off
     exit $?
@@ -314,6 +356,16 @@ for _ in $(seq 1 60); do
   fi
   sleep 0.5
 done
+
+# --- Miroir de l'écran entier -------------------------------------------------
+# Vue Journaliste : l'écran reste normal, elle se retourne elle-même. Vue
+# Settings : c'est l'écran entier qui suit le réglage « Miroir » (et donc le
+# pointeur de la souris, qui se déplace alors dans le bon sens à travers la vitre).
+if [ "$VUE" = settings ]; then
+  miroir_ecran "${PROMPTEUR_MIROIR:-normal}" 2>/dev/null || true
+else
+  miroir_ecran normal 2>/dev/null || true
+fi
 
 # --- Navigateur --------------------------------------------------------------
 BROWSER="$(trouver_navigateur)"

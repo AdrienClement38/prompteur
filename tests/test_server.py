@@ -464,9 +464,12 @@ DEPUIS_UN_TELEPHONE = {"REMOTE_ADDR": "10.42.0.57"}
 DEPUIS_LE_BOITIER = {"REMOTE_ADDR": "127.0.0.1"}
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def kiosque(monkeypatch):
-    """Kiosque simulé : ce que « kiosk.sh » répondrait, et les lancements demandés."""
+    """Kiosque simulé : ce que « kiosk.sh » répondrait, et les lancements demandés.
+
+    Pour TOUS les tests : aucun ne doit lancer le vrai script (il attendait le
+    serveur 30 s puis cherchait Chromium, en arrière-plan de la CI)."""
     etat = {"sortie": "stopped", "code": 1, "ok": True, "appels": [], "lancements": []}
 
     def faux_kiosk(*args):
@@ -1423,3 +1426,78 @@ def test_position_partagee_sans_ligne_reste_acceptee(client):
     assert client.get("/api/scroll").get_json()["ligne"] is None
     assert client.post("/api/scroll", json={"pos": 10, "ligne": "douze"}).status_code == 200
     assert client.get("/api/scroll").get_json()["ligne"] is None
+
+
+# ============================================================================
+# Miroir de l'écran entier (vue Settings et bureau sur le grand écran)
+# ----------------------------------------------------------------------------
+# La vue Journaliste se retourne elle-même ; pour le reste, c'est l'écran
+# entier qui suit l'onglet Affichage, pour se lire à travers la vitre.
+# ============================================================================
+
+
+@pytest.mark.parametrize(
+    "h,v,attendu", [(False, False, "normal"), (True, False, "x"), (False, True, "y"), (True, True, "xy")]
+)
+def test_reflet_suit_l_onglet_affichage(client, h, v, attendu):
+    client.post("/api/settings", json={"mirrorH": h, "mirrorV": v})
+    assert server._reflet() == attendu
+
+
+def test_bureau_retourne_selon_le_miroir(client, kiosque):
+    client.post("/api/settings", json={"mirrorH": True})
+    kiosque["appels"].clear()
+    client.post("/api/kiosk/close", json={})
+    assert ("--miroir", "x") in kiosque["appels"]
+
+
+def test_miroir_change_sur_settings_en_grand(client, kiosque):
+    kiosque.update(sortie="running settings", code=0)
+    client.post("/api/settings", json={"mirrorH": True})
+    assert ("--miroir", "x") in kiosque["appels"]
+
+
+def test_miroir_change_sur_le_bureau(client, kiosque):
+    kiosque.update(sortie="stopped", code=1)
+    client.post("/api/settings", json={"mirrorV": True})
+    assert ("--miroir", "y") in kiosque["appels"]
+
+
+def test_miroir_change_pendant_le_prompteur_ne_retourne_pas_l_ecran(client, kiosque):
+    """Le prompteur se retourne lui-même : retourner aussi l'écran annulerait l'effet."""
+    kiosque.update(sortie="running journaliste", code=0)
+    client.post("/api/settings", json={"mirrorH": True})
+    assert not any(appel[0] == "--miroir" for appel in kiosque["appels"])
+
+
+def test_autre_reglage_ne_touche_pas_a_l_ecran(client, kiosque):
+    kiosque.update(sortie="running settings", code=0)
+    client.post("/api/settings", json={"fontSize": 70})
+    assert not any(appel[0] == "--miroir" for appel in kiosque["appels"])
+
+
+def test_position_partagee_porte_les_dimensions_du_grand_ecran(client):
+    """La vue Spectateur en fait une réplique à l'échelle de sa fenêtre."""
+    client.post("/api/scroll", json={"pos": 1, "vel": 0, "largeur": 1024, "hauteur": 600})
+    point = client.get("/api/scroll").get_json()
+    assert (point["largeur"], point["hauteur"]) == (1024, 600)
+    client.post("/api/scroll", json={"pos": 1, "vel": 0, "largeur": "grand"})
+    assert client.get("/api/scroll").get_json()["largeur"] == 1024  # refusé, rien n'a changé
+
+
+# Le vrai lanceur, gardé avant que la fixture « kiosque » ne le remplace.
+_LANCEMENT_REEL = server._kiosk_launch
+
+
+def test_ouvrir_settings_en_grand_transmet_le_miroir(client, monkeypatch):
+    """kiosk.sh retourne l'écran entier pour la vue Settings, selon ce réglage."""
+    vus = {}
+
+    def faux_popen(args, env=None, **_kw):
+        vus["args"], vus["miroir"] = args, env.get("PROMPTEUR_MIROIR")
+
+    monkeypatch.setattr(server.subprocess, "Popen", faux_popen)
+    server.STATE["settings"]["mirrorH"] = True
+    server.STATE["settings"]["mirrorV"] = True
+    assert _LANCEMENT_REEL("settings") is True
+    assert vus["miroir"] == "xy" and vus["args"][-2:] == ["--vue", "settings"]

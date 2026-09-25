@@ -437,7 +437,17 @@ STATE = load_state()
 # (/view) qui la SUIVENT avec anticipation (ils connaissent la vitesse et prédisent
 # le mouvement entre deux lectures -> retard imperceptible). Mise à jour par POST,
 # lue par GET, sur /api/scroll.
-SCROLL = {"pos": 0.0, "vel": 0.0, "playing": False, "seq": 0, "ligne": None, "frac": 0.0, "h": 0.0}
+SCROLL = {
+    "pos": 0.0,
+    "vel": 0.0,
+    "playing": False,
+    "seq": 0,
+    "ligne": None,
+    "frac": 0.0,
+    "h": 0.0,
+    "largeur": 0,
+    "hauteur": 0,
+}
 
 # Veille du système : tous les écrans passent au noir, le grand écran est éteint.
 # État TRANSITOIRE, jamais écrit sur la carte : un boîtier qu'on rallume doit
@@ -666,6 +676,10 @@ def api_scroll():
         )
         frac = max(-1000.0, min(1000.0, float(data.get("frac", 0) or 0)))
         hauteur = max(0.0, min(1e5, float(data.get("h", 0) or 0)))
+        # Dimensions de l'écran du journaliste : la vue Spectateur en fait une
+        # réplique à l'échelle. 0 = inconnues (écran d'une version antérieure).
+        ecran_l = int(max(0.0, min(20000.0, float(data.get("largeur", 0) or 0))))
+        ecran_h = int(max(0.0, min(20000.0, float(data.get("hauteur", 0) or 0))))
     except (TypeError, ValueError, OverflowError):
         return jsonify({"ok": False, "error": "valeurs invalides"}), 400
     with _lock:
@@ -674,6 +688,8 @@ def api_scroll():
         SCROLL["ligne"] = ligne
         SCROLL["frac"] = frac
         SCROLL["h"] = hauteur
+        SCROLL["largeur"] = ecran_l
+        SCROLL["hauteur"] = ecran_h
         SCROLL["playing"] = bool(data.get("playing"))
         SCROLL["seq"] += 1
         seq = SCROLL["seq"]
@@ -724,6 +740,9 @@ def api_settings():
     # rien n'avait été accepté : la télécommande colorait le bouton, et l'on
     # croyait avoir change de mode alors que rien n'avait bouge. Les reglages
     # valides du meme envoi sont quand meme appliques — on ne punit pas le reste.
+    if changed and ("mirrorH" in data or "mirrorV" in data):
+        with _kiosk_lock:
+            _miroir_hors_prompteur()
     if refuses:
         return jsonify({"ok": False, "error": "réglage refusé", "refused": refuses, "settings": settings}), 400
     return jsonify({"ok": True, "settings": settings})
@@ -1252,12 +1271,34 @@ def _kiosk(*args):
         return False, None, ""
 
 
+def _reflet():
+    """Retournement du grand écran demandé par l'onglet Affichage : normal, x, y ou xy."""
+    s = STATE["settings"]
+    h, v = bool(s.get("mirrorH")), bool(s.get("mirrorV"))
+    return {(False, False): "normal", (True, False): "x", (False, True): "y", (True, True): "xy"}[(h, v)]
+
+
+def _miroir_hors_prompteur():
+    """Applique le miroir à l'écran ENTIER quand il n'affiche pas le prompteur.
+
+    La vue Journaliste se retourne elle-même (CSS, fluide) : l'écran reste alors
+    normal. Mais la vue Settings affichée sur le grand écran, ou le bureau,
+    doivent eux aussi se lire à travers la vitre — c'est l'écran entier qu'on
+    retourne, pointeur de la souris compris.
+    """
+    affiche, vue = _etat_grand_ecran()
+    if affiche is None or (affiche and vue == "journaliste"):
+        return
+    _kiosk("--miroir", _reflet())
+
+
 def _kiosk_launch(vue):
     """Lance le prompteur sans attendre : le script patiente jusqu'à ce que le
     serveur réponde, ce qui bloquerait la requête en cours."""
     if not KIOSK_SCRIPT.exists():
         return False
     env = _kiosk_env()
+    env["PROMPTEUR_MIROIR"] = _reflet()  # appliqué à l'écran entier pour la vue Settings
     try:
         subprocess.Popen(  # nosec B603 - chemin fixe du projet, pas de shell
             ["/bin/bash", str(KIOSK_SCRIPT), "--vue", vue],
@@ -1282,10 +1323,12 @@ def _kiosk_reprendre():
     """
     if not KIOSK_SCRIPT.exists():
         return
+    env = _kiosk_env()
+    env["PROMPTEUR_MIROIR"] = _reflet()
     try:
         subprocess.Popen(  # nosec B603 - chemin fixe du projet, pas de shell
             ["/bin/bash", str(KIOSK_SCRIPT), "--reprendre"],
-            env=_kiosk_env(),
+            env=env,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
@@ -1337,6 +1380,8 @@ def api_kiosk_close():
             return jsonify({"ok": False, "error": "script du kiosque introuvable"}), 500
         with _lock:
             _liberer_la_place_du_kiosque()
+        # Le bureau aussi se lit à travers la vitre : il suit le réglage Miroir.
+        _kiosk("--miroir", _reflet())
     return jsonify({"ok": True, "running": False})
 
 

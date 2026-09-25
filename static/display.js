@@ -67,12 +67,7 @@
     scroller.style.lineHeight = String(Math.max(0.8, Math.min(4, Number(s.lineHeight) || 1.6)));
     scroller.style.textAlign = s.align === "center" ? "center" : "left";
 
-    // 0 % est une valeur voulue : « || 10 » la remplaçait par 10 %.
-    const m = Math.max(0, Math.min(45, Number.isFinite(Number(s.margin)) ? Number(s.margin) : 10));
-    scroller.style.paddingLeft = m + "%";
-    scroller.style.paddingRight = m + "%";
-    scroller.style.paddingTop = "60vh";
-    scroller.style.paddingBottom = "80vh";
+    mettreEnPage();
 
     const sx = s.mirrorH ? -1 : 1;
     const sy = s.mirrorV ? -1 : 1;
@@ -105,7 +100,7 @@
       const apres = positionDepuisRepere(repereAvant);
       if (apres !== null && Math.abs(apres - pos) > 0.5) {
         pos = Math.max(0, Math.min(maxScrollPos(), apres));
-        scroller.style.transform = `translateY(${-pos}px)`;
+        placer();
         forceResync();
       }
     }
@@ -384,8 +379,59 @@
     }
   }
 
+  // --- Vue Spectateur : une réplique du grand écran ---------------------------
+  // Une fenêtre d'une autre taille coupait les lignes ailleurs : la régie ne
+  // voyait pas la même phrase sous la ligne rouge, et un redimensionnement la
+  // décalait encore. La vue Spectateur reproduit donc la mise en page de la vue
+  // Journaliste — même largeur de texte, donc mêmes coupures de lignes — puis la
+  // met à l'échelle de sa propre fenêtre. Le meneur donne ses dimensions avec sa
+  // position (/api/scroll). Sans elles (aucune vue Journaliste ouverte), la vue
+  // Spectateur se met en page à sa propre taille, comme avant.
+  const replique = { largeur: 0, hauteur: 0, echelle: 1 };
+
+  function mettreEnPage() {
+    const s = settings || {};
+    // 0 % est une valeur voulue : « || 10 » la remplaçait par 10 %.
+    const m = Math.max(0, Math.min(45, Number.isFinite(Number(s.margin)) ? Number(s.margin) : 10));
+    const L = replique.largeur;
+    const H = replique.hauteur;
+    if (isViewer && L > 0 && H > 0) {
+      // L'échelle qui fait tenir l'écran du journaliste dans cette fenêtre. Une
+      // fenêtre plus haute que lui montre simplement plus de lignes au-dessus et
+      // au-dessous ; une fenêtre plus large le centre.
+      const e = Math.min(viewport.clientWidth / L, viewport.clientHeight / H);
+      replique.echelle = Number.isFinite(e) && e > 0 ? e : 1;
+      scroller.style.width = L + "px";
+      scroller.style.left = Math.max(0, (viewport.clientWidth - L * replique.echelle) / 2) + "px";
+      // En pixels du grand écran : les pourcentages se rapporteraient ici à la
+      // fenêtre, et plus à la largeur du texte.
+      scroller.style.paddingLeft = (L * m) / 100 + "px";
+      scroller.style.paddingRight = (L * m) / 100 + "px";
+      scroller.style.paddingTop = 0.6 * H + "px";
+      scroller.style.paddingBottom = 0.8 * H + "px";
+    } else {
+      replique.echelle = 1;
+      scroller.style.width = "100%";
+      scroller.style.left = "0px";
+      scroller.style.paddingLeft = m + "%";
+      scroller.style.paddingRight = m + "%";
+      scroller.style.paddingTop = "60vh";
+      scroller.style.paddingBottom = "80vh";
+    }
+  }
+
+  // Hauteur visible, dans les unités de la mise en page (avant mise à l'échelle).
+  function hauteurVisible() {
+    return viewport.clientHeight / replique.echelle;
+  }
+
+  function placer() {
+    scroller.style.transform =
+      replique.echelle === 1 ? `translateY(${-pos}px)` : `scale(${replique.echelle}) translateY(${-pos}px)`;
+  }
+
   function maxScrollPos() {
-    return Math.max(0, scroller.scrollHeight - viewport.clientHeight);
+    return Math.max(0, scroller.scrollHeight - hauteurVisible());
   }
 
   // --- Repère dans le TEXTE, et non en pixels --------------------------------
@@ -397,7 +443,7 @@
   function hauteurRepere() {
     const s = settings || {};
     const pourcent = Number.isFinite(Number(s.guidePos)) ? Number(s.guidePos) : 42;
-    return viewport.clientHeight * Math.max(0, Math.min(100, pourcent)) / 100;
+    return (hauteurVisible() * Math.max(0, Math.min(100, pourcent))) / 100;
   }
 
   function repereDepuisPosition(p) {
@@ -435,7 +481,14 @@
       method: "POST",
       headers: { "Content-Type": "application/json" },
       keepalive: true,
-      body: JSON.stringify({ pos: p, vel: v, playing: autoPlay || v > 0, ...repere }),
+      body: JSON.stringify({
+        pos: p,
+        vel: v,
+        playing: autoPlay || v > 0,
+        largeur: viewport.clientWidth,
+        hauteur: viewport.clientHeight,
+        ...repere,
+      }),
     }).catch(() => {});
   }
   function maybePush(now, v) {
@@ -503,7 +556,7 @@
       }
     }
     maybePush(now, v);
-    scroller.style.transform = `translateY(${-pos}px)`;
+    placer();
   }
 
   function frameViewer(now, dt) {
@@ -524,13 +577,18 @@
     } else {
       target = follow.pos + follow.vel * elapsed;
     }
-    const maxPos = maxScrollPos();
-    if (target < 0) target = 0;
-    else if (target > maxPos) target = maxPos;
+    // Bornes larges : une fenêtre plus haute que le grand écran doit pouvoir
+    // descendre le début du texte jusqu'à sa ligne rouge (ou y monter la fin),
+    // quitte à laisser du noir au-dessus ou au-dessous. Bornée à 0, elle butait
+    // et montrait une autre phrase que celle du journaliste.
+    const bas = -hauteurVisible();
+    const haut = scroller.scrollHeight;
+    if (target < bas) target = bas;
+    else if (target > haut) target = haut;
     const k = Math.min(1, dt * 20); // vitesse de convergence
     pos += (target - pos) * k;
     if (Math.abs(target - pos) < 0.5) pos = target;
-    scroller.style.transform = `translateY(${-pos}px)`;
+    placer();
   }
 
   function frame(now) {
@@ -643,6 +701,9 @@
   }
   layoutTop();
   window.addEventListener("resize", layoutTop);
+  // Fenêtre redimensionnée : la réplique se remet à l'échelle, et la même phrase
+  // reste sous la ligne rouge (la position est recalculée à chaque image).
+  if (isViewer) window.addEventListener("resize", mettreEnPage);
 
   // --- Plein écran (écran principal uniquement) ------------------------------
   // On veut un écran de lecture sans barre d'adresse ni onglet. Deux obstacles,
@@ -918,9 +979,13 @@
       case "-": case "_": envoyerCommande("slower"); break;
       case "r": case "R": revenirAuDebut(); updateSpeedTag(); break;
       case "m": case "M":
+        // Enregistré par le boîtier, comme l'interrupteur de Settings : il
+        // retourne aussi le reste du grand écran (Settings, bureau), et
+        // l'interrupteur du téléphone reste juste.
         if (settings) {
           settings.mirrorH = !settings.mirrorH;
           stage.style.transform = `scale(${settings.mirrorH ? -1 : 1}, ${settings.mirrorV ? -1 : 1})`;
+          postJson("/api/settings", { mirrorH: settings.mirrorH }).catch(() => {});
         }
         break;
       case "h": case "H": hud.classList.toggle("hidden"); break;
@@ -1036,6 +1101,13 @@
       const s = await (await fetch("/api/scroll", { cache: "no-store" })).json();
       // On ne se re-cale QUE sur un nouveau point du meneur (seq changé) ; entre deux,
       // on continue d'anticiper avec la vitesse -> le défilement reste fluide et collé.
+      const L = Number(s.largeur) || 0;
+      const H = Number(s.hauteur) || 0;
+      if (L !== replique.largeur || H !== replique.hauteur) {
+        replique.largeur = L;
+        replique.hauteur = H;
+        mettreEnPage();
+      }
       if (s.seq !== follow.seq) {
         follow.seq = s.seq;
         follow.pos = Number(s.pos) || 0;

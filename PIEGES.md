@@ -333,6 +333,21 @@ une autre phrase que le journaliste.
 fraction déjà passée ; chaque écran la replace dans sa propre mise en page. Le
 même repère garde la phrase quand on change la taille du texte en pleine lecture.
 
+### Un miroir limité à l'application laisse le reste de l'écran à l'envers
+Le miroir retournait la page du prompteur, et elle seule. Affichée sur le grand
+écran, la vue Settings restait à l'endroit : illisible à travers la vitre, avec
+une souris qui partait dans le mauvais sens.
+**Parade :** hors du prompteur, c'est l'écran ENTIER qu'on retourne (`xrandr
+--reflect`), pointeur compris. Le prompteur, lui, garde son miroir à lui — plus
+fluide — et l'écran est remis à l'endroit pendant qu'il est affiché, sans quoi
+les deux retournements s'annuleraient.
+
+### Une réplique qui bute en haut ne montre pas la même phrase
+Réplique du grand écran dans une fenêtre plus haute que lui : la ligne rouge y
+tombe plus bas. Pour y amener le début du texte, il faut descendre le texte
+au-delà du haut — ce que la borne à zéro interdisait.
+**Parade :** laisser la vue Spectateur dépasser les bornes, du noir en plus.
+
 ### Un raccourci d'écran d'accueil ouvre la page de son manifeste
 « Ajouter à l'écran d'accueil » n'enregistre pas la page affichée, mais l'adresse de
 départ déclarée par le manifeste. Un manifeste unique, pointant sur l'écran de
