@@ -40,9 +40,14 @@ FIN="# <<< Prompteur : petit écran 3,5 pouces"
 
 # Le compte qui ouvre la session graphique (celui qui a tapé sudo) : c'est lui
 # qui lance kiosk.sh, donc lui qui lit la rotation choisie.
+# Sans sudo, c'est simplement le compte courant et son $HOME.
 UTILISATEUR="${SUDO_USER:-$(id -un)}"
-MAISON="$(getent passwd "$UTILISATEUR" 2>/dev/null | cut -d: -f6)"
-REGLAGE="${MAISON:-$HOME}/.config/prompteur/petit-ecran.conf"
+MAISON="$HOME"
+if [ -n "${SUDO_USER:-}" ]; then
+  MAISON="$(getent passwd "$SUDO_USER" 2>/dev/null | cut -d: -f6)"
+  MAISON="${MAISON:-$HOME}"
+fi
+REGLAGE="$MAISON/.config/prompteur/petit-ecran.conf"
 
 usage() {
   sed -n 's/^#  \{0,1\}//p' "$0" | sed -n '/^Usage/,/^Après/p'
