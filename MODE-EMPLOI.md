@@ -671,23 +671,28 @@ passage : un nom propre, une question, une relance. **Trois gestes, toujours les
 le repère jaune « Ce texte n'est pas encore à l'écran » apparaît tant que vous n'avez pas envoyé.*
 
 **Pour enlever un effet : resélectionnez le passage et rappuyez sur le même bouton.**
-Le bouton **« Tout effacer »** retire la mise en forme de **tout** le texte (message
-« Mise en forme effacée ») — le texte, lui, n'est pas touché.
+*(Il n'y a plus de bouton « Tout effacer » : d'un appui, il retirait toute la mise en forme du
+texte, sans retour possible.)*
 
 > 💡 **Si le message « Sélectionnez d'abord un passage » s'affiche**, c'est que rien n'était
 > sélectionné : les boutons agissent uniquement sur le passage surligné, jamais sur tout le texte.
 
 > 💡 **Restez sobre** : sur un écran de 7 pouces, deux ou trois passages en couleur suffisent.
 
-**Aligner une ligne** : placez le curseur dans la ligne (ou sélectionnez-en plusieurs), puis
-**« ⇤ Gauche »**, **« Centré »** ou **« Droite ⇥ »**, sous les pastilles. **Chaque ligne garde son
-propre alignement** : un titre centré, une signature à droite, le reste à gauche. Dans la zone
-de saisie, la ligne reçoit `[centre] ` ou `[droite] ` au début — c'est normal, ces signes ne
+**Aligner** : placez le curseur dans un paragraphe (ou sélectionnez-en plusieurs), puis
+**« ⇤ Gauche »**, **« Centré »** ou **« Droite ⇥ »**, sous les pastilles. **Chaque paragraphe garde
+son propre alignement** : un titre centré, une signature à droite, le reste à gauche. Dans la
+zone de saisie, il reçoit `[centre] ` ou `[droite] ` au début — c'est normal, ces signes ne
 s'affichent pas à l'écran de lecture.
 
-**Les numéros de ligne**, à gauche de la zone de saisie, sont les mêmes que sur le grand écran
-et sur la vue Spectateur : « reprends ligne 42 » désigne la même ligne partout. Seules les
-lignes de texte sont numérotées, pas les lignes vides.
+**Pour aligner une partie d'un paragraphe seulement, sélectionnez-la** : elle devient une ligne
+à part, alignée seule. *(Une ligne qui « passe à la ligne » toute seule change avec la taille du
+texte : seule une ligne coupée par « Entrée » peut garder son propre alignement.)*
+
+**Les numéros de ligne**, à gauche de la zone de saisie, sont ceux du **grand écran** : en face
+de chaque paragraphe, le numéro de sa première ligne à l'écran. Ils s'affichent quand le texte
+de la zone est celui de l'écran ; pendant que vous écrivez, la colonne reste vide jusqu'à
+« Envoyer à l'écran ».
 
 > 💡 **Astuce des titres.** Une ligne que vous commencez par un **dièse suivi d'un espace**
 > s'affiche **en gros et en gras** sur le grand écran, sans rien sélectionner. Il y a trois
@@ -759,8 +764,9 @@ que fait chacun des trois modes.
 Arrivé en haut ou en bas du texte, le défilement s'arrête tout seul ; l'autre pédale repart dans
 l'autre sens.
 Un réglage apparaît alors sous les trois boutons, **« Montée en vitesse (mode dynamique) »** :
-c'est le nombre de **secondes d'appui continu pour atteindre la vitesse maximale**, **10 s** au
-départ. Plus le nombre est petit, plus la pédale est nerveuse.
+c'est le nombre de **secondes d'appui continu pour atteindre 600**, **10 s** au départ ; en
+gardant le pied, la vitesse continue de monter jusqu'à **1200**, pour aller vite chercher un
+passage. Plus le nombre est petit, plus la pédale est nerveuse.
 **La pédale centrale ne sert que dans ce mode** ; ailleurs, elle ne fait rien. Un pédalier à deux
 pédales fonctionne aussi en Dynamique : pour s'arrêter, la pédale opposée ramène à zéro.
 
@@ -838,10 +844,14 @@ la ligne »** laissé vide (ou `1`), puis **« Aller »** — le texte revient e
 
 ## 9. Travailler par séquences
 
-**Reprendre à une ligne précise** : chaque ligne du texte porte un **numéro**, dans la marge
-de gauche du grand écran, de la vue Spectateur et de la zone de saisie. Onglet **Contrôle**,
-tapez ce numéro dans **« Commencer à la ligne »**, puis **« Aller »** : la ligne vient se placer
-en haut de l'écran, **à l'arrêt**, et vous repartez au pied. Champ vide = le début du texte.
+**Reprendre à une ligne précise** : **chaque ligne à l'écran porte un numéro**, dans la marge
+de gauche du grand écran et de la vue Spectateur (un paragraphe qui s'étale sur quatre lignes en
+porte quatre ; les lignes vides n'en ont pas). Onglet **Contrôle**, tapez ce numéro dans
+**« Commencer à la ligne »**, puis **« Aller »** : la ligne vient se placer en haut de l'écran,
+**à l'arrêt**, et vous repartez au pied. Champ vide = le début du texte.
+
+> 📌 Les numéros suivent la mise en page : changer la **taille du texte** ou les **marges**
+> change les retours à la ligne, donc les numéros.
 
 > 💡 Les numéros se masquent dans l'onglet **Réglages**, carte **« Affichage »**, interrupteur
 > **« Numéros de ligne »**.

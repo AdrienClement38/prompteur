@@ -70,6 +70,20 @@
   let contenuBoitier = null;
   const signature = (st) => (st.title || "") + "\u0000" + (st.text || "") + "\u0000" + JSON.stringify(st.marks || []);
 
+  // --- Taille de la page selon la fenêtre ----------------------------------
+  // (retour n° 4) Comme les vues Journaliste et Spectateur, la page suit sa
+  // fenêtre : sur un grand écran, tout grandit en proportion au lieu de rester
+  // une colonne étroite au milieu. En dessous de 800 px de large (téléphone,
+  // petit écran du boîtier), elle garde sa taille : ses boutons restent faciles
+  // à toucher.
+  const LARGEUR_REFERENCE = 800;
+  function ajusterTaille() {
+    const z = Math.max(1, Math.min(3, window.innerWidth / LARGEUR_REFERENCE));
+    document.documentElement.style.zoom = z > 1.02 ? String(Math.round(z * 100) / 100) : "";
+  }
+  ajusterTaille();
+  window.addEventListener("resize", ajusterTaille);
+
   // --- Onglets --------------------------------------------------------------
   document.querySelectorAll(".tabbtns button").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -282,14 +296,44 @@
   }
 
   // --- Numéros de ligne dans la zone de saisie ------------------------------
-  // Les mêmes que sur les écrans de lecture : chaque ligne de texte non vide,
-  // l'alignement « [centre] » / « [droite] » retiré. Un numéro par ligne du
-  // texte, en face de sa première ligne à l'écran si elle passe à la ligne.
-  // Colonne posée par-dessus la marge de gauche de la zone, décalée au défilement.
+  // Ceux du GRAND ÉCRAN : il numérote ses lignes à l'écran (un paragraphe de
+  // quatre lignes en porte quatre) et envoie au boîtier le numéro de la première
+  // ligne de chaque paragraphe (/api/lignes). On l'affiche en face du paragraphe,
+  // tant que la zone contient le texte qui est à l'écran ; pendant une saisie,
+  // la colonne reste vide (les numéros d'un texte pas encore envoyé n'existent
+  // pas). Colonne posée par-dessus la marge de gauche, qui défile avec la zone.
   const RE_ALIGNE = /^\[(centre|droite)\][ \t]*/i;
   const cadreEditeur = editor.parentElement;
   const numerosContenu = $("numerosContenu");
+  const colonneNumeros = numerosContenu.parentElement;
+  // Sonde de 100 px : rapport entre les pixels mesurés à l'écran et ceux de la
+  // page (la page peut être agrandie, voir ajusterTaille).
+  const sonde = document.createElement("div");
+  sonde.style.cssText = "position:absolute;left:0;top:0;width:1px;height:100px;visibility:hidden";
+  colonneNumeros.appendChild(sonde);
   let minuterieNumeros = 0;
+  let carteEcran = null; // { debuts: [...] } : numéro de la 1re ligne de chaque paragraphe
+  let carteJson = "";
+
+  async function relireCarte() {
+    let c;
+    try {
+      c = await api("/api/lignes");
+    } catch {
+      return;
+    }
+    const json = c && c.empreinte ? JSON.stringify(c.debuts || []) : "";
+    if (json === carteJson) return;
+    carteJson = json;
+    carteEcran = json ? c : null;
+    planifierNumeros();
+  }
+
+  function oublierCarte() {
+    carteEcran = null;
+    carteJson = "";
+    planifierNumeros();
+  }
 
   function planifierNumeros() {
     clearTimeout(minuterieNumeros);
@@ -315,37 +359,46 @@
       numerosContenu.replaceChildren();
       return;
     }
+    const texte = getText();
+    const lignes = texte.split("\n");
+    const debuts =
+      carteEcran && texte === sentText && carteEcran.debuts.length === lignes.length ? carteEcran.debuts : null;
+    if (!debuts) {
+      numerosContenu.replaceChildren();
+      return;
+    }
     const cadre = editor.getBoundingClientRect();
     if (!cadre.height) return; // onglet caché : on recalculera quand il s'affiche
-    const haut = cadre.top + editor.clientTop - editor.scrollTop;
+    const f = sonde.getBoundingClientRect().height / 100 || 1;
+    // Mesure faite zone remontée tout en haut, puis remise en place : rien n'est
+    // dessiné entre-temps. Les positions ne dépendent ainsi pas du défilement.
+    const defile = editor.scrollTop;
+    editor.scrollTop = 0;
+    const haut = editor.getBoundingClientRect().top;
     const frag = document.createDocumentFragment();
     const plage = document.createRange();
     let offset = 0;
-    let numero = 0;
-    for (const brute of getText().split("\n")) {
-      const sans = brute.replace(RE_ALIGNE, "");
-      if (sans.trim() !== "") {
-        numero++;
-        const p = caractere(offset);
-        if (p) {
-          plage.setStart(p.noeud, p.dec);
-          plage.setEnd(p.noeud, p.dec + 1);
-          const r = plage.getClientRects()[0] || plage.getBoundingClientRect();
-          const span = document.createElement("span");
-          span.textContent = String(numero);
-          span.style.top = r.top - haut + "px";
-          span.style.lineHeight = r.height + "px";
-          frag.appendChild(span);
-        }
+    lignes.forEach((brute, i) => {
+      const p = debuts[i] > 0 ? caractere(offset) : null;
+      if (p) {
+        plage.setStart(p.noeud, p.dec);
+        plage.setEnd(p.noeud, p.dec + 1);
+        const r = plage.getClientRects()[0] || plage.getBoundingClientRect();
+        const span = document.createElement("span");
+        span.textContent = String(debuts[i]);
+        span.style.top = (r.top - haut) / f - 1 + "px"; // - 1 : le bord de la zone
+        span.style.lineHeight = r.height / f + "px";
+        frag.appendChild(span);
       }
       offset += brute.length + 1;
-    }
+    });
+    editor.scrollTop = defile;
     numerosContenu.replaceChildren(frag);
-    numerosContenu.style.transform = `translateY(${-editor.scrollTop}px)`;
+    colonneNumeros.scrollTop = editor.scrollTop;
   }
 
   editor.addEventListener("scroll", () => {
-    numerosContenu.style.transform = `translateY(${-editor.scrollTop}px)`;
+    colonneNumeros.scrollTop = editor.scrollTop;
   });
   // Largeur changée, zone agrandie à la main, onglet Texte ré-affiché : les
   // lignes ne passent plus à la ligne aux mêmes endroits.
@@ -501,17 +554,67 @@
   // nouveau à comprendre pour l'écran.
   const PREFIXE_ALIGNE = { left: "", center: "[centre] ", right: "[droite] " };
 
+  // Tête d'un paragraphe : alignement, puis dièses d'un titre.
+  const RE_TETE = /^(\[(?:centre|droite)\][ \t]*)?((?:#{1,3}[ \t]+)?)/i;
+
   function alignerLignes(sens) {
     const sel = selectionCourante();
     if (!sel) {
       toast("Placez d'abord le curseur sur une ligne");
       return;
     }
-    let texte = getText();
+    const origine = getText();
+    let texte = origine;
     const marksAvant = JSON.stringify(marks);
+    let { debut, fin: finSel } = sel;
+    // Un seul remplacement à la fois : les plages sont recalées à chaque fois.
+    const remplacer = (d, f, insertion) => {
+      const apres = texte.slice(0, d) + insertion + texte.slice(f);
+      marks = window.Plages.recaler(marks, texte, apres);
+      texte = apres;
+    };
+
+    // (retour n° 4) Une PARTIE d'un paragraphe est sélectionnée : elle devient
+    // une ligne à part, pour être alignée seule. Une ligne qui passe à la ligne
+    // toute seule dépend de la taille du texte : elle ne peut pas porter son
+    // propre alignement. Le reste du paragraphe garde le sien, et un titre reste
+    // un titre.
+    if (finSel > debut) {
+      const ps = debut === 0 ? 0 : texte.lastIndexOf("\n", debut - 1) + 1;
+      const pe = texte.indexOf("\n", ps) === -1 ? texte.length : texte.indexOf("\n", ps);
+      if (finSel <= pe) {
+        const tete = RE_TETE.exec(texte.slice(ps, pe));
+        const aligneAvant = tete[1] || "";
+        const titre = tete[2] ? tete[2].trim() + " " : "";
+        let a = Math.max(debut, ps + tete[0].length);
+        let b = finSel;
+        while (a < b && /\s/.test(texte[a])) a++;
+        while (b > a && /\s/.test(texte[b - 1])) b--;
+        const avant = a < b && texte.slice(ps + tete[0].length, a).trim() !== "";
+        const apres = a < b && texte.slice(b, pe).trim() !== "";
+        if (apres) {
+          let c = b;
+          while (c < pe && (texte[c] === " " || texte[c] === "\t")) c++;
+          remplacer(b, c, "\n" + aligneAvant + titre);
+        }
+        if (avant) {
+          let c = a;
+          while (c > ps && (texte[c - 1] === " " || texte[c - 1] === "\t")) c--;
+          remplacer(c, a, "\n" + titre);
+          const decalage = 1 + titre.length - (a - c);
+          a += decalage;
+          b += decalage;
+        }
+        if (avant || apres) {
+          debut = a;
+          finSel = b;
+        }
+      }
+    }
+
     // Une sélection qui s'arrête juste au début de la ligne suivante ne la prend pas.
-    const fin = sel.fin > sel.debut && texte[sel.fin - 1] === "\n" ? sel.fin - 1 : sel.fin;
-    const debutLignes = sel.debut === 0 ? 0 : texte.lastIndexOf("\n", sel.debut - 1) + 1;
+    const fin = finSel > debut && texte[finSel - 1] === "\n" ? finSel - 1 : finSel;
+    const debutLignes = debut === 0 ? 0 : texte.lastIndexOf("\n", debut - 1) + 1;
     const finLignes = texte.indexOf("\n", fin) === -1 ? texte.length : texte.indexOf("\n", fin);
     const lignes = texte.slice(debutLignes, finLignes).split("\n");
     // De la dernière à la première : les lignes du dessus ne bougent pas pendant
@@ -523,6 +626,7 @@
       o += l.length + 1;
     }
     let decalagePremiere = 0;
+    const longueurAvantTetes = texte.length;
     for (let k = lignes.length - 1; k >= 0; k--) {
       const ligne = lignes[k];
       const ancien = (RE_ALIGNE.exec(ligne) || [""])[0];
@@ -535,7 +639,7 @@
       texte = apres;
       if (k === 0) decalagePremiere = nouveau.length - ancien.length;
     }
-    const total = texte.length - getText().length;
+    const total = texte.length - longueurAvantTetes;
     // Un paragraphe importé (Word, LibreOffice, RTF) centré ou à droite porte son
     // alignement dans une plage, pas dans le texte : sans ce nettoyage, « Gauche »
     // le laisserait centré. Sur ces lignes, c'est désormais le bouton qui décide.
@@ -551,7 +655,7 @@
       if (m.end > b) morceaux.push({ ...m, start: b });
       return morceaux;
     });
-    if (texte === getText() && JSON.stringify(marks) === marksAvant) {
+    if (texte === origine && JSON.stringify(marks) === marksAvant) {
       editor.focus();
       return; // déjà aligné ainsi
     }
@@ -561,12 +665,12 @@
     refreshUnsent();
     refreshFmtInfo();
     editor.focus();
-    if (sel.fin > sel.debut) {
-      // Plusieurs lignes : elles restent sélectionnées, pour enchaîner.
+    if (finSel > debut) {
+      // Des lignes sélectionnées : elles le restent, pour enchaîner.
       replacerSelection(debutLignes, finLignes + total);
     } else {
       // Un simple curseur : il reste sur la même lettre.
-      const curseur = Math.max(debutLignes + (PREFIXE_ALIGNE[sens] || "").length, sel.debut + decalagePremiere);
+      const curseur = Math.max(debutLignes + (PREFIXE_ALIGNE[sens] || "").length, debut + decalagePremiere);
       replacerSelection(curseur, curseur);
     }
   }
@@ -574,15 +678,6 @@
   $("alignG").addEventListener("click", () => alignerLignes("left"));
   $("alignC").addEventListener("click", () => alignerLignes("center"));
   $("alignD").addEventListener("click", () => alignerLignes("right"));
-
-  $("fmtClear").addEventListener("click", () => {
-    marks = [];
-    textDirty = true;
-    refreshUnsent();
-    refreshFmtInfo();
-    renderEditor(getText());
-    toast("Mise en forme effacée");
-  });
 
   // --- Envoi du texte -------------------------------------------------------
   $("send").addEventListener("click", async () => {
@@ -597,6 +692,7 @@
     sentText = envoye;
     sentMarks = JSON.stringify(marks);
     textDirty = false;
+    oublierCarte(); // celle du texte précédent ; le grand écran en envoie une neuve
     refreshUnsent();
     toast("Texte envoyé à l'écran ✓");
   });
@@ -1061,5 +1157,7 @@
   refreshFmtInfo();
   pollVersion();
   setInterval(pollVersion, 1500);
+  relireCarte();
+  setInterval(relireCarte, 2500);
   loadAddresses();
 })();

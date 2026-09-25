@@ -27,6 +27,7 @@ function banc(reglages, options = {}) {
       reglages
     ),
     text: options.texte || "Ligne\n".repeat(400),
+    empreinte: "e1",
     marks: options.marks || [],
     control: { cmd: options.cmdAuDemarrage || null, cmdSeq: options.cmdAuDemarrage ? 7 : 0 },
   };
@@ -36,7 +37,12 @@ function banc(reglages, options = {}) {
     const e = {
       style: { setProperty() {} }, dataset: {}, childNodes: [], className: "", textContent: "",
       classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
-      appendChild(c) { this.childNodes.push(c); return c; },
+      appendChild(c) { if (c && typeof c === "object") c.parentNode = this; this.childNodes.push(c); return c; },
+      remove() {
+        const l = this.parentNode && this.parentNode.childNodes;
+        const i = l ? l.indexOf(this) : -1;
+        if (i >= 0) l.splice(i, 1);
+      },
       append(...c) { this.childNodes.push(...c); },
       replaceChildren(...c) { this.childNodes = c.length === 1 && c[0].childNodes ? c[0].childNodes : c; },
       addEventListener() {}, setAttribute() {}, getBoundingClientRect() { return { height: 30 }; },
@@ -56,18 +62,28 @@ function banc(reglages, options = {}) {
   // Marge du haut : « 60vh » (fenêtre), ou en pixels quand elle est fixée (réplique).
   const margeHaut = () =>
     /px$/.test(scroller.style.paddingTop || "") ? parseFloat(scroller.style.paddingTop) : HAUT_ECRAN * 0.6;
+  // Texte d'un paragraphe (sans ses numéros), et son nombre de lignes à l'écran :
+  // une seule, sauf si l'essai fixe un nombre de caractères par ligne.
+  const texteDe = (n) => {
+    const enfants = (n.childNodes || []).filter((c) => c.className !== "num");
+    if (enfants.length) return enfants.map(texteDe).join("");
+    return typeof n.t === "string" ? n.t : n.textContent || "";
+  };
+  const nbLignes = (div) => (options.carParLigne ? Math.max(1, Math.ceil(texteDe(div).length / options.carParLigne)) : 1);
+  const lignesAvant = (i) => scroller.childNodes.slice(0, i).reduce((s, d) => s + nbLignes(d), 0);
   scroller.replaceChildren = (...c) => {
     const lignes = c.length === 1 && c[0].childNodes ? c[0].childNodes : c;
     lignes.forEach((ligne, i) => {
-      Object.defineProperty(ligne, "offsetTop", { get: () => margeHaut() + i * hauteurLigne() });
-      Object.defineProperty(ligne, "offsetHeight", { get: () => hauteurLigne() });
+      Object.defineProperty(ligne, "offsetTop", { get: () => margeHaut() + lignesAvant(i) * hauteurLigne() });
+      Object.defineProperty(ligne, "offsetHeight", { get: () => nbLignes(ligne) * hauteurLigne() });
+      ligne.getBoundingClientRect = () => ({ top: ligne.offsetTop, height: ligne.offsetHeight, width: 500 });
     });
     scroller.childNodes = lignes;
   };
   Object.defineProperty(scroller, "children", { get: () => scroller.childNodes });
   scroller.querySelectorAll = () => scroller.childNodes.filter((c) => c.dataset && c.dataset.n);
   Object.defineProperty(scroller, "scrollHeight", {
-    get: () => options.hauteur || margeHaut() + scroller.childNodes.length * hauteurLigne() + HAUT_ECRAN * 0.8,
+    get: () => options.hauteur || margeHaut() + lignesAvant(scroller.childNodes.length) * hauteurLigne() + HAUT_ECRAN * 0.8,
   });
   elements.scroller = scroller;
   const viewport = elt();
@@ -79,6 +95,21 @@ function banc(reglages, options = {}) {
     currentScript: { dataset: { mode: options.spectateur ? "viewer" : "presenter" } },
     getElementById(id) { if (!elements[id]) elements[id] = elt(); return elements[id]; },
     createElement: () => elt(), createDocumentFragment: () => elt(), createTextNode: (t) => ({ t }),
+    // Plage de texte : un rectangle par ligne à l'écran, en double (le <span> et
+    // son texte en donnent chacun un), dans le désordre — comme un vrai navigateur
+    // peut le faire.
+    createRange: () => ({
+      selectNodeContents(div) { this.div = div; },
+      getClientRects() {
+        const h = hauteurLigne();
+        const out = [];
+        for (let k = 0; k < nbLignes(this.div); k++) {
+          const r = { top: this.div.offsetTop + (k + 0.1) * h, bottom: this.div.offsetTop + (k + 0.9) * h, width: 50, height: 0.8 * h };
+          out.push(r, { ...r, top: r.top + 1, bottom: r.bottom - 1 });
+        }
+        return out.reverse();
+      },
+    }),
     addEventListener() {}, fullscreenElement: null, hidden: false,
     documentElement: { requestFullscreen: () => Promise.reject(new Error("geste")), style: { setProperty() {} } },
   };
@@ -398,6 +429,49 @@ async function appui(b, key, ms) {
     const numeros = b.lignes().map((l) => l.dataset.n || "");
     verifier("Numéros : lignes de texte seulement, pas les lignes vides", JSON.stringify(numeros) === JSON.stringify(["1", "", "2", "3", "4", "", ""]),
       JSON.stringify(numeros));
+  }
+
+  // --- Numéros : un par ligne À L'ÉCRAN (retour n° 4) ------------------------
+  {
+    const b = banc({ mode: "hold" }, { texte: "Court\n\n" + "x".repeat(25) + "\nFin", carParLigne: 10 });
+    await b.demarrer();
+    b.avancer(32); // la mesure se fait dans la boucle d'affichage
+    const numeros = b.lignes().flatMap((l) => l.childNodes.filter((c) => c.className === "num").map((c) => c.textContent));
+    verifier(
+      "Un numéro par ligne à l'écran (un paragraphe de 3 lignes en porte 3)",
+      JSON.stringify(numeros) === JSON.stringify(["1", "2", "3", "4", "5"]),
+      JSON.stringify(numeros)
+    );
+    b.avancer(32);
+    const encore = b.lignes().flatMap((l) => l.childNodes.filter((c) => c.className === "num"));
+    verifier("Mesurés à nouveau : pas de numéros en double", encore.length === 5, String(encore.length));
+    await b.commande("ligne", { ligne: 3 });
+    verifier(
+      "Commencer à la ligne 3 = la 2e ligne du long paragraphe",
+      Math.abs(b.pos() - 3 * b.hauteurLigne()) < 0.5,
+      `pos ${Math.round(b.pos())}, attendu ${Math.round(3 * b.hauteurLigne())}`
+    );
+    const carte = b.envois.filter(([u]) => u === "/api/lignes").pop();
+    verifier(
+      "Carte envoyée au boîtier : numéro de la 1re ligne de chaque paragraphe",
+      carte && carte[1].empreinte === "e1" && JSON.stringify(carte[1].debuts) === JSON.stringify([1, 0, 2, 5]),
+      carte && JSON.stringify(carte[1])
+    );
+  }
+
+  // --- Vitesse maximale : 1200, et le mode dynamique garde sa sensation -------
+  {
+    const b = banc({ mode: "dyn", rampSeconds: 1 });
+    await b.demarrer();
+    await appui(b, "ArrowDown", 1000); // 1 s : 600 px/s, comme avant
+    const uneSeconde = b.vitesse();
+    await appui(b, "ArrowDown", 3000); // on garde le pied : jusqu'à 1200, pas plus
+    const auBout = b.vitesse();
+    verifier(
+      "Dynamique : même accélération qu'avant, et on monte jusqu'à 1200",
+      Math.abs(uneSeconde - 600) < 30 && Math.abs(auBout - 1200) < 2,
+      `${Math.round(uneSeconde)} puis ${Math.round(auBout)} px/s`
+    );
   }
 
   // --- Sans commun.js, l'écran de lecture tourne quand même ---------------

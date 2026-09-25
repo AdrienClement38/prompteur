@@ -38,6 +38,15 @@
   .navvues .navbtn { min-height: 36px; }
   .navvues .navbtn.veillebtn { padding: 0 8px; }
 }
+/* Très petit écran (le 3,5 pouces du boîtier : 320 px de large, ou 320 de haut
+   tourné) : l'en-tête, toujours visible, doit laisser de la place à la page. */
+@media (max-width: 380px), (max-height: 420px) {
+  .navvues { gap: 3px 6px; font-size: 12px; }
+  .navvues .groupe { gap: 2px; }
+  .navvues .groupe-nom { min-height: 15px; font-size: 9.5px; letter-spacing: .08em; }
+  .navvues .infobtn.mini { padding: 1px 6px; font-size: 9.5px; }
+  .navvues .navbtn { min-height: 32px; padding: 0 5px; border-radius: 8px; }
+}
 
 /* --- Bouton « Info », en haut à droite de chaque bloc --------------------- */
 .infobtn {

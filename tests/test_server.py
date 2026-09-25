@@ -110,6 +110,9 @@ def test_settings_sans_bouton_debut_avec_commencer_a_la_ligne(client):
     # La pastille blanche, et l'interrupteur des numéros de ligne.
     assert 'data-color="6"' in page
     assert 'id="numeros"' in page
+    # « Tout effacer » retiré (retour n° 4) : trop dangereux en plein travail.
+    assert 'id="fmtClear"' not in page and "Tout effacer" not in page
+    assert 'max="1200"' in page
 
 
 def test_manifeste_ouvre_la_vue_journaliste(client):
@@ -194,9 +197,53 @@ def test_vitesse_cumulative_et_bornee(client):
         r = client.post("/api/command", json={"cmd": "faster"})
     assert r.get_json()["speed"] == 130  # le serveur renvoie la nouvelle vitesse (pour la barre)
     assert client.get("/api/state").get_json()["settings"]["speed"] == 130
-    for _ in range(100):
+    for _ in range(200):
         client.post("/api/command", json={"cmd": "faster"})
-    assert client.get("/api/state").get_json()["settings"]["speed"] == 600  # borne haute
+    assert client.get("/api/state").get_json()["settings"]["speed"] == 1200  # borne haute
+
+
+def test_vitesse_jusqu_a_1200(client):
+    assert client.post("/api/settings", json={"speed": 1200}).status_code == 200
+    assert client.post("/api/settings", json={"speed": 1210}).status_code == 400
+    assert client.get("/api/state").get_json()["settings"]["speed"] == 1200
+
+
+def test_carte_des_lignes_du_grand_ecran(client):
+    """La vue Journaliste envoie, pour chaque paragraphe, le numéro de sa première
+    ligne à l'écran ; Settings la relit. Elle ne vaut que pour le texte affiché."""
+    client.post("/api/text", json={"text": "Un\n\nDeux trois"})
+    st = client.get("/api/state").get_json()
+    assert isinstance(st["empreinte"], str) and st["empreinte"]
+    assert client.get("/api/lignes").get_json() == {"empreinte": None, "debuts": []}
+    r = client.post("/api/lignes", json={"empreinte": st["empreinte"], "debuts": [1, 0, 2]})
+    assert r.status_code == 200
+    assert client.get("/api/lignes").get_json() == {"empreinte": st["empreinte"], "debuts": [1, 0, 2]}
+    # Un autre texte à l'écran : l'ancienne carte ne vaut plus rien.
+    client.post("/api/text", json={"text": "Autre"})
+    assert client.get("/api/lignes").get_json()["debuts"] == []
+    # Mesurée sur l'ancien texte : refusée, sans rien casser.
+    assert client.post("/api/lignes", json={"empreinte": st["empreinte"], "debuts": [1]}).status_code == 409
+
+
+@pytest.mark.parametrize(
+    "corps",
+    [
+        {"debuts": [1]},
+        {"empreinte": "x", "debuts": "1"},
+        {"empreinte": "x", "debuts": [True]},
+        {"empreinte": "x", "debuts": [-1]},
+        {"empreinte": "x", "debuts": [1.5]},
+    ],
+)
+def test_carte_des_lignes_invalide(client, corps):
+    assert client.post("/api/lignes", json=corps).status_code == 400
+
+
+def test_carte_des_lignes_de_la_bonne_longueur(client):
+    client.post("/api/text", json={"text": "a\nb"})
+    empreinte = client.get("/api/state").get_json()["empreinte"]
+    assert client.post("/api/lignes", json={"empreinte": empreinte, "debuts": [1]}).status_code == 400
+    assert client.post("/api/lignes", json={"empreinte": empreinte, "debuts": [1, 2]}).status_code == 200
 
 
 def test_commande_inconnue_refusee(client):

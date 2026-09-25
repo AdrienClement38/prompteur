@@ -260,11 +260,16 @@ relance aussi la vue Journaliste.
 
 ### Le petit écran du boîtier
 
-Un **second écran** branché sur le boîtier (le 7 pouces de la régie, seconde prise
-HDMI ou écran DSI) affiche **tout seul la vue Settings**, en plein écran, dès le
-lancement du prompteur : **sans WiFi**. `install/kiosk.sh` s'en charge : il met les
-deux écrans côte à côte s'ils étaient en recopie, cale la dalle tactile sur le petit
-écran (`xinput map-to-output`), puis ouvre un second Chromium, indépendant du premier.
+Un **second écran** sur le boîtier affiche **tout seul la vue Settings**, en plein
+écran, dès le lancement du prompteur : **sans WiFi**. C'est le cas du petit écran
+tactile de 3,5 pouces **sur les broches** (Waveshare « 3.5inch RPi LCD (G) », ST7796S
+en SPI), une fois installé par `sudo ./install/petit-ecran.sh installer` (pilote
+officiel `mipi-dbi-spi`, voir ECRAN-TACTILE.md) — et d'un écran branché sur la seconde
+prise HDMI, sans rien installer. `install/kiosk.sh` relie l'écran SPI au bureau X11
+(`xrandr --setprovideroutputsource` : c'est une carte graphique à part), met les
+deux écrans côte à côte s'ils étaient en recopie, applique la rotation choisie, cale
+la dalle tactile sur le petit écran (`xinput map-to-output`), puis ouvre un second
+Chromium, indépendant du premier.
 Le grand écran est la prise **HDMI 0** (collée à l'alimentation) ; à défaut, celui qui
 a le plus de pixels. `kiosk.sh --ecrans` dit ce qui a été reconnu ;
 `PROMPTEUR_ECRAN` / `PROMPTEUR_PETIT_ECRAN` imposent les sorties. Si le petit écran
@@ -342,15 +347,21 @@ Sous la zone de saisie, une barre applique un style **au passage sélectionné**
 - **petit**, **Titre**, **Grand titre** ;
 - **six couleurs** (dont le **blanc**, pour remettre un mot en blanc au milieu d'un
   passage coloré) ;
-- **Gauche**, **Centré**, **Droite** : l'alignement de la **ligne** du curseur (ou des
-  lignes sélectionnées), qui reçoit `[centre] ` ou `[droite] ` en tête.
+- **Gauche**, **Centré**, **Droite** : l'alignement du **paragraphe** du curseur (ou
+  des paragraphes sélectionnés), qui reçoit `[centre] ` ou `[droite] ` en tête. Une
+  **partie** de paragraphe sélectionnée devient une ligne à part, alignée seule (le
+  reste garde son alignement, un titre reste un titre).
 
-Les **numéros de ligne**, à gauche de la zone de saisie, sont ceux des écrans de
-lecture : ce sont eux que prend **« Commencer à la ligne »** (onglet Contrôle).
+**Rappuyer sur le même bouton retire le style.** Plus de bouton « Tout effacer » : il
+retirait toute la mise en forme d'un appui, sans retour possible.
 
-**Rappuyer sur le même bouton retire le style.** **« Tout effacer »** retire toute
-la mise en forme — *ce que vous devez voir* : **« Mise en forme effacée »** ; le
-texte, lui, reste intact.
+**Numéros de ligne : un par ligne À L'ÉCRAN.** La vue Journaliste mesure sa mise en
+page (après chaque changement de texte, de taille, de marge ou de fenêtre) et numérote
+chaque ligne affichée ; la vue Spectateur, réplique à l'échelle, a les mêmes coupures
+donc les mêmes numéros. « Commencer à la ligne » prend ce numéro. La vue Journaliste
+envoie aussi au boîtier la **carte** « paragraphe → numéro de sa première ligne »
+(`/api/lignes`, liée à l'empreinte du texte affiché) : la zone de saisie de Settings
+l'affiche en face de chaque paragraphe, tant qu'elle contient le texte de l'écran.
 
 Le gras, l'italique, le souligné, les tailles et les couleurs **se voient
 directement dans la zone de saisie**. Trois choses n'y apparaissent pas et ne se
@@ -507,8 +518,8 @@ collisions avec un raccourci de l'écran sont signalées.
   L'alignement se pose **ligne par ligne**, dans la carte Texte.
 - Le texte est **toujours blanc sur fond noir** ; la couleur d'un passage se pose
   avec les pastilles de l'éditeur.
-- **Vitesse** (onglet **Contrôle**) : le curseur et **« − Moins vite »** / **« Plus
-  vite + »**, regroupés. En mode **Dynamique**, le curseur donne la vitesse de
+- **Vitesse** (onglet **Contrôle**) : de 10 à **1200**, le curseur et **« − Moins
+  vite »** / **« Plus vite + »**, regroupés. En mode **Dynamique**, le curseur donne la vitesse de
   « Lecture » ; les boutons corrigent la vitesse en cours.
 - **Miroir horizontal / vertical**, pour la vitre sans tain face caméra.
   **Le miroir retourne tout le grand écran** — la vue Journaliste se retourne

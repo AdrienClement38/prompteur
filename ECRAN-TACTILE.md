@@ -1,153 +1,92 @@
-# Le petit écran tactile — les deux montages possibles
+# Le petit écran tactile du boîtier
 
-Ce document sert à **brancher l'écran tactile de 3,5 pouces** posé sur les broches
-du Raspberry, et à en faire le **petit écran de contrôle du boîtier** : il affiche la
-vue **Settings** (ou **Spectateur**, d'un appui), pendant que le grand écran affiche
-le texte.
+Le **petit écran** posé sur le Raspberry affiche la vue **Settings** (ou **Spectateur**,
+d'un appui) pendant que le grand écran affiche le texte : une copie de
+`http://10.42.0.1:5000`, **sans passer par le WiFi**.
 
-- **Écran concerné** : CUQI / Waveshare 3.5″ RPi LCD **(C)** — 480 × 320, tactile
-  résistif (il se pilote à l'ongle ou au stylet), raccordé en **SPI** sur les
-  broches GPIO. La mention « SPI 125 MHz » et « 60 FPS » de la fiche produit est
-  la signature de ce modèle.
-- **Ce document ne concerne que le branchement.** Les vues Settings et
-  Spectateur, elles, sont déjà en place et fonctionnent sur n'importe quel
-  appareil : **`/settings`** et **`/spectateur`**.
-- **Écran de 7 pouces à la place ?** Voir juste en dessous : il n'y a **rien à
-  installer**.
+- **Écran concerné** : Waveshare **« 3.5inch RPi LCD (G) »** — sa carte porte l'inscription
+  **« 3.5 inch Display-G »**. Dalle IPS 320 × 480, contrôleur **ST7796S**, tactile résistif
+  **XPT2046** (il se pilote à l'ongle ou au stylet), relié par les **broches** du Raspberry
+  (en SPI), **pas en HDMI**.
+- **Tant qu'il n'est pas installé, il reste blanc** : le rétroéclairage est allumé, mais rien
+  ne pilote la dalle. Ce n'est pas une panne.
 
 ---
 
-## Écran de 7 pouces HDMI : rien à faire
+## Installer le petit écran (5 minutes, une seule fois)
 
-Branchez-le sur la **seconde prise HDMI** du Raspberry — le grand écran, celui qu'on
-lit, reste sur la prise **collée à l'alimentation** — et redémarrez. **C'est tout** : à
-chaque lancement du prompteur, le boîtier
-
-1. repère les deux écrans ; s'ils affichent la même chose (recopie), il place le petit
-   **à côté** du grand ;
-2. cale la **dalle tactile** sur le petit écran (sans cela, un appui y tomberait à
-   côté) ;
-3. y ouvre la **vue Settings en plein écran** — une copie de `http://10.42.0.1:5000`,
-   **sans passer par le WiFi**.
-
-Pour vérifier ce que le boîtier a reconnu, dans la fenêtre noire du boîtier (ou en
-SSH) :
+Dans la fenêtre noire du boîtier (**Ctrl + Alt + T**) ou en SSH :
 
 ```bash
-~/prompteur/install/kiosk.sh --ecrans
-```
-
-**Ce que vous devez voir :** le **grand écran** et le **petit écran** avec leur nom
-(`HDMI-1`, `HDMI-2`…), la dalle tactile reconnue, et « Vue Settings du petit écran :
-affichée ».
-
-> 📌 **Le texte s'affiche sur le petit écran, et Settings sur le grand ?** Les câbles
-> sont inversés côté boîtier : intervertissez-les et redémarrez.
-
-> 📌 **Le petit écran reste sur le bureau** : lancez `~/prompteur/install/kiosk.sh --menu`
-> et lisez le message. « Un seul écran branché » = le système ne le voit pas (câble,
-> alimentation de l'écran). « n'a pas pu être placé à côté du grand » = il refuse la
-> disposition : rien n'est ouvert, pour ne jamais couvrir le prompteur.
-
-Les sections suivantes ne concernent **que le petit écran de 3,5 pouces** sur broches.
-
----
-
-## 🛑 Avant tout : ne pas lancer le pilote du vendeur
-
-Le script fourni avec ce type d'écran (`LCD35C-show` ou équivalent) fait deux
-choses incompatibles avec ce boîtier :
-
-1. il **désactive le pilote graphique** `vc4-kms-v3d` — sur un Raspberry Pi 5, il
-   n'existe aucun mode de secours derrière ;
-2. il **force la sortie HDMI en 480 × 320** — votre écran 7″ serait rabaissé à la
-   résolution du petit et afficherait la même chose.
-
-Ce script est conçu pour un Raspberry qui n'a **qu'un seul écran**. Ici il y en a
-deux, et ils doivent afficher des choses différentes.
-
----
-
-## 1. Savoir de quoi on dispose
-
-Ces deux commandes ne font que **lire**, elles ne modifient rien :
-
-```bash
-ls /boot/firmware/overlays/ | grep -iE "waveshare|piscreen|tft35|ili9|mipi"
+cd ~/prompteur && git pull
 ```
 
 ```bash
-grep -vE "^\s*#|^\s*$" /boot/firmware/config.txt
+sudo ./install/petit-ecran.sh installer
 ```
 
-La première dit quels pilotes d'écran sont disponibles. **C'est elle qui décide
-du montage** : selon qu'un pilote accepte ou non le mode « DRM », le petit écran
-sera un véritable second écran, ou une simple recopie du grand.
-
----
-
-## 2. Sauvegarder le fichier de démarrage
-
-Une seule ligne, et c'est ce qui permet de revenir en arrière quoi qu'il arrive :
+**✅ Attendu :** « Petit écran préparé », puis le nom de la sauvegarde du fichier de démarrage.
 
 ```bash
-sudo cp /boot/firmware/config.txt /boot/firmware/config.txt.avant-ecran
+sudo reboot
 ```
 
-> 📌 **Si le boîtier ne redémarre plus** : éteignez, sortez la carte SD et mettez-la
-> dans un ordinateur. La partition de démarrage est **lisible sous Windows** :
-> ouvrez `config.txt` dans le Bloc-notes, remettez le contenu de la sauvegarde,
-> replacez la carte. Voir **SAUVEGARDE-ET-RESTAURATION.md**.
+**✅ Attendu, une minute plus tard :** le texte sur le grand écran, et la page **Settings** sur
+le petit.
 
----
+Ce que fait `petit-ecran.sh` : il ajoute au fichier de démarrage (`config.txt`, sauvegardé
+avant) les lignes que le fabricant recommande — le pilote **officiel** `mipi-dbi-spi` de
+Raspberry Pi avec la séquence d'allumage du ST7796S, et le pilote officiel `ads7846` du
+tactile. Au démarrage, le boîtier relie ce petit écran au bureau, cale le tactile dessus et y
+ouvre la vue Settings. Le grand écran n'est pas touché.
 
-## Montage A — deux écrans indépendants *(celui qu'on vise)*
+### Si le résultat n'est pas le bon
 
-Le grand écran affiche le prompteur, le petit affiche la vue Settings. C'est possible si
-un pilote accepte le suffixe `,drm`, qui fait du petit écran une **sortie
-graphique à part entière** au lieu d'une recopie.
+| Ce que vous voyez | La ligne à taper, puis `sudo reboot` |
+|---|---|
+| La page est **couchée** (écran monté en largeur) | `sudo ./install/petit-ecran.sh installer --rotation left` *(ou `right` si elle est couchée de l'autre côté ; `inverted` si elle est à l'envers)* |
+| Le **doigt tombe à côté**, en miroir gauche-droite | `sudo ./install/petit-ecran.sh installer --tactile inverse-x` |
+| … en miroir haut-bas | `sudo ./install/petit-ecran.sh installer --tactile inverse-y` |
+| … le doigt va en haut quand on va à droite | `sudo ./install/petit-ecran.sh installer --tactile echange` |
+| **Toujours blanc** | `./install/petit-ecran.sh etat` *(sans sudo)* : envoyez une photo de ce qui s'affiche |
 
-Ajoutez à la fin de `/boot/firmware/config.txt`, **sans rien supprimer d'autre** :
+Chaque relance garde les autres choix (la rotation ne défait pas le réglage du tactile).
 
-```
-dtparam=spi=on
-dtoverlay=waveshare35c,drm
-```
-
-> Remplacez `waveshare35c` par le nom réellement présent dans la liste de
-> l'étape 1. `piscreen` et `tft35a` sont les autres noms courants pour cette
-> famille d'écrans.
-
-**Ce qu'il ne faut surtout pas faire** : commenter la ligne `dtoverlay=vc4-kms-v3d`.
-Elle doit rester.
-
-Redémarrez, puis vérifiez que le système voit bien **deux écrans** :
+### Revenir en arrière
 
 ```bash
-xrandr --query | grep " connected"
+sudo ./install/petit-ecran.sh annuler
 ```
 
-**Ce que vous devez voir :** deux lignes, l'une pour le HDMI, l'autre pour le petit
-écran. S'il n'y en a qu'une, c'est le montage B.
+puis `sudo reboot` : le boîtier revient exactement comme avant.
 
-La vue Settings s'y affiche alors **toute seule** à chaque lancement du prompteur,
-en plein écran, à sa taille exacte. Pour la fermer : `~/prompteur/install/kiosk.sh
---menu-stop` ; pour la rouvrir : `~/prompteur/install/kiosk.sh --menu`.
+> 📌 **Si le boîtier ne redémarre plus du tout** : éteignez, sortez la carte SD et mettez-la
+> dans un ordinateur. La partition de démarrage est **lisible sous Windows** : remplacez
+> `config.txt` par `config.txt.avant-petit-ecran`, replacez la carte. Voir
+> **SAUVEGARDE-ET-RESTAURATION.md**.
 
 ---
 
-## Montage B — recopie de l'écran principal *(si le mode DRM est indisponible)*
+## 🛑 Ne pas lancer les pilotes du vendeur
 
-Le petit écran ne peut alors que **répéter** ce que montre le grand. La vue
-Settings ne peut pas y être affichée seule, et l'afficher en recopie n'aurait pas de
-sens : on verrait le prompteur en tout petit.
+Les scripts fournis avec ce type d'écran (`LCD35-show`, `LCD35G-show`, `fbcp`, le fichier
+`Waveshare35g.dtbo`…) sont faits pour un Raspberry qui n'a **qu'un seul écran** :
 
-**Dans ce cas, on n'installe pas le pilote de l'écran.** Les vues Settings et
-Spectateur restent parfaitement utilisables — simplement, elles s'ouvrent sur
-l'appareil de votre choix : **`http://10.42.0.1:5000/settings`** depuis le téléphone,
-la tablette ou le PC de la régie.
+1. ils **désactivent le pilote graphique** `vc4-kms-v3d` — sur un Raspberry Pi 5, il n'existe
+   aucun mode de secours derrière ;
+2. ils **forcent la sortie HDMI en 480 × 320**, ou recopient l'écran principal sur le petit.
 
-Le confort est moindre, rien n'est perdu, et le boîtier reste intact.
+Ici il y a deux écrans, qui doivent afficher des choses différentes. `petit-ecran.sh` refuse
+d'ailleurs de s'installer par-dessus leurs lignes.
+
+---
+
+## Écran de 7 pouces en HDMI, à la place : rien à installer
+
+Un petit écran **HDMI** se branche sur la **seconde prise HDMI** du Raspberry — le grand écran
+reste sur la prise **collée à l'alimentation**. À chaque lancement du prompteur, le boîtier met
+les deux écrans côte à côte, cale le tactile sur le petit et y ouvre la vue Settings.
+Écrans inversés (le texte sur le petit) : intervertissez les deux câbles et redémarrez.
 
 ---
 
@@ -161,19 +100,17 @@ La vue **Settings**, comme sur le téléphone, avec tout en haut :
 | **Écran journaliste** | **Settings** · **Journaliste** · **Bureau** | ce qu'affiche **le grand écran** |
 | | **⏻ Veille** | éteint le grand écran et met le petit au noir ; un appui sur le petit écran rallume tout |
 
-Settings et Spectateur passent de l'une à l'autre d'un seul appui : on change un
-réglage, puis on revient au texte aussitôt.
-
 ---
 
-## Si l'écran reste blanc
+## Pour le dépannage à distance
 
-Un écran SPI **sans pilote chargé** affiche un fond blanc : le rétroéclairage est
-allumé, mais rien ne pilote la dalle. **Ce n'est pas une panne** — c'est l'état
-normal tant que l'étape A n'a pas été faite, et c'est sans conséquence sur le
-reste du boîtier.
+```bash
+~/prompteur/install/kiosk.sh --ecrans
+```
 
----
+dit quelles cartes graphiques et quels écrans le bureau voit, lequel est le grand, lequel le
+petit, et quelle dalle tactile est reconnue. `~/prompteur/install/kiosk.sh --menu` rouvre la vue
+Settings sur le petit écran (et dit pourquoi, s'il ne peut pas) ; `--menu-stop` la ferme.
 
 *Voir aussi : `SAUVEGARDE-ET-RESTAURATION.md` (revenir en arrière) et
 `MISE-EN-ROUTE.md` (installation complète du boîtier).*

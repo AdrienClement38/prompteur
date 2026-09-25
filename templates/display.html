@@ -58,18 +58,16 @@
     #scroller .c6 { color:#ffffff; }
     /* Numéros de ligne, dans la marge de gauche : de quoi repérer « la ligne 42 »
        et y aller depuis Settings. Discrets, et retournés avec le texte (miroir). */
-    /* Le numéro est centré sur la PREMIÈRE ligne du paragraphe : sa hauteur de
-       ligne est celle du texte (1lh, figé en pixels sur la ligne elle-même grâce
-       à @property ; un titre, plus grand, a donc la sienne). */
-    @property --hauteur-ligne { syntax:"<length>"; inherits:true; initial-value:0px; }
-    #scroller.numeros .ln[data-n] { position:relative; --hauteur-ligne:1lh; }
-    #scroller.numeros .ln[data-n]::before {
-      content:attr(data-n); position:absolute; right:100%; top:0;
-      margin-right:.6em; font-size:var(--taille-numero, 19px);
-      line-height:max(var(--hauteur-ligne), 2.2em);
-      font-weight:500; font-style:normal; color:#7d838d; text-indent:0;
-      pointer-events:none;
+    /* Un numéro par ligne À L'ÉCRAN, posé par display.js au milieu de la ligne
+       mesurée (un paragraphe de quatre lignes en porte quatre). */
+    #scroller .ln[data-n] { position:relative; }
+    #scroller .ln .num {
+      position:absolute; right:100%; top:0; transform:translateY(-50%);
+      margin-right:.6em; font-size:var(--taille-numero, 19px); line-height:1;
+      font-weight:500; font-style:normal; text-decoration:none; color:#7d838d;
+      text-indent:0; white-space:nowrap; pointer-events:none; user-select:none;
     }
+    #scroller:not(.numeros) .ln .num { display:none; }
     /* Alignement venu du document importe. Il porte sur la ligne entiere. */
     /* Puce : retrait pendant, pour qu'une puce qui passe a la ligne reste
        alignee sur son texte et non sous son point. */

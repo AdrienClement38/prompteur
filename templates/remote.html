@@ -90,11 +90,21 @@
     .numeros-editeur{display:none; position:absolute; left:1px; top:1px; bottom:1px; width:40px;
       overflow:hidden; pointer-events:none; border-right:1px solid var(--line);}
     .editeur-cadre.avec-numeros .numeros-editeur{display:block;}
-    #numerosContenu{position:relative;}
+    /* Très haute : elle défile avec la zone de saisie (même scrollTop). */
+    #numerosContenu{position:relative; height:200000px;}
     #numerosContenu span{position:absolute; right:7px; font-size:11px; line-height:1;
       color:var(--muted); font-variant-numeric:tabular-nums;}
     /* Alignement ligne par ligne : trois boutons de même largeur. */
-    .fmtbar.alignbar button, .fmtbar.alignbar button:last-child{flex:1; font-size:14px;}
+    .fmtbar.alignbar button{font-size:14px;}
+    /* Très petit écran (le 3,5 pouces du boîtier) : moins de marges, pour que
+       l'essentiel tienne sans défiler. */
+    @media (max-width:380px), (max-height:420px){
+      body{padding:0 8px 8px;}
+      .navvues{padding:6px 0; margin-bottom:4px;}
+      .card{padding:10px; margin-bottom:10px;}
+      .tabbtns{margin-bottom:8px;}
+      .tabbtns button{min-height:36px;}
+    }
     /* Aide a la saisie : la syntaxe des titres, montree telle qu'on la tape. */
     .synt{display:flex; align-items:center; gap:10px; padding:3px 0;}
     /* Repere « pas encore a l'ecran ». Indispensable des lors qu'un import ne
@@ -109,7 +119,7 @@
        On ne stocke jamais de HTML — seulement des plages sur le texte brut. */
     .fmtbar{display:flex; gap:8px; margin-top:10px;}
     .fmtbar button{min-height:40px; padding:8px 0; flex:1; font-size:16px;}
-    .fmtbar button:last-child{flex:2; font-size:13px;}
+    .fmtbar button#fmtXL{flex:2;}
     #fmtInfo{margin-top:6px; min-height:1.2em;}
     /* Zone de saisie RICHE : la mise en forme se voit la ou l'on tape, ce qu'une
        <textarea> ne sait pas faire. Memes classes que l'ecran, donc meme rendu. */
@@ -181,7 +191,6 @@
         <button id="fmtB" title="Gras"><b>G</b></button>
         <button id="fmtI" title="Italique"><i>I</i></button>
         <button id="fmtU" title="Souligné"><u>S</u></button>
-        <button class="ghost" id="fmtClear">Tout effacer</button>
       </div>
       <div class="fmtbar">
         <button id="fmtS" title="Plus petit">petit</button>
@@ -197,7 +206,8 @@
         <button class="swatchBtn" data-color="6" style="background:#ffffff" title="blanc"></button>
       </div>
       <!-- Alignement de la LIGNE où se trouve le curseur (ou des lignes
-           sélectionnées) : il pose ou retire « [centre] » / « [droite] ». -->
+           sélectionnées) : il pose ou retire « [centre] » / « [droite] ». Un
+           morceau de paragraphe sélectionné devient une ligne à part. -->
       <div class="fmtbar alignbar">
         <button id="alignG" title="Aligner la ligne à gauche">⇤ Gauche</button>
         <button id="alignC" title="Centrer la ligne">Centré</button>
@@ -260,7 +270,7 @@
     <div class="card">
       <h2><span>Vitesse</span><button type="button" class="infobtn" data-info="info-vitesse">Info</button></h2>
       <div class="slider">
-        <input type="range" id="speed" min="10" max="600" step="5" aria-label="Vitesse de lecture">
+        <input type="range" id="speed" min="10" max="1200" step="5" aria-label="Vitesse de lecture">
         <span class="val" id="speedVal">70</span>
       </div>
       <div class="grid2" style="margin-top:12px;">
@@ -367,13 +377,18 @@
   <template id="info-texte">
     <p><b>Mettre en forme :</b> sélectionnez un passage, puis un bouton (gras,
       italique, souligné, taille, couleur). <b>Rappuyez</b> sur le même bouton pour
-      l'enlever. « Tout effacer » retire toute la mise en forme, pas le texte.
-      La pastille <b>blanche</b> remet un mot en blanc au milieu d'un passage coloré.</p>
-    <p><b>Aligner :</b> placez le curseur sur une ligne (ou sélectionnez-en
-      plusieurs), puis <b>Gauche</b>, <b>Centré</b> ou <b>Droite</b>. Chaque ligne
-      garde son propre alignement.</p>
-    <p class="muted">Les <b>numéros</b> à gauche sont ceux des écrans de lecture :
-      c'est eux que prend « Commencer à la ligne » (onglet Contrôle).</p>
+      l'enlever. La pastille <b>blanche</b> remet un mot en blanc au milieu d'un
+      passage coloré.</p>
+    <p><b>Aligner :</b> placez le curseur dans un paragraphe (ou sélectionnez-en
+      plusieurs), puis <b>Gauche</b>, <b>Centré</b> ou <b>Droite</b>. Pour aligner
+      <b>une partie</b> d'un paragraphe seulement, <b>sélectionnez-la</b> : elle
+      devient une ligne à part. <i>(Une ligne qui passe à la ligne toute seule
+      change avec la taille du texte : seule une ligne coupée par « Entrée » garde
+      son alignement.)</i></p>
+    <p class="muted">Les <b>numéros</b> à gauche sont ceux du <b>grand écran</b>
+      (une ligne à l'écran = un numéro) : c'est eux que prend « Commencer à la
+      ligne ». Ils s'affichent quand le texte de la zone est celui de l'écran —
+      après « Envoyer à l'écran ».</p>
     <p>Rien ne part à l'écran avant <b>« Envoyer à l'écran »</b>. Tant que ce n'est
       pas fait, un bandeau jaune le rappelle.</p>
     <p><b>Au clavier, en début de ligne</b> — marche partout, tapé ici ou venu d'un
@@ -424,11 +439,13 @@
       dans les trois modes de pédales.</p>
     <p><b>Commencer à la ligne</b> : tapez un numéro, puis <b>Aller</b>. Cette ligne
       se place au début de l'écran, à l'arrêt. Les numéros sont ceux affichés à
-      gauche du texte ; <b>1</b> (ou le champ vide) = le début du texte.</p>
+      gauche du texte, <b>un par ligne à l'écran</b> ; <b>1</b> (ou le champ vide)
+      = le début du texte.</p>
   </template>
 
   <template id="info-vitesse">
-    <p>Le curseur et les deux boutons règlent la même vitesse de défilement.</p>
+    <p>Le curseur et les deux boutons règlent la même vitesse de défilement,
+      de 10 à <b>1200</b>.</p>
     <p class="muted">En mode <b>Dynamique</b>, la vitesse se construit au pied, en
       repartant de 0 à chaque départ. Le curseur donne alors la vitesse de
       « Lecture » ; Plus vite / Moins vite ajustent d'un cran la vitesse en cours.</p>
@@ -442,7 +459,7 @@
       à l'endroit.</p>
     <p class="muted">La <b>ligne de repère</b> est la ligne rouge à hauteur de
       laquelle on lit. Les <b>numéros de ligne</b> s'affichent dans la marge de
-      gauche, sur tous les écrans.</p>
+      gauche, sur tous les écrans : <b>un numéro par ligne à l'écran</b>.</p>
   </template>
 
   <template id="info-pedales">
@@ -456,7 +473,8 @@
       la gauche ralentit d'abord, puis fait reculer si on la garde. La <b>centrale</b>
       met en <b>pause</b> ; ensuite, une pédale repart de 0, lentement.</p>
     <p class="muted"><b>Montée en vitesse</b> (mode dynamique) : le nombre de
-      secondes d'appui continu pour atteindre la vitesse maximale.</p>
+      secondes d'appui continu pour atteindre 600 ; en gardant le pied, la vitesse
+      continue de monter jusqu'à 1200. Plus le nombre est petit, plus ça va vite.</p>
     <p><b>Changer la touche d'une pédale :</b> « Réapprendre » → appuyez <b>une
       fois</b> sur la pédale → la touche s'affiche → <b>« Enregistrer »</b>. Rien
       n'est envoyé au boîtier avant « Enregistrer », et la confirmation verte

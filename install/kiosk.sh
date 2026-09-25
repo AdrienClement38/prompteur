@@ -224,17 +224,56 @@ cote_a_cote() {
 # ce cas on n'ouvre RIEN, la fenêtre risquerait de couvrir le prompteur.
 disposer_ecrans() {
   command -v xrandr >/dev/null 2>&1 || return 1
-  local grand petit
+  relier_ecrans_annexes
+  local grand petit rotation
   grand="$(sortie_grand_ecran)"
   petit="$(sortie_petit_ecran)"
   { [ -n "$grand" ] && [ -n "$petit" ]; } || return 1
-  cote_a_cote "$grand" "$petit" && return 0
-  xrandr --output "$petit" --auto --right-of "$grand" 2>/dev/null
+  rotation="$(rotation_voulue)"
+  if cote_a_cote "$grand" "$petit" && [ "$(rotation_de "$petit")" = "$rotation" ]; then
+    return 0
+  fi
+  xrandr --output "$petit" --auto --rotate "$rotation" --right-of "$grand" 2>/dev/null
   for _ in $(seq 1 10); do
     cote_a_cote "$grand" "$petit" && return 0
     sleep 0.3
   done
   return 1
+}
+
+# Le petit écran de 3,5 pouces sur les broches (SPI) est une carte graphique à
+# part. Sous X11, ses sorties n'apparaissent qu'une fois reliées à la carte
+# principale (« xrandr --setprovideroutputsource ») : sans cela le bureau ne le
+# voit pas, et il reste blanc. Seules les cartes pas encore reliées le sont (une
+# seconde fois pourrait éteindre l'écran) ; sans effet quand il n'y en a qu'une.
+relier_ecrans_annexes() {
+  local i
+  xrandr --listproviders 2>/dev/null |
+    sed -n 's/^Provider \([1-9][0-9]*\): .*associated providers: 0 .*/\1/p' |
+    while read -r i; do
+      xrandr --setprovideroutputsource "$i" 0 2>/dev/null || true
+    done
+}
+
+# Rotation du petit écran, choisie par install/petit-ecran.sh (--rotation) :
+# normal (d'usine, en hauteur), left, right ou inverted.
+rotation_voulue() {
+  local r
+  r="$(sed -n 's/^rotation=\(normal\|left\|right\|inverted\)$/\1/p' \
+    "$HOME/.config/prompteur/petit-ecran.conf" 2>/dev/null | tail -1)"
+  echo "${r:-normal}"
+}
+
+# Rotation actuelle d'une sortie, telle que xrandr l'écrit après sa géométrie.
+rotation_de() {
+  xrandr --query 2>/dev/null | awk -v s="$1" '
+    $1 == s && $2 == "connected" {
+      for (i = 3; i <= NF; i++) if ($i ~ /^[0-9]+x[0-9]+[+][0-9]+[+][0-9]+$/) {
+        r = $(i + 1)
+        print (r == "left" || r == "right" || r == "inverted") ? r : "normal"
+        exit
+      }
+    }'
 }
 
 # La dalle tactile doit viser le PETIT écran : sans cela, un appui est réparti
@@ -357,6 +396,9 @@ case "$ACTION" in
     exit 0
     ;;
   --ecrans)
+    echo "Cartes graphiques vues par le bureau :"
+    xrandr --listproviders 2>&1 | sed 's/^/  /'
+    relier_ecrans_annexes
     echo "Écrans branchés et allumés (nom, x, y, largeur, hauteur, surface en mm²) :"
     sorties | sed 's/^/  /'
     echo "Grand écran (la vitre) : $(sortie_grand_ecran)"
@@ -384,6 +426,7 @@ case "$ACTION" in
       echo "Petit écran déjà affiché."
       exit 0
     fi
+    relier_ecrans_annexes # le petit écran SPI n'apparaît qu'une fois relié
     if [ -z "$(sortie_petit_ecran)" ]; then
       echo "Un seul écran branché : pas de petit écran à remplir."
       exit 0

@@ -189,11 +189,9 @@
   const RE_PUCE = /^[-*•][ \t]+(.*)$/;
   const RE_ALIGNE = /^\[(centre|droite)\][ \t]*/i;
 
-  // Numéros de ligne : une ligne de TEXTE en porte un (titre, puce, paragraphe),
-  // une ligne vide non. Le même compte partout — vue Journaliste, vue Spectateur,
-  // zone de saisie de Settings — et c'est ce numéro que prend « Commencer à la
-  // ligne ». Une ligne de texte, et non une ligne à l'écran : sur un autre écran,
-  // les retours à la ligne tombent ailleurs, le numéro, lui, ne bouge pas.
+  // Numéros de ligne : un par ligne À L'ÉCRAN (voir « Numéros de ligne » plus
+  // bas). data-n ne marque plus que les paragraphes qui en portent (pas les
+  // lignes vides).
   function tailleNumero() {
     return Math.max(12, Math.round((Number((settings || {}).fontSize) || 64) * 0.3));
   }
@@ -262,6 +260,134 @@
       offset += brute.length + 1; // +1 pour le saut de ligne retiré par split
     }
     scroller.replaceChildren(frag);
+    lignesAMesurer();
+  }
+
+  // --- Numéros de ligne : un par ligne À L'ÉCRAN ------------------------------
+  // (retour n° 4 du journaliste) On repère une ligne à l'écran, pas un
+  // paragraphe : un paragraphe qui s'étale sur quatre lignes porte quatre
+  // numéros. Ils sont MESURÉS sur la mise en page réelle, après chaque
+  // changement de texte, de taille, de marge ou de fenêtre. La vue Spectateur
+  // reproduit la mise en page du journaliste (mêmes coupures de lignes) : elle
+  // porte les mêmes numéros. « Commencer à la ligne » prend ce même numéro, et la
+  // zone de saisie de Settings les affiche grâce à la carte envoyée au boîtier.
+  let lignesEcran = []; // haut de chaque ligne à l'écran, en px de mise en page
+  let lignesAJour = false;
+  let numerosPoses = [];
+  let empreinteTexte = ""; // celle du texte affiché, donnée par le boîtier
+  const carte = { corps: null, envoyee: true, echecA: -Infinity };
+
+  function lignesAMesurer() {
+    lignesAJour = false;
+  }
+
+  // Les lignes à l'écran d'un paragraphe, en px depuis son haut. Les rectangles
+  // du texte sont triés puis regroupés par rangée : un mot plus gros sur la même
+  // rangée reste sur la même ligne.
+  function rangees(div) {
+    const haut = div.getBoundingClientRect().top;
+    const plage = document.createRange();
+    plage.selectNodeContents(div);
+    const rects = Array.from(plage.getClientRects()).filter((r) => r.width || r.height);
+    rects.sort((a, b) => a.top - b.top);
+    const out = [];
+    for (const r of rects) {
+      const d = out[out.length - 1];
+      if (d && r.top < d.haut + (d.bas - d.haut) / 2) {
+        d.haut = Math.min(d.haut, r.top);
+        d.bas = Math.max(d.bas, r.bottom);
+      } else {
+        out.push({ haut: r.top, bas: r.bottom });
+      }
+    }
+    return out.map((d) => ({ haut: d.haut - haut, centre: (d.haut + d.bas) / 2 - haut }));
+  }
+
+  function mesurerLignes() {
+    lignesAJour = true;
+    // Les anciens numéros d'abord : ils fausseraient la mesure de leur ligne.
+    for (const n of numerosPoses) if (n.remove) n.remove();
+    numerosPoses = [];
+    lignesEcran = [];
+    const paras = scroller.children;
+    const debuts = new Array(paras.length).fill(0);
+    const aPoser = [];
+    const peutMesurer = typeof document.createRange === "function";
+    // Le défilement, l'échelle de la réplique et le miroir ne changent rien à la
+    // mise en page, mais faussent les mesures à l'écran : on les retire le temps
+    // de mesurer. Rien n'est dessiné entre-temps.
+    const tStage = stage.style.transform;
+    const tScroll = scroller.style.transform;
+    if (peutMesurer) {
+      stage.style.transform = "none";
+      scroller.style.transform = "none";
+    }
+    try {
+      for (let i = 0; i < paras.length; i++) {
+        const div = paras[i];
+        if (!div.dataset || !div.dataset.n) continue; // ligne vide : pas de numéro
+        let rs = null;
+        try {
+          if (peutMesurer) rs = rangees(div);
+        } catch {
+          rs = null;
+        }
+        // Mesure impossible : une ligne par paragraphe, faute de mieux.
+        if (!rs || !rs.length) rs = [{ haut: 0, centre: (div.offsetHeight || 0) / 2 }];
+        for (const r of rs) {
+          lignesEcran.push(div.offsetTop + r.haut);
+          if (!debuts[i]) debuts[i] = lignesEcran.length;
+          aPoser.push([div, r.centre]);
+        }
+      }
+    } finally {
+      if (peutMesurer) {
+        stage.style.transform = tStage;
+        scroller.style.transform = tScroll;
+      }
+    }
+    // Écritures après les lectures : posés en absolu, les numéros ne changent
+    // rien à la mise en page.
+    if (!settings || settings.numeros !== false) {
+      aPoser.forEach(([div, centre], k) => {
+        const span = document.createElement("span");
+        span.className = "num";
+        span.textContent = String(k + 1);
+        span.style.top = centre + "px";
+        div.appendChild(span);
+        numerosPoses.push(span);
+      });
+    }
+    // La carte « paragraphe -> numéro de sa première ligne » part au boîtier :
+    // la zone de saisie de Settings affiche ainsi les numéros de CET écran.
+    if (!isViewer && empreinteTexte) {
+      const corps = { empreinte: empreinteTexte, debuts };
+      if (!carte.corps || JSON.stringify(carte.corps) !== JSON.stringify(corps)) {
+        carte.corps = corps;
+        carte.envoyee = false;
+      }
+    }
+  }
+
+  // Envoyée par le meneur seulement, une fois, et réessayée 2 s plus tard en cas
+  // d'échec (texte changé entre-temps : la mesure suivante en fera une neuve).
+  function envoyerCarte(now) {
+    if (carte.envoyee || !carte.corps || !isLeading || now - carte.echecA < 2000) return;
+    carte.envoyee = true;
+    const corps = carte.corps;
+    postJson("/api/lignes", corps)
+      .then((r) => {
+        if (!r.ok && carte.corps === corps) {
+          carte.envoyee = false;
+          carte.echecA = now;
+        }
+      })
+      .catch(() => {
+        if (carte.corps === corps) {
+          carte.envoyee = false;
+          carte.echecA = now;
+        }
+      });
   }
 
   // --- Lecture, pause, début : les mêmes gestes dans les trois modes ---------
@@ -304,13 +430,14 @@
     arretTout();
   }
 
-  // « Commencer à la ligne n » : la ligne n se présente comme la première ligne
-  // au début du texte, juste sous la ligne rouge, et tout est à l'arrêt.
+  // « Commencer à la ligne n » : la ligne n (à l'écran) se présente comme la
+  // première ligne au début du texte, juste sous la ligne rouge, et tout est à
+  // l'arrêt.
   function allerALaLigne(n) {
-    const lignes = scroller.querySelectorAll(".ln[data-n]");
-    if (!lignes.length) return revenirAuDebut();
-    const cible = lignes[Math.max(0, Math.min(lignes.length, Math.round(n) || 1) - 1)];
-    pos = Math.max(0, Math.min(maxScrollPos(), cible.offsetTop - lignes[0].offsetTop));
+    if (!lignesAJour) mesurerLignes();
+    if (!lignesEcran.length) return revenirAuDebut();
+    const k = Math.max(1, Math.min(lignesEcran.length, Math.round(n) || 1));
+    pos = Math.max(0, Math.min(maxScrollPos(), lignesEcran[k - 1] - lignesEcran[0]));
     arretTout();
     placer();
   }
@@ -430,6 +557,7 @@
       scroller.style.paddingTop = "60vh";
       scroller.style.paddingBottom = "80vh";
     }
+    lignesAMesurer();
   }
 
   // Hauteur visible, dans les unités de la mise en page (avant mise à l'échelle).
@@ -529,8 +657,10 @@
       // Changer de sens passe TOUJOURS par 0 : la vitesse est intégrée image par
       // image, elle ne saute jamais d'un sens à l'autre. Les deux pédales
       // ensemble s'annulent. Maximum atteint après « rampSeconds » d'appui.
+      // L'accélération est celle validée par le journaliste (600 px/s atteints
+      // en « rampSeconds ») ; en gardant le pied, on continue jusqu'à 1200.
       const secondes = Math.max(1, Math.min(30, Number((settings || {}).rampSeconds) || 10));
-      const accel = SPEED_MAX / secondes; // px/s²
+      const accel = VITESSE_REFERENCE / secondes; // px/s²
       const pousse = (keys.forward ? 1 : 0) - (keys.backward ? 1 : 0);
       if (pousse) {
         dynVel = Math.max(-SPEED_MAX, Math.min(SPEED_MAX, dynVel + pousse * accel * dt));
@@ -605,8 +735,12 @@
     if (!lastTime) lastTime = now;
     const dt = Math.min(0.1, (now - lastTime) / 1000);
     lastTime = now;
+    if (!lignesAJour) mesurerLignes();
     if (isViewer) frameViewer(now, dt);
-    else framePresenter(now, dt);
+    else {
+      framePresenter(now, dt);
+      envoyerCarte(now);
+    }
     requestAnimationFrame(frame);
   }
 
@@ -714,6 +848,9 @@
   // Fenêtre redimensionnée : la réplique se remet à l'échelle, et la même phrase
   // reste sous la ligne rouge (la position est recalculée à chaque image).
   if (isViewer) window.addEventListener("resize", mettreEnPage);
+  // Largeur changée : les lignes ne se coupent plus aux mêmes endroits.
+  window.addEventListener("resize", lignesAMesurer);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(lignesAMesurer).catch(() => {});
 
   // --- Plein écran (écran principal uniquement) ------------------------------
   // On veut un écran de lecture sans barre d'adresse ni onglet. Deux obstacles,
@@ -890,7 +1027,8 @@
   // annulait un ralentissement (« on ne peut plus ralentir »). Les événements
   // clavier disent seulement si une pédale est enfoncée ; la rampe est intégrée
   // image par image dans la boucle d'animation, avec le même dt borné.
-  const SPEED_MAX = 600; // même borne que le serveur
+  const SPEED_MAX = 1200; // même borne que le serveur
+  const VITESSE_REFERENCE = 600; // celle qu'on atteint en « rampSeconds »
   let dynVel = 0; // vitesse signée construite au pied, en px/s
   let tapDir = 0; // -1 arrière, 0 pause, +1 avant (mode impulsion)
 
@@ -1060,6 +1198,7 @@
       ).json();
       if (st.version !== lastVersion) {
         lastVersion = st.version;
+        empreinteTexte = typeof st.empreinte === "string" ? st.empreinte : "";
         applySettings(st.settings, st.text, st.marks);
       }
       if (st.control && st.control.cmdSeq !== lastCmdSeq) {

@@ -1114,7 +1114,7 @@ catastrophe en direct.
 
 **Le confort de lecture — à régler MAINTENANT, jamais pendant une prise**
 
-- [ ] **La barre de mise en forme** (sous la zone de saisie de l'onglet Texte) : je sélectionne un mot, j'appuie sur **G** → il s'affiche en gras **dans la zone elle-même** ; j'appuie une seconde fois sur **G** → le gras est retiré. Puis **« Envoyer à l'écran »** → le mot est en gras sur le grand écran. **« Tout effacer »** retire toute la mise en forme.
+- [ ] **La barre de mise en forme** (sous la zone de saisie de l'onglet Texte) : je sélectionne un mot, j'appuie sur **G** → il s'affiche en gras **dans la zone elle-même** ; j'appuie une seconde fois sur **G** → le gras est retiré. Puis **« Envoyer à l'écran »** → le mot est en gras sur le grand écran.
 - [ ] Onglet **Texte**, carte **« Mise en page »**, j'ajuste **taille du texte**, **interligne** et **marges** à la bonne distance de lecture, avec le journaliste si possible.
   *(Ces barres n'agissent qu'au moment où l'on **relâche** le doigt : glissez, lâchez, puis regardez le grand écran.)*
 - [ ] **Miroir horizontal : laissé éteint**, sauf s'il y a réellement une vitre sans tain.

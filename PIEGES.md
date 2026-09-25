@@ -183,6 +183,25 @@ que les écrans sont côte à côte, il n'ouvre **rien** : une fenêtre plein é
 posée sur le prompteur serait pire que pas de fenêtre. `kiosk.sh --ecrans` dit ce
 qui a été reconnu.
 
+### 🔴 Le petit écran n'était pas en HDMI
+Tout le travail du retour n° 3 visait un 7 pouces HDMI : l'écran du boîtier est un
+**3,5 pouces sur les broches** (Waveshare « 3.5inch RPi LCD (G) », inscrit « 3.5 inch
+Display-G » sur sa carte). Et son contrôleur est un **ST7796S**, pas l'ILI9486 de la
+famille des 3,5 pouces à laquelle on pensait (le pilote officiel `piscreen`, prévu
+pour l'ILI9486, n'aurait rien affiché). Deux hypothèses fausses, faute d'avoir
+demandé une photo de la carte.
+**Parade :** identifier le matériel sur une photo AVANT d'écrire le moindre pilote ;
+la méthode du fabricant pour Bookworm (pilote officiel `mipi-dbi-spi` + séquence
+d'allumage), et la séquence vérifiée octet par octet contre la sienne (test).
+
+### 🔴 X11 ne voit pas un écran SPI tout seul
+Un écran SPI piloté en DRM est une **carte graphique à part**. Wayland les prend
+toutes ; X11 n'affiche que la principale : le petit écran reste blanc, et `xrandr`
+ne le montre pas. Sur les forums, on s'en tire en désactivant le HDMI…
+**Parade :** relier ses sorties à la carte principale (`xrandr
+--setprovideroutputsource`), une seule fois (relier deux fois peut l'éteindre), avant
+de le placer à côté du grand écran.
+
 ### Les réglages `hdmi_*` sont ignorés sur Pi 5
 Presque tous les tutoriels en ligne datent d'avant le changement d'architecture
 graphique. Les recettes qu'on trouve **ne font rien**, sans le dire.
@@ -293,6 +312,21 @@ accéléré, on ne peut plus ralentir ».
 **Parade :** la vitesse au pied reste sur l'écran qui la construit ; le boîtier ne
 connaît que celle du bouton « Lecture ». Le banc d'essai vérifie qu'aucune vitesse
 n'est plus envoyée, et que le ralentissement tient.
+
+### 🔴 Un numéro par paragraphe, quand on lit des lignes
+Les numéros comptaient les lignes du TEXTE : un paragraphe de quatre lignes à l'écran
+n'en portait qu'un, et « ligne 12 » ne désignait rien de ce qu'on voyait.
+**Parade :** numéroter les lignes À L'ÉCRAN, mesurées sur la mise en page réelle
+(rectangles du texte triés puis regroupés par rangée, transformations retirées le
+temps de la mesure). Settings, qui coupe ses lignes ailleurs, affiche la carte
+envoyée par la vue Journaliste, liée à l'empreinte du texte affiché.
+
+### Une page cachée ne dessine pas
+La mesure des lignes se fait dans la boucle d'affichage : un onglet caché (ou le
+volet de prévisualisation replié) ne la lance pas, et les numéros n'apparaissent
+qu'une fois la page visible. « Commencer à la ligne », lui, mesure à la demande.
+**Parade :** ne pas conclure « rien ne s'affiche » d'une page cachée ; mesurer à la
+demande tout ce qui doit répondre à une commande.
 
 ---
 

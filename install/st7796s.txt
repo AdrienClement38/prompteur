@@ -1,0 +1,33 @@
+# Séquence d'allumage du contrôleur ST7796S — petit écran Waveshare
+# « 3.5inch RPi LCD (G) » (320 × 480, IPS).
+#
+# Écriture de l'outil mipi-dbi-cmd (dépôt notro/panel-mipi-dbi) : une commande
+# par ligne, « command <registre> <paramètres…> » ou « delay <millisecondes> ».
+# install/petit-ecran.sh la convertit en /lib/firmware/st7796s.bin, que le
+# pilote officiel panel-mipi-dbi lit au démarrage. Valeurs du fabricant
+# (st7796s.bin de sa page Bookworm), relues octet par octet.
+
+command 0x01                        # remise à zéro logicielle
+delay 150
+command 0x36 0x48                   # sens d'écriture (MADCTL)
+command 0x3a 0x05                   # 16 bits par point (RGB565)
+command 0xf0 0xc3                   # accès aux registres étendus
+command 0xf0 0x96
+command 0xb4 0x01                   # inversion par colonne
+command 0xb7 0xc6
+command 0xc0 0x80 0x45              # alimentation
+command 0xc1 0x13
+command 0xc2 0xa7
+command 0xc5 0x0a                   # VCOM
+command 0xe8 0x40 0x8a 0x00 0x00 0x29 0x19 0xa5 0x33
+command 0xe0 0xd0 0x08 0x0f 0x06 0x06 0x33 0x30 0x33 0x47 0x17 0x13 0x13 0x2b 0x31   # gamma +
+command 0xe1 0xd0 0x0a 0x11 0x0b 0x09 0x07 0x2f 0x33 0x47 0x38 0x15 0x16 0x2c 0x32   # gamma -
+command 0xf0 0x3c                   # fin des registres étendus
+command 0xf0 0x69
+command 0x21                        # inversion des couleurs (dalle IPS)
+command 0x11                        # sortie de veille
+delay 100
+command 0x29                        # affichage allumé
+delay 100
+command 0x13                        # mode normal
+delay 20

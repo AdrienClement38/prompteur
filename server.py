@@ -30,6 +30,7 @@ Par défaut : http://0.0.0.0:5000  (waitress en production, serveur Flask si PRO
 """
 
 import copy
+import hashlib
 import ipaddress
 import json
 import os
@@ -135,7 +136,7 @@ def _num(lo, hi):
 SETTING_VALIDATORS = {
     "fontSize": _num(8, 400),
     "lineHeight": _num(0.8, 4),
-    "speed": _num(10, 600),
+    "speed": _num(10, 1200),
     "margin": _num(0, 45),
     "guidePos": _num(0, 100),
     "mirrorH": lambda v: isinstance(v, bool),
@@ -154,7 +155,7 @@ SETTING_VALIDATORS = {
     "keyCenter": lambda v: isinstance(v, str) and 1 <= len(v) <= 20,
 }
 
-SPEED_MIN, SPEED_MAX, SPEED_STEP = 10, 600, 10
+SPEED_MIN, SPEED_MAX, SPEED_STEP = 10, 1200, 10
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_BODY  # rejette (413) tout corps > 6 Mo avant bufferisation
@@ -452,6 +453,20 @@ SCROLL = {
     "hauteur": 0,
 }
 
+# Numéros de ligne : la vue Journaliste numérote les lignes À L'ÉCRAN (un
+# paragraphe de quatre lignes en porte quatre), et envoie ici, pour chaque
+# paragraphe du texte, le numéro de sa première ligne (0 pour une ligne vide).
+# La zone de saisie de Settings affiche ainsi les numéros du grand écran. En
+# mémoire seulement : la carte dépend de l'écran, elle se refait à l'ouverture.
+LIGNES = {"empreinte": None, "debuts": []}
+
+
+def _empreinte(text):
+    """Empreinte courte du texte affiché : une carte des lignes ne vaut que pour
+    le texte sur lequel elle a été mesurée."""
+    return hashlib.blake2b(text.encode("utf-8", "surrogatepass"), digest_size=8).hexdigest()
+
+
 # Veille du système : tous les écrans passent au noir, le grand écran est éteint.
 # État TRANSITOIRE, jamais écrit sur la carte : un boîtier qu'on rallume doit
 # toujours se réveiller allumé, jamais noir sans raison apparente.
@@ -637,7 +652,38 @@ def api_state():
     surface = request.args.get("surface", "")
     if surface:
         snap["settings"] = effective_settings(snap["settings"], surface)
+    snap["empreinte"] = _empreinte(snap.get("text", ""))
     return jsonify(snap)
+
+
+@app.route("/api/lignes", methods=["GET", "POST"])
+def api_lignes():
+    """Carte des numéros de ligne du grand écran (voir LIGNES).
+    GET  : lue par Settings ; vide si elle ne correspond pas au texte affiché.
+    POST : envoyée par la vue Journaliste après chaque mise en page."""
+    if request.method == "GET":
+        with _lock:
+            courante = _empreinte(STATE.get("text", ""))
+            if LIGNES["empreinte"] == courante:
+                return jsonify({"empreinte": courante, "debuts": list(LIGNES["debuts"])})
+        return jsonify({"empreinte": None, "debuts": []})
+    data = _corps()
+    empreinte = data.get("empreinte")
+    debuts = data.get("debuts")
+    if not isinstance(empreinte, str) or not isinstance(debuts, list):
+        return jsonify({"ok": False, "error": "carte invalide"}), 400
+    if not all(isinstance(n, int) and not isinstance(n, bool) and 0 <= n <= 10_000_000 for n in debuts):
+        return jsonify({"ok": False, "error": "carte invalide"}), 400
+    with _lock:
+        texte = STATE.get("text", "")
+        if empreinte != _empreinte(texte):
+            # Mesurée sur un texte qui n'est plus à l'écran : la suivante suivra.
+            return jsonify({"ok": False, "error": "texte changé"}), 409
+        if len(debuts) != texte.count("\n") + 1:
+            return jsonify({"ok": False, "error": "carte invalide"}), 400
+        LIGNES["empreinte"] = empreinte
+        LIGNES["debuts"] = debuts
+    return jsonify({"ok": True})
 
 
 @app.route("/api/version")
