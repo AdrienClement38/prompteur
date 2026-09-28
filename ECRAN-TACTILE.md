@@ -4,10 +4,12 @@ Le **petit écran** posé sur le Raspberry affiche la vue **Settings** (ou **Spe
 d'un appui) pendant que le grand écran affiche le texte : une copie de
 `http://10.42.0.1:5000`, **sans passer par le WiFi**.
 
-- **Écran concerné** : Waveshare **« 3.5inch RPi LCD (G) »** — sa carte porte l'inscription
-  **« 3.5 inch Display-G »**. Dalle IPS 320 × 480, contrôleur **ST7796S**, tactile résistif
-  **XPT2046** (il se pilote à l'ongle ou au stylet), relié par les **broches** du Raspberry
-  (en SPI), **pas en HDMI**.
+- **Écran concerné** : un 3,5 pouces **sur les broches** du Raspberry (en SPI), **pas en
+  HDMI** — sa carte porte « 3.5 inch Display-G », « 480 x 320 », « SPI 16MHz », « XPT2046 ».
+  Tactile résistif : il se pilote à l'ongle ou au stylet.
+- **Deux familles** d'écrans de ce genre, branchées sur des broches différentes : le script
+  les connaît toutes les deux. **ili9486** (d'usine) : la plus répandue — Waveshare (A) et (C),
+  leurs copies, CUQI. **st7796s** : Waveshare « 3.5inch RPi LCD (G) », à contacts à ressort.
 - **Tant qu'il n'est pas installé, il reste blanc** : le rétroéclairage est allumé, mais rien
   ne pilote la dalle. Ce n'est pas une panne.
 
@@ -35,9 +37,9 @@ sudo reboot
 le petit.
 
 Ce que fait `petit-ecran.sh` : il ajoute au fichier de démarrage (`config.txt`, sauvegardé
-avant) les lignes que le fabricant recommande — le pilote **officiel** `mipi-dbi-spi` de
-Raspberry Pi avec la séquence d'allumage du ST7796S, et le pilote officiel `ads7846` du
-tactile. Au démarrage, le boîtier relie ce petit écran au bureau, cale le tactile dessus et y
+avant) les lignes du pilote **officiel** de Raspberry Pi pour cet écran (`piscreen` en mode
+drm pour la famille ili9486 ; `mipi-dbi-spi` avec la séquence d'allumage du ST7796S, et
+`ads7846` pour le tactile, pour l'autre). Au démarrage, le boîtier relie ce petit écran au bureau, cale le tactile dessus et y
 ouvre la vue Settings. Le grand écran n'est pas touché.
 
 ### Si le résultat n'est pas le bon
@@ -48,7 +50,7 @@ ouvre la vue Settings. Le grand écran n'est pas touché.
 | Le **doigt tombe à côté**, en miroir gauche-droite | `sudo ./install/petit-ecran.sh installer --tactile inverse-x` |
 | … en miroir haut-bas | `sudo ./install/petit-ecran.sh installer --tactile inverse-y` |
 | … le doigt va en haut quand on va à droite | `sudo ./install/petit-ecran.sh installer --tactile echange` |
-| **Toujours blanc** | `./install/petit-ecran.sh etat` *(sans sudo)* : envoyez une photo de ce qui s'affiche |
+| **Toujours blanc** | l'autre famille : `sudo ./install/petit-ecran.sh installer --modele st7796s` *(ou `--modele ili9486` pour revenir)* ; si c'est encore blanc, `./install/petit-ecran.sh etat` *(sans sudo)* et envoyez une photo |
 
 Chaque relance garde les autres choix (la rotation ne défait pas le réglage du tactile).
 

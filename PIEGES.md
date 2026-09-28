@@ -190,9 +190,17 @@ Display-G » sur sa carte). Et son contrôleur est un **ST7796S**, pas l'ILI9486
 famille des 3,5 pouces à laquelle on pensait (le pilote officiel `piscreen`, prévu
 pour l'ILI9486, n'aurait rien affiché). Deux hypothèses fausses, faute d'avoir
 demandé une photo de la carte.
-**Parade :** identifier le matériel sur une photo AVANT d'écrire le moindre pilote ;
-la méthode du fabricant pour Bookworm (pilote officiel `mipi-dbi-spi` + séquence
-d'allumage), et la séquence vérifiée octet par octet contre la sienne (test).
+Et la première identification était fausse elle aussi : l'inscription « Display-G »
+avait fait croire au Waveshare (G), à contacts à ressort et ST7796S. La carte, elle,
+annonce « SPI 16MHz », a un connecteur ordinaire et des cases IPS/TN à cocher : c'est
+la famille ILI9486, sur d'autres broches. Résultat : pilote chargé, image envoyée,
+aucune erreur… et un écran qui reste blanc, parce que les données partaient sur les
+mauvaises broches.
+**Parade :** identifier le matériel sur une photo AVANT d'écrire le moindre pilote, en
+croisant TOUTES les inscriptions de la carte, pas seulement son nom ; un script qui
+connaît les deux familles (`--modele`), pour changer d'hypothèse d'une ligne ; et le
+diagnostic « l'image part-elle ? » (`/sys/kernel/debug/dri/N/state`, active=1) pour
+séparer un problème de bureau d'un problème d'écran.
 
 ### 🔴 X11 ne voit pas un écran SPI tout seul
 Un écran SPI piloté en DRM est une **carte graphique à part**. Wayland les prend

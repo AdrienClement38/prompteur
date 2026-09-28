@@ -262,9 +262,10 @@ relance aussi la vue Journaliste.
 
 Un **second écran** sur le boîtier affiche **tout seul la vue Settings**, en plein
 écran, dès le lancement du prompteur : **sans WiFi**. C'est le cas du petit écran
-tactile de 3,5 pouces **sur les broches** (Waveshare « 3.5inch RPi LCD (G) », ST7796S
-en SPI), une fois installé par `sudo ./install/petit-ecran.sh installer` (pilote
-officiel `mipi-dbi-spi`, voir ECRAN-TACTILE.md) — et d'un écran branché sur la seconde
+tactile de 3,5 pouces **sur les broches** (SPI), une fois installé par `sudo
+./install/petit-ecran.sh installer` — pilote officiel `piscreen,drm` pour la famille
+ILI9486 (d'usine), `mipi-dbi-spi` pour un ST7796S (`--modele st7796s`) ; voir
+ECRAN-TACTILE.md — et d'un écran branché sur la seconde
 prise HDMI, sans rien installer. `install/kiosk.sh` relie l'écran SPI au bureau X11
 (`xrandr --setprovideroutputsource` : c'est une carte graphique à part), met les
 deux écrans côte à côte s'ils étaient en recopie, applique la rotation choisie, cale

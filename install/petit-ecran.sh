@@ -2,21 +2,28 @@
 # =============================================================================
 #  Prompteur — le petit écran tactile de 3,5 pouces, sur les broches du Raspberry
 # =============================================================================
-#  Écran visé : Waveshare « 3.5inch RPi LCD (G) » — sa carte porte l'inscription
-#  « 3.5 inch Display-G » : contrôleur ST7796S, 320 × 480, tactile résistif
-#  XPT2046, relié en SPI par les broches (pas en HDMI).
+#  Deux familles d'écrans 3,5 pouces SPI (480 × 320, tactile résistif XPT2046),
+#  qui ne se branchent PAS sur les mêmes broches et n'ont pas le même contrôleur :
 #
-#  Méthode : celle que le fabricant recommande depuis Bookworm — le pilote
-#  OFFICIEL mipi-dbi-spi du noyau Raspberry Pi, avec la séquence d'allumage du
-#  ST7796S (install/st7796s.txt), et le pilote officiel ads7846 pour le tactile
-#  (le XPT2046 en est une copie). Rien n'est téléchargé, aucun pilote du vendeur
-#  n'est lancé, la ligne vc4-kms-v3d n'est pas touchée : le grand écran HDMI
-#  continue de fonctionner. Ensuite, install/kiosk.sh relie ce petit écran au
-#  bureau et y ouvre la vue Settings, tout seul, à chaque démarrage.
+#   ili9486 (d'usine) : la famille la plus répandue — Waveshare « 3.5inch RPi LCD
+#       (A) » et « (C) », leurs copies (CUQI, cartes « 3.5 inch Display », cases
+#       IPS/TN à cocher, « SPI 16MHz »…). Données sur GPIO 24, remise à zéro sur
+#       GPIO 25. Pilote OFFICIEL du noyau : piscreen en mode drm (il comprend le
+#       tactile).
+#   st7796s : Waveshare « 3.5inch RPi LCD (G) » (contacts à ressort, IPS).
+#       Données sur GPIO 22, remise à zéro sur GPIO 27. Pilote OFFICIEL
+#       mipi-dbi-spi, avec la séquence d'allumage du ST7796S (install/st7796s.txt),
+#       et ads7846 pour le tactile.
+#
+#  Rien n'est téléchargé, aucun pilote du vendeur n'est lancé, la ligne
+#  vc4-kms-v3d n'est pas touchée : le grand écran HDMI continue de fonctionner.
+#  Ensuite, install/kiosk.sh relie ce petit écran au bureau et y ouvre la vue
+#  Settings, tout seul, à chaque démarrage.
 #
 #  Usage :
-#      sudo ./install/petit-ecran.sh installer [--rotation R] [--tactile T]
-#            R : normal (d'usine, en hauteur), left, right ou inverted
+#      sudo ./install/petit-ecran.sh installer [--modele M] [--rotation R] [--tactile T]
+#            M : ili9486 (d'usine) ou st7796s
+#            R : normal (d'usine), left, right ou inverted
 #            T : inverse-x, inverse-y, echange (si le doigt tombe à l'envers)
 #                ou normal ; sans option, les choix précédents sont gardés
 #      sudo ./install/petit-ecran.sh annuler     retire tout ce qui a été ajouté
@@ -68,6 +75,11 @@ retirer_bloc() {
   fi
 }
 
+# Valeur « cle=… » du réglage enregistré, si elle fait partie des valeurs permises.
+reglage() {
+  sed -n "s/^$1=\\($2\\)\$/\\1/p" "$REGLAGE" 2>/dev/null | tail -1
+}
+
 # install/st7796s.txt -> /lib/firmware/st7796s.bin (format de mipi-dbi-cmd :
 # « MIPI DBI » + 7 zéros, version 1, puis commande, nombre de paramètres,
 # paramètres ; un délai est la commande 0 avec un paramètre en ms).
@@ -97,12 +109,21 @@ PY
 installer() {
   # Sans option, on garde ce qui avait été choisi à l'installation précédente :
   # relancer pour changer la rotation ne doit pas défaire le réglage du tactile.
-  local rotation tactile
-  rotation="$(sed -n 's/^rotation=\(normal\|left\|right\|inverted\)$/\1/p' "$REGLAGE" 2>/dev/null | tail -1)"
+  local modele rotation tactile
+  modele="$(reglage modele 'ili9486\|st7796s')"
+  modele="${modele:-ili9486}"
+  rotation="$(reglage rotation 'normal\|left\|right\|inverted')"
   rotation="${rotation:-normal}"
-  tactile="$(sed -n "\\|^$DEBUT\$|,\\|^$FIN\$|s/^dtoverlay=ads7846,.*\\(,invx\\|,invy\\|,swapxy\\)\$/\\1/p" "$CONFIG" 2>/dev/null | tail -1)"
+  tactile="$(sed -n "\\|^$DEBUT\$|,\\|^$FIN\$|s/^dtoverlay=\\(ads7846\\|piscreen\\),.*\\(,invx\\|,invy\\|,swapxy\\)\$/\\2/p" "$CONFIG" 2>/dev/null | tail -1)"
   while [ $# -gt 0 ]; do
     case "$1" in
+      --modele)
+        case "${2:-}" in
+          ili9486 | st7796s) modele="$2" ;;
+          *) echo "Modèle inconnu : ${2:-} (ili9486 ou st7796s)" >&2; exit 2 ;;
+        esac
+        shift 2
+        ;;
       --rotation)
         case "${2:-}" in
           normal | left | right | inverted) rotation="$2" ;;
@@ -125,8 +146,6 @@ installer() {
   done
   exiger_root installer
   [ -f "$CONFIG" ] || { echo "Fichier de démarrage introuvable ($CONFIG) : est-ce bien le boîtier ?" >&2; exit 1; }
-  [ -f "$SEQUENCE" ] || { echo "Séquence d'allumage introuvable : $SEQUENCE" >&2; exit 1; }
-  command -v python3 >/dev/null 2>&1 || { echo "python3 introuvable." >&2; exit 1; }
 
   # Le pilote du vendeur (LCD-show) désactive le pilote graphique : sur un Pi 5,
   # plus d'image du tout. S'il est passé par là, on s'arrête et on le dit.
@@ -142,15 +161,28 @@ installer() {
   fi
 
   [ -f "$SAUVEGARDE" ] || cp "$CONFIG" "$SAUVEGARDE"
-  fabriquer_firmware
   retirer_bloc
   # « [all] » d'abord : sans lui, nos lignes ne vaudraient que pour la dernière
   # section conditionnelle du fichier ([cm5], [pi4]…).
-  cat >>"$CONFIG" <<EOF
+  if [ "$modele" = ili9486 ]; then
+    # piscreen en mode drm = pilote ili9486 du noyau (« waveshare,rpi-lcd-35 »),
+    # tactile compris. 16 MHz : la vitesse que ces cartes annoncent.
+    cat >>"$CONFIG" <<EOF
 $DEBUT
 [all]
 dtparam=spi=on
-dtoverlay=mipi-dbi-spi,speed=48000000
+dtoverlay=piscreen,drm,speed=16000000${tactile}
+$FIN
+EOF
+  else
+    [ -f "$SEQUENCE" ] || { echo "Séquence d'allumage introuvable : $SEQUENCE" >&2; exit 1; }
+    command -v python3 >/dev/null 2>&1 || { echo "python3 introuvable." >&2; exit 1; }
+    fabriquer_firmware
+    cat >>"$CONFIG" <<EOF
+$DEBUT
+[all]
+dtparam=spi=on
+dtoverlay=mipi-dbi-spi,speed=48000000,write-only
 dtparam=compatible=st7796s\\0panel-mipi-dbi-spi
 dtparam=width=320,height=480,width-mm=49,height-mm=79
 dtparam=reset-gpio=27,dc-gpio=22,backlight-gpio=18
@@ -158,14 +190,15 @@ dtoverlay=ads7846,speed=2000000,penirq=17,xmin=300,ymin=300,xmax=3900,ymax=3800,
 extra_transpose_buffer=2
 $FIN
 EOF
+  fi
 
   # La rotation se fait par le bureau (kiosk.sh), pas au démarrage : elle se
   # change sans toucher à config.txt.
   mkdir -p "$(dirname "$REGLAGE")"
-  echo "rotation=$rotation" >"$REGLAGE"
+  printf 'modele=%s\nrotation=%s\n' "$modele" "$rotation" >"$REGLAGE"
   chown -R "$UTILISATEUR:" "$(dirname "$REGLAGE")" 2>/dev/null || true
 
-  echo "Petit écran préparé (rotation : $rotation)."
+  echo "Petit écran préparé (modèle : $modele, rotation : $rotation)."
   echo "Sauvegarde de l'ancien fichier de démarrage : $SAUVEGARDE"
   echo "Redémarrez maintenant : sudo reboot"
 }
@@ -179,21 +212,25 @@ annuler() {
 
 etat() {
   if grep -qF "$DEBUT" "$CONFIG" 2>/dev/null; then
-    echo "Fichier de démarrage : lignes du petit écran EN PLACE."
+    echo "Fichier de démarrage : lignes du petit écran EN PLACE :"
+    sed -n "\\|^$DEBUT\$|,\\|^$FIN\$|p" "$CONFIG" | sed '1d;$d;s/^/    /'
   else
     echo "Fichier de démarrage : lignes du petit écran ABSENTES (sudo $0 installer)."
   fi
-  if [ -f "$FIRMWARE" ]; then echo "Séquence d'allumage : présente ($FIRMWARE)."; else echo "Séquence d'allumage : ABSENTE."; fi
-  if [ -f "$REGLAGE" ]; then echo "Réglage : $(cat "$REGLAGE")"; fi
-  local pilote=""
-  for carte in /sys/class/drm/card*; do
+  if [ -f "$REGLAGE" ]; then echo "Réglage : $(tr '\n' ' ' <"$REGLAGE")"; fi
+  # Toute carte graphique qui n'est pas celle du Raspberry (vc4, v3d) est celle
+  # du petit écran.
+  local pilote="" carte nom
+  for carte in /sys/class/drm/card[0-9]; do
     [ -e "$carte/device/driver" ] || continue
-    case "$(basename "$(readlink -f "$carte/device/driver")")" in
-      panel-mipi-dbi*) pilote="$(basename "$carte")" ;;
+    nom="$(basename "$(readlink -f "$carte/device/driver")")"
+    case "$nom" in
+      vc4* | v3d*) ;;
+      *) pilote="$nom ($(basename "$carte"))" ;;
     esac
   done
   if [ -n "$pilote" ]; then
-    echo "Pilote de l'écran : chargé ($pilote)."
+    echo "Pilote de l'écran : chargé, $pilote."
   else
     echo "Pilote de l'écran : NON chargé (redémarré depuis l'installation ?)."
   fi

@@ -78,31 +78,50 @@ def _bloc(texte):
     return texte[debut:fin]
 
 
-def test_installer_ajoute_ses_lignes_et_la_sequence(boot):
+def test_installer_par_defaut_la_famille_ili9486(boot):
+    """La famille la plus répandue (Waveshare A/C et leurs copies) : pilote
+    officiel piscreen en mode drm, tactile compris — pas de second ads7846."""
     r = boot["lancer"]("installer")
     assert r.returncode == 0, r.stderr
     texte = boot["config"].read_text(encoding="utf-8")
     assert texte.startswith(ORIGINE)  # rien d'autre n'est touché
     bloc = _bloc(texte)
     assert "[all]\n" in bloc  # sinon nos lignes ne vaudraient que pour [cm5]
-    assert "dtoverlay=mipi-dbi-spi,speed=48000000" in bloc
+    assert "dtoverlay=piscreen,drm,speed=16000000\n" in bloc
+    assert "mipi-dbi" not in bloc and "ads7846" not in bloc
+    assert (boot["tmp"] / "config.txt.avant-petit-ecran").read_text(encoding="utf-8") == ORIGINE
+    reglage = boot["maison"] / ".config" / "prompteur" / "petit-ecran.conf"
+    assert reglage.read_text(encoding="utf-8").split() == ["modele=ili9486", "rotation=normal"]
+
+
+def test_installer_le_st7796s_et_sa_sequence(boot):
+    r = boot["lancer"]("installer", "--modele", "st7796s")
+    assert r.returncode == 0, r.stderr
+    bloc = _bloc(boot["config"].read_text(encoding="utf-8"))
+    assert "dtoverlay=mipi-dbi-spi,speed=48000000,write-only" in bloc
     assert "dtparam=compatible=st7796s\\0panel-mipi-dbi-spi" in bloc  # antislash-zéro littéral
     assert "dtparam=reset-gpio=27,dc-gpio=22,backlight-gpio=18" in bloc
     assert "dtoverlay=ads7846,speed=2000000,penirq=17," in bloc
+    assert "piscreen" not in bloc
     assert (boot["tmp"] / "st7796s.bin").read_bytes() == FIRMWARE_FABRICANT
-    assert (boot["tmp"] / "config.txt.avant-petit-ecran").read_text(encoding="utf-8") == ORIGINE
 
 
 def test_reinstaller_ne_double_rien_et_garde_les_choix(boot):
-    assert boot["lancer"]("installer", "--rotation", "left", "--tactile", "inverse-y").returncode == 0
-    assert boot["lancer"]("installer").returncode == 0
+    lancer = boot["lancer"]
+    assert lancer("installer", "--modele", "st7796s", "--rotation", "left", "--tactile", "inverse-y").returncode == 0
+    assert lancer("installer").returncode == 0
     texte = boot["config"].read_text(encoding="utf-8")
     assert texte.count("# >>> Prompteur") == 1
     assert "xohms=400,invy\n" in _bloc(texte)
     reglage = boot["maison"] / ".config" / "prompteur" / "petit-ecran.conf"
-    assert reglage.read_text(encoding="utf-8").strip() == "rotation=left"
-    assert boot["lancer"]("installer", "--tactile", "normal").returncode == 0
-    assert "xohms=400\n" in _bloc(boot["config"].read_text(encoding="utf-8"))
+    assert reglage.read_text(encoding="utf-8").split() == ["modele=st7796s", "rotation=left"]
+    # Changer de modèle garde la rotation et le réglage du tactile.
+    assert lancer("installer", "--modele", "ili9486").returncode == 0
+    bloc = _bloc(boot["config"].read_text(encoding="utf-8"))
+    assert "dtoverlay=piscreen,drm,speed=16000000,invy\n" in bloc and "mipi-dbi" not in bloc
+    assert reglage.read_text(encoding="utf-8").split() == ["modele=ili9486", "rotation=left"]
+    assert lancer("installer", "--tactile", "normal").returncode == 0
+    assert "dtoverlay=piscreen,drm,speed=16000000\n" in _bloc(boot["config"].read_text(encoding="utf-8"))
 
 
 def test_annuler_rend_le_fichier_d_origine(boot):
@@ -129,4 +148,5 @@ def test_refuse_sans_le_pilote_graphique(boot):
 def test_options_inconnues_refusees(boot):
     assert boot["lancer"]("installer", "--rotation", "diagonale").returncode == 2
     assert boot["lancer"]("installer", "--tactile", "magique").returncode == 2
+    assert boot["lancer"]("installer", "--modele", "hdmi").returncode == 2
     assert boot["config"].read_text(encoding="utf-8") == ORIGINE
