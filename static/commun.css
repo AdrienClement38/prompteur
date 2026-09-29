@@ -48,6 +48,23 @@
   .navvues .navbtn { min-height: 32px; padding: 0 5px; border-radius: 8px; }
 }
 
+/* --- Petit écran du boîtier (?petit=1) : où porte l'appui, et l'image vit-elle ? */
+.trace-appui {
+  position: fixed; z-index: 1100; pointer-events: none;
+  width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  border: 3px solid #ff5a4f; border-radius: 50%;
+  animation: trace-appui .8s ease-out forwards;
+}
+@keyframes trace-appui {
+  from { opacity: 1; transform: scale(.5); }
+  to { opacity: 0; transform: scale(1.4); }
+}
+.horloge-petit {
+  position: fixed; right: 4px; bottom: 2px; z-index: 1100; pointer-events: none;
+  font: 600 11px/1 'Consolas', monospace; color: #9aa3b2;
+  background: rgba(0, 0, 0, .55); padding: 2px 4px; border-radius: 4px;
+}
+
 /* --- Bouton « Info », en haut à droite de chaque bloc --------------------- */
 .infobtn {
   appearance: none; cursor: pointer; margin-left: auto;

@@ -294,6 +294,16 @@ prime_sync() {
     dedans && /PRIME Synchronization:/ { print $3; exit }'
 }
 
+# Relance le rafraîchissement du petit écran SPI. Constaté sur le boîtier : ce
+# n'est pas la VALEUR du réglage qui compte (le journal la montrait déjà à 0),
+# c'est de la POSER : l'image, figée, repart aussitôt. On la repose donc après
+# l'ouverture de la page, régulièrement, et après tout ce qui touche au grand
+# écran (miroir, réveil). Sans effet sur un écran HDMI, qui n'a pas ce réglage.
+relancer_rafraichissement() {
+  [ -n "${1:-}" ] || return 0
+  xrandr --output "$1" --set "PRIME Synchronization" 0 2>/dev/null || true
+}
+
 # Rotation actuelle d'une sortie, telle que xrandr l'écrit après sa géométrie.
 rotation_de() {
   xrandr --query 2>/dev/null | awk -v s="$1" '
@@ -463,7 +473,9 @@ done
 case "$ACTION" in
   --miroir)
     miroir_ecran "$MIROIR_DEMANDE"
-    exit $?
+    CODE=$?
+    relancer_rafraichissement "$(sortie_petit_ecran)"
+    exit "$CODE"
     ;;
   --veille)
     ecrans off
@@ -471,7 +483,9 @@ case "$ACTION" in
     ;;
   --reveil)
     ecrans on
-    exit $?
+    CODE=$?
+    relancer_rafraichissement "$(sortie_petit_ecran)"
+    exit "$CODE"
     ;;
   --menu-stop)
     stop_menu
@@ -582,19 +596,30 @@ case "$ACTION" in
         --window-size="${TAILLE}" \
         --user-data-dir="/tmp/prompteur-menu-profil-$(id -u)" \
         --class=PrompteurMenu \
-        --app="http://localhost:${PORT}/settings" >/dev/null 2>&1 &
+        --app="http://localhost:${PORT}/settings?petit=1" >/dev/null 2>&1 &
       NAVIGATEUR=$!
       SORTIE="$(sortie_petit_ecran)"
-      # Tant que la page est ouverte, on veille sur « PRIME Synchronization » :
-      # vu sur le boîtier, le réglage posé au démarrage ne tenait pas (la page
-      # était ouverte, l'écran montrait encore le bureau figé), alors que le même
-      # réglage, reposé à la main ensuite, faisait apparaître la page aussitôt.
+      # Tant que la page est ouverte, on relance le rafraîchissement : à 3, 10
+      # et 30 s (la page est alors dessinée, le grand écran installé), puis
+      # toutes les 30 s ; et tout de suite si le réglage est revenu à 1.
+      ECOULE=0
       while kill -0 "$NAVIGATEUR" 2>/dev/null; do
-        sleep 5
-        if [ "$(prime_sync "$SORTIE")" = 1 ]; then
-          xrandr --output "$SORTIE" --set "PRIME Synchronization" 0 2>/dev/null &&
-            journal_menu "Rafraîchissement du petit écran rétabli (PRIME Synchronization remis à 0)."
-        fi
+        sleep 1
+        ECOULE=$((ECOULE + 1))
+        case "$ECOULE" in
+          3 | 10 | 30)
+            relancer_rafraichissement "$SORTIE"
+            journal_menu "Rafraîchissement du petit écran relancé (${ECOULE} s après l'ouverture)."
+            ;;
+          *)
+            if [ $((ECOULE % 30)) -eq 0 ]; then
+              relancer_rafraichissement "$SORTIE"
+            elif [ $((ECOULE % 5)) -eq 0 ] && [ "$(prime_sync "$SORTIE")" = 1 ]; then
+              relancer_rafraichissement "$SORTIE"
+              journal_menu "Rafraîchissement du petit écran rétabli (réglage revenu à 1)."
+            fi
+            ;;
+        esac
       done
       wait "$NAVIGATEUR" 2>/dev/null || true
       journal_menu "Page Settings fermée après $(($(date +%s) - DEPART)) s : réouverture."
@@ -696,6 +721,7 @@ if [ "$VUE" = settings ]; then
 else
   miroir_ecran normal 2>/dev/null || true
 fi
+relancer_rafraichissement "$(sortie_petit_ecran)"
 
 # --- Navigateur --------------------------------------------------------------
 BROWSER="$(trouver_navigateur)"

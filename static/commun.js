@@ -269,6 +269,36 @@
     setInterval(relireGrand, 3000);
   }
 
+  // --- Petit écran du boîtier (adresse « ?petit=1 », ouverte par kiosk.sh) ------
+  // Dalle résistive : chaque appui laisse un rond rouge qui s'efface, on voit où
+  // il a porté. Et une horloge à la seconde, en bas à droite : si elle s'arrête,
+  // c'est l'image du petit écran qui ne se rafraîchit plus, pas le tactile.
+  if (new URLSearchParams(window.location.search).has("petit")) {
+    document.documentElement.classList.add("petit-ecran");
+    // Settings <-> Spectateur : on reste en mode petit écran.
+    document.querySelectorAll('.navvues a.navbtn[href^="/"]').forEach((a) => {
+      a.setAttribute("href", a.getAttribute("href").split("?")[0] + "?petit=1");
+    });
+    document.addEventListener(
+      "pointerdown",
+      (e) => {
+        const rond = el("div", "trace-appui");
+        rond.style.left = e.clientX + "px";
+        rond.style.top = e.clientY + "px";
+        document.body.append(rond);
+        setTimeout(() => rond.remove(), 800);
+      },
+      true
+    );
+    const horloge = el("div", "horloge-petit");
+    document.body.append(horloge);
+    const tic = () => {
+      horloge.textContent = new Date().toLocaleTimeString("fr-FR");
+    };
+    tic();
+    setInterval(tic, 1000);
+  }
+
   window.Commun = {
     el,
     poster,
