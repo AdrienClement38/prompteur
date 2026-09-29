@@ -65,6 +65,14 @@ LOCKFILE="/tmp/prompteur-kiosk-$(id -u).lock"
 # fermer le grand écran ne doit pas faire disparaître celle du technicien.
 MENUPID="/tmp/prompteur-menu-$(id -u).pid"
 MENULOCK="/tmp/prompteur-menu-$(id -u).lock"
+# Journal du petit écran : ce qui s'est passé à son ouverture, lisible après coup
+# (cat /tmp/prompteur-menu-UID.log) — il est lancé en arrière-plan, sans fenêtre.
+MENULOG="/tmp/prompteur-menu-$(id -u).log"
+
+journal_menu() {
+  echo "$*"
+  echo "$(date '+%F %T') $*" >>"$MENULOG" 2>/dev/null || true
+}
 
 # --- État --------------------------------------------------------------------
 kiosk_pid() {
@@ -77,6 +85,7 @@ kiosk_pid() {
     '' | *[!0-9]*) return 1 ;;
   esac
   kill -0 "$pid" 2>/dev/null || return 1
+  est_a_nous "$pid" 'kiosk\.sh|PrompteurKiosque' || return 1
   echo "$pid"
 }
 
@@ -288,15 +297,63 @@ rotation_de() {
 # La dalle tactile doit viser le PETIT écran : sans cela, un appui est réparti
 # sur la largeur des deux écrans réunis, et le doigt tombe à côté.
 MOTS_TACTILES='touch|ft5x06|goodix|ilitek|egalax|ads7846|usb2iic|ctp|qdtech|waveshare'
+#
+# Puis les corrections choisies par install/petit-ecran.sh (tactile=…) : une dalle
+# peut avoir ses axes échangés ou retournés par rapport à l'image (vu sur le
+# boîtier : haut et bas inversés). Elles se font ICI, par le bureau, avec des mots
+# qui parlent de l'écran tel qu'on le voit — le pilote du noyau, lui, retourne
+# AVANT d'échanger, et « inverse-x » y voudrait dire l'axe vertical. Elles
+# s'appliquent sans redémarrer.
+tactile_voulu() {
+  sed -n 's/^tactile=\([a-z,-]*\)$/\1/p' "$HOME/.config/prompteur/petit-ecran.conf" 2>/dev/null | tail -1
+}
+
+# Matrice de map-to-output ($1…$9) suivie des corrections ($10) -> nouvelle matrice.
+# Les corrections s'appliquent au point touché AVANT le placement sur l'écran :
+# échange des axes d'abord, puis retournements.
+composer_matrice() {
+  echo "$1" | awk -v corr=",$2," '{
+    gsub(",", " ")
+    for (i = 1; i <= 9; i++) m[i] = $i
+    q[1]=1; q[2]=0; q[3]=0; q[4]=0; q[5]=1; q[6]=0
+    if (index(corr, ",echange,")) { q[1]=0; q[2]=1; q[4]=1; q[5]=0 }
+    if (index(corr, ",inverse-x,")) { q[1]=-q[1]; q[2]=-q[2]; q[3]=1-q[3] }
+    if (index(corr, ",inverse-y,")) { q[4]=-q[4]; q[5]=-q[5]; q[6]=1-q[6] }
+    # Produit M × Q (troisième ligne de Q : 0 0 1).
+    r[1] = m[1]*q[1] + m[2]*q[4];  r[2] = m[1]*q[2] + m[2]*q[5];  r[3] = m[1]*q[3] + m[2]*q[6] + m[3]
+    r[4] = m[4]*q[1] + m[5]*q[4];  r[5] = m[4]*q[2] + m[5]*q[5];  r[6] = m[4]*q[3] + m[5]*q[6] + m[6]
+    printf "%.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f\n", r[1], r[2], r[3], r[4], r[5], r[6], m[7], m[8], m[9]
+  }'
+}
+
 caler_tactile() {
   command -v xinput >/dev/null 2>&1 || return 0
-  local petit id
+  local petit id corrections matrice
   petit="$(sortie_petit_ecran)"
   [ -n "$petit" ] || return 0
+  corrections="$(tactile_voulu)"
   for id in $(xinput list --short 2>/dev/null | grep -iE 'slave +pointer' | grep -iE "$MOTS_TACTILES" |
     sed -n 's/.*id=\([0-9]\+\).*/\1/p'); do
-    xinput map-to-output "$id" "$petit" 2>/dev/null || true
+    # map-to-output place le tactile sur le petit écran (rotation comprise).
+    xinput map-to-output "$id" "$petit" 2>/dev/null || continue
+    case "$corrections" in
+      '' | normal) continue ;;
+    esac
+    matrice="$(xinput list-props "$id" 2>/dev/null |
+      sed -n 's/.*Coordinate Transformation Matrix ([0-9]*):[[:space:]]*//p' | head -1)"
+    [ -n "$matrice" ] || continue
+    # shellcheck disable=SC2046 # neuf nombres, séparés par des espaces
+    xinput set-prop "$id" "Coordinate Transformation Matrix" \
+      $(composer_matrice "$matrice" "$corrections") 2>/dev/null || true
   done
+}
+
+# Un PID lu dans un fichier ne vaut que s'il désigne encore NOTRE processus :
+# après un redémarrage, le même numéro peut appartenir à n'importe quoi d'autre,
+# et l'on croirait la fenêtre ouverte alors qu'elle ne l'est pas.
+est_a_nous() {
+  [ -r "/proc/$1/cmdline" ] || return 0 # impossible de vérifier : on fait confiance
+  tr '\0' ' ' <"/proc/$1/cmdline" 2>/dev/null | grep -qE "$2"
 }
 
 menu_pid() {
@@ -307,6 +364,7 @@ menu_pid() {
     '' | *[!0-9]*) return 1 ;;
   esac
   kill -0 "$pid" 2>/dev/null || return 1
+  est_a_nous "$pid" 'kiosk\.sh|PrompteurMenu' || return 1
   echo "$pid"
 }
 
@@ -374,7 +432,7 @@ while [ $# -gt 0 ]; do
       esac
       shift 2
       ;;
-    --restart | --stop | --status | --veille | --reveil | --menu | --menu-stop | --reprendre | --ecrans)
+    --restart | --stop | --status | --veille | --reveil | --menu | --menu-stop | --reprendre | --ecrans | --caler-tactile)
       ACTION="$1"
       shift
       ;;
@@ -429,28 +487,50 @@ case "$ACTION" in
     fi
     exit 0
     ;;
+  --caler-tactile)
+    caler_tactile
+    echo "Tactile recalé sur le petit écran (corrections : $(tactile_voulu))."
+    exit 0
+    ;;
   --menu)
     detacher_si_ssh "Vue Settings demandée sur le petit écran du boîtier."
+    # Le journal ne garde que les 200 dernières lignes.
+    if [ -f "$MENULOG" ]; then tail -n 200 "$MENULOG" >"$MENULOG.tmp" 2>/dev/null && mv -f "$MENULOG.tmp" "$MENULOG"; fi
+    journal_menu "Ouverture demandée (PID $$)."
     # Un seul petit écran à la fois, même si deux lancements se croisent : on
     # vérifie ET on réserve la place sous le même verrou.
     exec 8>"$MENULOCK"
     flock 8 2>/dev/null || true
     if menu_pid >/dev/null; then
-      echo "Petit écran déjà affiché."
+      journal_menu "Petit écran déjà affiché (PID $(menu_pid))."
       exit 0
     fi
-    relier_ecrans_annexes # le petit écran SPI n'apparaît qu'une fois relié
-    if [ -z "$(sortie_petit_ecran)" ]; then
-      echo "Un seul écran branché : pas de petit écran à remplir."
-      exit 0
-    fi
-    if ! disposer_ecrans; then
-      echo "Le petit écran n'a pas pu être placé à côté du grand : rien n'est ouvert (voir kiosk.sh --ecrans)." >&2
+    # Lancée au démarrage, on laisse au petit écran le temps d'apparaître
+    # (PROMPTEUR_ATTENDRE_ECRAN secondes) ; à la main, la réponse est immédiate.
+    ATTENTE="${PROMPTEUR_ATTENDRE_ECRAN:-0}"
+    case "$ATTENTE" in '' | *[!0-9]*) ATTENTE=0 ;; esac
+    PRET=""
+    while :; do
+      relier_ecrans_annexes # le petit écran SPI n'apparaît qu'une fois relié
+      if [ -n "$(sortie_petit_ecran)" ] && disposer_ecrans; then
+        PRET=1
+        break
+      fi
+      [ "$ATTENTE" -gt 0 ] || break
+      ATTENTE=$((ATTENTE - 2))
+      sleep 2
+    done
+    if [ -z "$PRET" ]; then
+      if [ -z "$(sortie_petit_ecran)" ]; then
+        journal_menu "Un seul écran branché : pas de petit écran à remplir."
+        exit 0
+      fi
+      journal_menu "Le petit écran n'a pas pu être placé à côté du grand : rien n'est ouvert (voir kiosk.sh --ecrans)." >&2
       exit 1
     fi
     BROWSER="$(trouver_navigateur)"
     if [ -z "$BROWSER" ]; then
-      echo "Prompteur: Chromium introuvable." >&2
+      journal_menu "Prompteur: Chromium introuvable." >&2
       exit 1
     fi
     echo $$ >"$MENUPID"
@@ -465,10 +545,14 @@ case "$ACTION" in
       # Position et taille réelles du petit écran ; PROMPTEUR_MENU_POS
       # (« 1920,0 ») et PROMPTEUR_MENU_TAILLE (« 480,320 ») permettent de les imposer.
       read -r GX GY GW GH <<<"$(geometrie "$(sortie_petit_ecran)")"
-      [ -n "${GX:-}" ] || break
+      if [ -z "${GX:-}" ]; then
+        journal_menu "Petit écran introuvable : arrêt."
+        break
+      fi
       POS="${PROMPTEUR_MENU_POS:-${GX},${GY}}"
       TAILLE="${PROMPTEUR_MENU_TAILLE:-${GW:-800},${GH:-480}}"
       DEPART="$(date +%s)"
+      journal_menu "Page Settings ouverte en $POS, taille $TAILLE."
       # Plein écran (--kiosk) sur le petit écran, avec son propre profil : c'est
       # un second navigateur, indépendant de celui du grand écran.
       "$BROWSER" \
@@ -486,10 +570,14 @@ case "$ACTION" in
         --window-size="${TAILLE}" \
         --user-data-dir="/tmp/prompteur-menu-profil-$(id -u)" \
         --class=PrompteurMenu \
-        --app="http://localhost:${PORT}/settings" >/dev/null 2>&1 || true
+        --app="http://localhost:${PORT}/settings" >>"$MENULOG" 2>&1 || true
+      journal_menu "Page Settings fermée après $(($(date +%s) - DEPART)) s : réouverture."
       # Refermée aussitôt ouverte : on attend un peu plus, sans s'emballer.
       if [ $(($(date +%s) - DEPART)) -lt 10 ]; then sleep 10; else sleep 2; fi
-      disposer_ecrans || break
+      if ! disposer_ecrans; then
+        journal_menu "Le petit écran n'est plus à côté du grand : arrêt."
+        break
+      fi
     done
     rm -f "$MENUPID"
     exit 0
@@ -565,8 +653,12 @@ attendre_serveur || true
 # directement sur le boîtier : pas besoin du WiFi. Les deux écrans sont d'abord
 # mis côte à côte, puis la fenêtre du petit est lancée à part : elle vit sa vie,
 # fermer ou changer la vue du grand écran ne la touche pas.
-if disposer_ecrans && ! menu_pid >/dev/null && command -v setsid >/dev/null 2>&1; then
-  PROMPTEUR_DETACHE=1 setsid -f /bin/bash "$0" --menu </dev/null >/dev/null 2>&1 || true
+# Au démarrage, le petit écran peut n'être prêt qu'un peu après le bureau (vu sur
+# le boîtier : on tombait sur le bureau au lieu de Settings) : on le place s'il
+# est déjà là, et la fenêtre, lancée dans tous les cas, l'attend une minute.
+disposer_ecrans || true
+if ! menu_pid >/dev/null && command -v setsid >/dev/null 2>&1; then
+  PROMPTEUR_DETACHE=1 PROMPTEUR_ATTENDRE_ECRAN=60 setsid -f /bin/bash "$0" --menu </dev/null >/dev/null 2>&1 || true
 fi
 
 # --- Miroir de l'écran entier -------------------------------------------------

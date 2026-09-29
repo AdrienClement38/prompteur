@@ -24,8 +24,12 @@
 #      sudo ./install/petit-ecran.sh installer [--modele M] [--rotation R] [--tactile T]
 #            M : ili9486 (d'usine) ou st7796s
 #            R : normal (d'usine), left, right ou inverted
-#            T : inverse-x, inverse-y, echange, ou plusieurs : echange,inverse-x
-#                ou normal ; sans option, les choix précédents sont gardés
+#            T : voir « tactile » ci-dessous ; sans option, les choix précédents
+#                sont gardés
+#      ./install/petit-ecran.sh tactile T        corrige le tactile TOUT DE SUITE,
+#            sans redémarrer ni sudo. T : inverse-y (haut et bas inversés),
+#            inverse-x (gauche et droite), echange (les deux axes croisés),
+#            plusieurs à la fois (echange,inverse-x), ou normal
 #      sudo ./install/petit-ecran.sh annuler     retire tout ce qui a été ajouté
 #      ./install/petit-ecran.sh etat             dit ce qui est en place
 #  Après installer ou annuler : sudo reboot
@@ -80,6 +84,34 @@ reglage() {
   sed -n "s/^$1=\\($2\\)\$/\\1/p" "$REGLAGE" 2>/dev/null | tail -1
 }
 
+# « echange,inverse-x » -> forme rangée (echange, inverse-x, inverse-y), ou « » pour
+# aucun. Les corrections sont appliquées par le bureau (kiosk.sh), avec des mots
+# qui parlent de l'écran tel qu'on le voit. Code 2 si un mot est inconnu.
+normaliser_tactile() {
+  local choix c echange="" invx="" invy="" sortie=""
+  [ -n "${1:-}" ] || { echo "Réglage du tactile manquant (normal, inverse-x, inverse-y, echange)" >&2; return 2; }
+  IFS=',' read -r -a choix <<<"$1"
+  for c in "${choix[@]}"; do
+    case "$c" in
+      inverse-x) invx=1 ;;
+      inverse-y) invy=1 ;;
+      echange) echange=1 ;;
+      normal) ;;
+      *) echo "Réglage du tactile inconnu : $c (normal, inverse-x, inverse-y ou echange)" >&2; return 2 ;;
+    esac
+  done
+  [ -z "$echange" ] || sortie="$sortie,echange"
+  [ -z "$invx" ] || sortie="$sortie,inverse-x"
+  [ -z "$invy" ] || sortie="$sortie,inverse-y"
+  echo "${sortie#,}"
+}
+
+ecrire_reglage() {
+  mkdir -p "$(dirname "$REGLAGE")"
+  printf 'modele=%s\nrotation=%s\ntactile=%s\n' "$1" "$2" "$3" >"$REGLAGE"
+  chown -R "$UTILISATEUR:" "$(dirname "$REGLAGE")" 2>/dev/null || true
+}
+
 # install/st7796s.txt -> /lib/firmware/st7796s.bin (format de mipi-dbi-cmd :
 # « MIPI DBI » + 7 zéros, version 1, puis commande, nombre de paramètres,
 # paramètres ; un délai est la commande 0 avec un paramètre en ms).
@@ -114,14 +146,7 @@ installer() {
   modele="${modele:-ili9486}"
   rotation="$(reglage rotation 'normal\|left\|right\|inverted')"
   rotation="${rotation:-normal}"
-  local ligne f
-  ligne="$(sed -n "\\|^$DEBUT\$|,\\|^$FIN\$|{/^dtoverlay=\\(ads7846\\|piscreen\\),/p}" "$CONFIG" 2>/dev/null | tail -1)"
-  tactile=""
-  for f in swapxy invx invy; do
-    case ",$ligne," in
-      *",$f,"*) tactile="$tactile,$f" ;;
-    esac
-  done
+  tactile="$(reglage tactile '[a-z,-]*')"
   while [ $# -gt 0 ]; do
     case "$1" in
       --modele)
@@ -139,20 +164,7 @@ installer() {
         shift 2
         ;;
       --tactile)
-        # Un ou plusieurs réglages séparés par des virgules : echange,inverse-x…
-        local choix c echange="" invx="" invy=""
-        [ -n "${2:-}" ] || { echo "Réglage du tactile manquant (normal, inverse-x, inverse-y, echange)" >&2; exit 2; }
-        IFS=',' read -r -a choix <<<"$2"
-        for c in "${choix[@]}"; do
-          case "$c" in
-            inverse-x) invx=",invx" ;;
-            inverse-y) invy=",invy" ;;
-            echange) echange=",swapxy" ;;
-            normal) ;;
-            *) echo "Réglage du tactile inconnu : $c (normal, inverse-x, inverse-y ou echange)" >&2; exit 2 ;;
-          esac
-        done
-        tactile="$echange$invx$invy"
+        tactile="$(normaliser_tactile "${2:-}")" || exit 2
         shift 2
         ;;
       *) usage ;;
@@ -185,7 +197,7 @@ installer() {
 $DEBUT
 [all]
 dtparam=spi=on
-dtoverlay=piscreen,drm,speed=16000000${tactile}
+dtoverlay=piscreen,drm,speed=16000000
 $FIN
 EOF
   else
@@ -200,21 +212,34 @@ dtoverlay=mipi-dbi-spi,speed=48000000,write-only
 dtparam=compatible=st7796s\\0panel-mipi-dbi-spi
 dtparam=width=320,height=480,width-mm=49,height-mm=79
 dtparam=reset-gpio=27,dc-gpio=22,backlight-gpio=18
-dtoverlay=ads7846,speed=2000000,penirq=17,xmin=300,ymin=300,xmax=3900,ymax=3800,pmin=0,pmax=65535,xohms=400${tactile}
+dtoverlay=ads7846,speed=2000000,penirq=17,xmin=300,ymin=300,xmax=3900,ymax=3800,pmin=0,pmax=65535,xohms=400
 extra_transpose_buffer=2
 $FIN
 EOF
   fi
 
-  # La rotation se fait par le bureau (kiosk.sh), pas au démarrage : elle se
-  # change sans toucher à config.txt.
-  mkdir -p "$(dirname "$REGLAGE")"
-  printf 'modele=%s\nrotation=%s\n' "$modele" "$rotation" >"$REGLAGE"
-  chown -R "$UTILISATEUR:" "$(dirname "$REGLAGE")" 2>/dev/null || true
+  # Rotation et tactile se font par le bureau (kiosk.sh), pas au démarrage : ils
+  # se changent sans toucher à config.txt.
+  ecrire_reglage "$modele" "$rotation" "$tactile"
 
-  echo "Petit écran préparé (modèle : $modele, rotation : $rotation)."
+  echo "Petit écran préparé (modèle : $modele, rotation : $rotation, tactile : ${tactile:-normal})."
   echo "Sauvegarde de l'ancien fichier de démarrage : $SAUVEGARDE"
   echo "Redémarrez maintenant : sudo reboot"
+}
+
+# Corrige le tactile tout de suite : le réglage est gardé pour les démarrages
+# suivants, et appliqué à l'instant par le bureau. Ni sudo, ni redémarrage.
+tactile() {
+  local t modele rotation
+  t="$(normaliser_tactile "${1:-}")" || exit 2
+  modele="$(reglage modele 'ili9486\|st7796s')"
+  rotation="$(reglage rotation 'normal\|left\|right\|inverted')"
+  ecrire_reglage "${modele:-ili9486}" "${rotation:-normal}" "$t"
+  if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then
+    "$ICI/kiosk.sh" --caler-tactile
+  else
+    echo "Réglage du tactile enregistré (${t:-normal}) : il s'appliquera au prochain démarrage."
+  fi
 }
 
 annuler() {
@@ -259,6 +284,7 @@ etat() {
 
 case "${1:-}" in
   installer) shift; installer "$@" ;;
+  tactile) shift; tactile "$@" ;;
   annuler) annuler ;;
   etat) etat ;;
   *) usage ;;

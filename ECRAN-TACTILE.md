@@ -47,14 +47,18 @@ ouvre la vue Settings. Le grand écran n'est pas touché.
 | Ce que vous voyez | La ligne à taper, puis `sudo reboot` |
 |---|---|
 | La page est **couchée** (écran monté en largeur) | `sudo ./install/petit-ecran.sh installer --rotation left` *(ou `right` si elle est couchée de l'autre côté ; `inverted` si elle est à l'envers)* |
-| Le **doigt tombe à côté**, en miroir gauche-droite | `sudo ./install/petit-ecran.sh installer --tactile inverse-x` |
-| … en miroir haut-bas | `sudo ./install/petit-ecran.sh installer --tactile inverse-y` |
-| … le doigt va en haut quand on va à droite | `sudo ./install/petit-ecran.sh installer --tactile echange` |
+| Le **doigt tombe à côté**, haut et bas inversés | `cd ~/prompteur && ./install/petit-ecran.sh tactile inverse-y` *(effet immédiat, sans redémarrer)* |
+| … gauche et droite inversées | `cd ~/prompteur && ./install/petit-ecran.sh tactile inverse-x` |
+| … le doigt va en haut quand on va à droite | `cd ~/prompteur && ./install/petit-ecran.sh tactile echange` |
 | **Toujours blanc** | l'autre famille : `sudo ./install/petit-ecran.sh installer --modele st7796s` *(ou `--modele ili9486` pour revenir)* ; si c'est encore blanc, `./install/petit-ecran.sh etat` *(sans sudo)* et envoyez une photo |
 
-Plusieurs corrections du tactile se combinent, séparées par une virgule :
-`--tactile echange,inverse-x`. Chaque relance garde les autres choix (la rotation ne défait
-pas le réglage du tactile).
+Les corrections du tactile se combinent, séparées par une virgule (`echange,inverse-x`),
+`normal` les retire. Elles s'appliquent **tout de suite**, sans sudo ni redémarrage, et sont
+gardées pour les démarrages suivants. Les lignes `installer` marquées `sudo` demandent, elles,
+un redémarrage ; chaque relance garde les autres choix.
+
+**La page Settings n'apparaît pas sur le petit écran ?** Le journal de son ouverture dit
+pourquoi : `cat /tmp/prompteur-menu-$(id -u).log`.
 
 ### Revenir en arrière
 

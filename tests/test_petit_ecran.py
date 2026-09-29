@@ -91,7 +91,7 @@ def test_installer_par_defaut_la_famille_ili9486(boot):
     assert "mipi-dbi" not in bloc and "ads7846" not in bloc
     assert (boot["tmp"] / "config.txt.avant-petit-ecran").read_text(encoding="utf-8") == ORIGINE
     reglage = boot["maison"] / ".config" / "prompteur" / "petit-ecran.conf"
-    assert reglage.read_text(encoding="utf-8").split() == ["modele=ili9486", "rotation=normal"]
+    assert reglage.read_text(encoding="utf-8").split() == ["modele=ili9486", "rotation=normal", "tactile="]
 
 
 def test_installer_le_st7796s_et_sa_sequence(boot):
@@ -106,27 +106,48 @@ def test_installer_le_st7796s_et_sa_sequence(boot):
     assert (boot["tmp"] / "st7796s.bin").read_bytes() == FIRMWARE_FABRICANT
 
 
+def _reglage(boot):
+    return (boot["maison"] / ".config" / "prompteur" / "petit-ecran.conf").read_text(encoding="utf-8").split()
+
+
 def test_reinstaller_ne_double_rien_et_garde_les_choix(boot):
     lancer = boot["lancer"]
     assert lancer("installer", "--modele", "st7796s", "--rotation", "left", "--tactile", "inverse-y").returncode == 0
     assert lancer("installer").returncode == 0
     texte = boot["config"].read_text(encoding="utf-8")
     assert texte.count("# >>> Prompteur") == 1
-    assert "xohms=400,invy\n" in _bloc(texte)
-    reglage = boot["maison"] / ".config" / "prompteur" / "petit-ecran.conf"
-    assert reglage.read_text(encoding="utf-8").split() == ["modele=st7796s", "rotation=left"]
+    assert _reglage(boot) == ["modele=st7796s", "rotation=left", "tactile=inverse-y"]
     # Changer de modèle garde la rotation et le réglage du tactile.
     assert lancer("installer", "--modele", "ili9486").returncode == 0
     bloc = _bloc(boot["config"].read_text(encoding="utf-8"))
-    assert "dtoverlay=piscreen,drm,speed=16000000,invy\n" in bloc and "mipi-dbi" not in bloc
-    assert reglage.read_text(encoding="utf-8").split() == ["modele=ili9486", "rotation=left"]
-    assert lancer("installer", "--tactile", "normal").returncode == 0
-    assert "dtoverlay=piscreen,drm,speed=16000000\n" in _bloc(boot["config"].read_text(encoding="utf-8"))
-    # Plusieurs réglages à la fois, dans un ordre fixe ; et ils sont gardés.
+    assert "dtoverlay=piscreen,drm,speed=16000000\n" in bloc and "mipi-dbi" not in bloc
+    assert _reglage(boot) == ["modele=ili9486", "rotation=left", "tactile=inverse-y"]
+    # Plusieurs corrections à la fois, rangées dans un ordre fixe.
     assert lancer("installer", "--tactile", "inverse-y,echange").returncode == 0
-    assert "dtoverlay=piscreen,drm,speed=16000000,swapxy,invy\n" in _bloc(boot["config"].read_text(encoding="utf-8"))
-    assert lancer("installer", "--rotation", "inverted").returncode == 0
-    assert "dtoverlay=piscreen,drm,speed=16000000,swapxy,invy\n" in _bloc(boot["config"].read_text(encoding="utf-8"))
+    assert _reglage(boot) == ["modele=ili9486", "rotation=left", "tactile=echange,inverse-y"]
+    assert lancer("installer", "--tactile", "normal").returncode == 0
+    assert _reglage(boot) == ["modele=ili9486", "rotation=left", "tactile="]
+
+
+def test_le_tactile_ne_touche_pas_au_fichier_de_demarrage(boot):
+    """Les corrections du tactile sont faites par le bureau : le fichier de
+    démarrage n'en porte aucune (le pilote du noyau retourne AVANT d'échanger
+    les axes, ses « invx / invy » ne veulent pas dire ce qu'on croit)."""
+    assert boot["lancer"]("installer", "--tactile", "echange,inverse-x,inverse-y").returncode == 0
+    bloc = _bloc(boot["config"].read_text(encoding="utf-8"))
+    assert "invx" not in bloc and "invy" not in bloc and "swapxy" not in bloc
+
+
+def test_corriger_le_tactile_sans_sudo_ni_redemarrage(boot):
+    lancer = boot["lancer"]
+    assert lancer("installer", "--rotation", "right").returncode == 0
+    avant = boot["config"].read_text(encoding="utf-8")
+    r = lancer("tactile", "inverse-y")
+    assert r.returncode == 0, r.stderr
+    assert _reglage(boot) == ["modele=ili9486", "rotation=right", "tactile=inverse-y"]
+    assert boot["config"].read_text(encoding="utf-8") == avant  # rien à redémarrer
+    assert lancer("tactile", "magique").returncode == 2
+    assert _reglage(boot) == ["modele=ili9486", "rotation=right", "tactile=inverse-y"]
 
 
 def test_annuler_rend_le_fichier_d_origine(boot):
@@ -157,3 +178,38 @@ def test_options_inconnues_refusees(boot):
     assert boot["lancer"]("installer", "--tactile", "echange,magique").returncode == 2
     assert boot["lancer"]("installer", "--tactile", "").returncode == 2
     assert boot["config"].read_text(encoding="utf-8") == ORIGINE
+
+
+def test_matrice_du_tactile_avec_les_mesures_du_boitier():
+    """Mesures relevées sur le boîtier (valeurs brutes de la dalle, sur 65535) :
+    haut et bas étaient inversés. Avec « inverse-y », chaque coin doit tomber
+    dans le bon coin du petit écran (480 × 320, à droite du grand : x de 1920
+    à 2400, y de 0 à 320, sur un bureau de 2400 × 1080)."""
+    kiosk = (RACINE / "install" / "kiosk.sh").as_posix()
+    sortie = subprocess.run(  # nosec B603 - script du dépôt, arguments fixes
+        [
+            _bash(),
+            "-c",
+            'source <(sed -n "/^composer_matrice()/,/^}/p" "$1"); composer_matrice "$2" "$3"',
+            "essai",
+            kiosk,
+            "0.200000, 0.000000, 0.800000, 0.000000, 0.296296, 0.000000, 0.000000, 0.000000, 1.000000",
+            "inverse-y",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    m = [float(v) for v in sortie.stdout.split()]
+    assert len(m) == 9, sortie.stderr
+
+    def ecran(u, v):
+        u, v = u / 65535, v / 65535
+        return (m[0] * u + m[1] * v + m[2]) * 2400, (m[3] * u + m[4] * v + m[5]) * 1080
+
+    hg_x, hg_y = ecran(4287.93, 62847.04)  # coin touché : en haut à gauche
+    hd_x, hd_y = ecran(61503.06, 61119.07)  # en haut à droite
+    bg_x, bg_y = ecran(4575.93, 2847.96)  # en bas à gauche
+    assert 1920 <= hg_x < 2000 and 0 <= hg_y < 40
+    assert 2320 < hd_x <= 2400 and 0 <= hd_y < 40
+    assert 1920 <= bg_x < 2000 and 280 < bg_y <= 320
