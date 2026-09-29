@@ -52,7 +52,9 @@ ouvre la vue Settings. Le grand écran n'est pas touché.
 | … le doigt va en haut quand on va à droite | `sudo ./install/petit-ecran.sh installer --tactile echange` |
 | **Toujours blanc** | l'autre famille : `sudo ./install/petit-ecran.sh installer --modele st7796s` *(ou `--modele ili9486` pour revenir)* ; si c'est encore blanc, `./install/petit-ecran.sh etat` *(sans sudo)* et envoyez une photo |
 
-Chaque relance garde les autres choix (la rotation ne défait pas le réglage du tactile).
+Plusieurs corrections du tactile se combinent, séparées par une virgule :
+`--tactile echange,inverse-x`. Chaque relance garde les autres choix (la rotation ne défait
+pas le réglage du tactile).
 
 ### Revenir en arrière
 

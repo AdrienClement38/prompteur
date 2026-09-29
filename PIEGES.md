@@ -210,6 +210,14 @@ ne le montre pas. Sur les forums, on s'en tire en désactivant le HDMI…
 --setprovideroutputsource`), une seule fois (relier deux fois peut l'éteindre), avant
 de le placer à côté du grand écran.
 
+### 🔴 Relié, placé… et figé sur le noir du démarrage
+Écran SPI relié et placé, fenêtre Settings ouverte dessus : l'écran restait noir, et
+la souris y disparaissait. La « synchronisation PRIME » (activée d'office) attend,
+pour envoyer chaque image, des signaux de rafraîchissement qu'un écran SPI ne donne
+pas : rien n'était jamais envoyé.
+**Parade :** `xrandr --output <petit écran> --set "PRIME Synchronization" 0`, posé
+par kiosk.sh à chaque placement. Constaté sur le boîtier : la page est apparue aussitôt.
+
 ### Les réglages `hdmi_*` sont ignorés sur Pi 5
 Presque tous les tutoriels en ligne datent d'avant le changement d'architecture
 graphique. Les recettes qu'on trouve **ne font rien**, sans le dire.

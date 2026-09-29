@@ -24,7 +24,7 @@
 #      sudo ./install/petit-ecran.sh installer [--modele M] [--rotation R] [--tactile T]
 #            M : ili9486 (d'usine) ou st7796s
 #            R : normal (d'usine), left, right ou inverted
-#            T : inverse-x, inverse-y, echange (si le doigt tombe à l'envers)
+#            T : inverse-x, inverse-y, echange, ou plusieurs : echange,inverse-x
 #                ou normal ; sans option, les choix précédents sont gardés
 #      sudo ./install/petit-ecran.sh annuler     retire tout ce qui a été ajouté
 #      ./install/petit-ecran.sh etat             dit ce qui est en place
@@ -114,7 +114,14 @@ installer() {
   modele="${modele:-ili9486}"
   rotation="$(reglage rotation 'normal\|left\|right\|inverted')"
   rotation="${rotation:-normal}"
-  tactile="$(sed -n "\\|^$DEBUT\$|,\\|^$FIN\$|s/^dtoverlay=\\(ads7846\\|piscreen\\),.*\\(,invx\\|,invy\\|,swapxy\\)\$/\\2/p" "$CONFIG" 2>/dev/null | tail -1)"
+  local ligne f
+  ligne="$(sed -n "\\|^$DEBUT\$|,\\|^$FIN\$|{/^dtoverlay=\\(ads7846\\|piscreen\\),/p}" "$CONFIG" 2>/dev/null | tail -1)"
+  tactile=""
+  for f in swapxy invx invy; do
+    case ",$ligne," in
+      *",$f,"*) tactile="$tactile,$f" ;;
+    esac
+  done
   while [ $# -gt 0 ]; do
     case "$1" in
       --modele)
@@ -132,13 +139,20 @@ installer() {
         shift 2
         ;;
       --tactile)
-        case "${2:-}" in
-          inverse-x) tactile=",invx" ;;
-          inverse-y) tactile=",invy" ;;
-          echange) tactile=",swapxy" ;;
-          normal) tactile="" ;;
-          *) echo "Réglage du tactile inconnu : ${2:-} (normal, inverse-x, inverse-y ou echange)" >&2; exit 2 ;;
-        esac
+        # Un ou plusieurs réglages séparés par des virgules : echange,inverse-x…
+        local choix c echange="" invx="" invy=""
+        [ -n "${2:-}" ] || { echo "Réglage du tactile manquant (normal, inverse-x, inverse-y, echange)" >&2; exit 2; }
+        IFS=',' read -r -a choix <<<"$2"
+        for c in "${choix[@]}"; do
+          case "$c" in
+            inverse-x) invx=",invx" ;;
+            inverse-y) invy=",invy" ;;
+            echange) echange=",swapxy" ;;
+            normal) ;;
+            *) echo "Réglage du tactile inconnu : $c (normal, inverse-x, inverse-y ou echange)" >&2; exit 2 ;;
+          esac
+        done
+        tactile="$echange$invx$invy"
         shift 2
         ;;
       *) usage ;;

@@ -122,6 +122,11 @@ def test_reinstaller_ne_double_rien_et_garde_les_choix(boot):
     assert reglage.read_text(encoding="utf-8").split() == ["modele=ili9486", "rotation=left"]
     assert lancer("installer", "--tactile", "normal").returncode == 0
     assert "dtoverlay=piscreen,drm,speed=16000000\n" in _bloc(boot["config"].read_text(encoding="utf-8"))
+    # Plusieurs réglages à la fois, dans un ordre fixe ; et ils sont gardés.
+    assert lancer("installer", "--tactile", "inverse-y,echange").returncode == 0
+    assert "dtoverlay=piscreen,drm,speed=16000000,swapxy,invy\n" in _bloc(boot["config"].read_text(encoding="utf-8"))
+    assert lancer("installer", "--rotation", "inverted").returncode == 0
+    assert "dtoverlay=piscreen,drm,speed=16000000,swapxy,invy\n" in _bloc(boot["config"].read_text(encoding="utf-8"))
 
 
 def test_annuler_rend_le_fichier_d_origine(boot):
@@ -149,4 +154,6 @@ def test_options_inconnues_refusees(boot):
     assert boot["lancer"]("installer", "--rotation", "diagonale").returncode == 2
     assert boot["lancer"]("installer", "--tactile", "magique").returncode == 2
     assert boot["lancer"]("installer", "--modele", "hdmi").returncode == 2
+    assert boot["lancer"]("installer", "--tactile", "echange,magique").returncode == 2
+    assert boot["lancer"]("installer", "--tactile", "").returncode == 2
     assert boot["config"].read_text(encoding="utf-8") == ORIGINE

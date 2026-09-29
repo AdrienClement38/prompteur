@@ -230,15 +230,24 @@ disposer_ecrans() {
   petit="$(sortie_petit_ecran)"
   { [ -n "$grand" ] && [ -n "$petit" ]; } || return 1
   rotation="$(rotation_voulue)"
-  if cote_a_cote "$grand" "$petit" && [ "$(rotation_de "$petit")" = "$rotation" ]; then
-    return 0
+  if ! cote_a_cote "$grand" "$petit" || [ "$(rotation_de "$petit")" != "$rotation" ]; then
+    xrandr --output "$petit" --auto --rotate "$rotation" --right-of "$grand" 2>/dev/null
+    local place=""
+    for _ in $(seq 1 10); do
+      if cote_a_cote "$grand" "$petit"; then
+        place=1
+        break
+      fi
+      sleep 0.3
+    done
+    [ -n "$place" ] || return 1
   fi
-  xrandr --output "$petit" --auto --rotate "$rotation" --right-of "$grand" 2>/dev/null
-  for _ in $(seq 1 10); do
-    cote_a_cote "$grand" "$petit" && return 0
-    sleep 0.3
-  done
-  return 1
+  # Écran SPI relié à la carte principale : sans cela, l'image ne se rafraîchit
+  # jamais (elle reste figée sur le noir du démarrage). Vu sur le boîtier : la
+  # synchronisation « PRIME » attend des signaux qu'un écran SPI ne donne pas.
+  # Sans effet (et sans erreur) sur un écran HDMI, qui n'a pas ce réglage.
+  xrandr --output "$petit" --set "PRIME Synchronization" 0 2>/dev/null || true
+  return 0
 }
 
 # Le petit écran de 3,5 pouces sur les broches (SPI) est une carte graphique à
