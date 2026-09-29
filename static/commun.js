@@ -304,17 +304,45 @@
         .catch(() => {});
     lireTouches();
     setInterval(lireTouches, 10000);
+    // Les pédales passent AVANT tout sur ce petit écran : même si un champ a la
+    // main (« Commencer à la ligne »…), une pédale fait défiler le texte, elle
+    // ne change pas le chiffre du champ. Seule exception : l'apprentissage d'une
+    // touche de pédale (onglet Réglages), qui doit justement la recevoir ici.
+    // Envois dans l'ORDRE, l'un après l'autre : un appui bref (enfoncée puis
+    // relâchée aussitôt) ne doit jamais arriver à l'envers au boîtier — la pédale
+    // resterait « enfoncée » et le texte partirait tout seul.
+    let fileEnvois = Promise.resolve();
+    const envoyer = (genre, key) => {
+      fileEnvois = fileEnvois.then(() => poster("/api/pedale", { type: genre, key })).catch(() => {});
+    };
+    const enfoncees = new Set();
     const transmettre = (e, genre) => {
+      if (genre === "up" && enfoncees.has(e.key)) {
+        // Toujours relâcher ce qu'on a enfoncé, quoi qu'il se soit passé entre-temps.
+        e.preventDefault();
+        enfoncees.delete(e.key);
+        envoyer("up", e.key);
+        return;
+      }
       if (!touchesPedales.includes(e.key)) return;
-      const cible = e.target;
-      if (cible && (cible.isContentEditable || cible.tagName === "INPUT" || cible.tagName === "TEXTAREA")) return;
       if (document.querySelector(".pedal.capture")) return; // apprentissage d'une touche en cours
       e.preventDefault();
-      if (genre === "down" && e.repeat) return;
-      poster("/api/pedale", { type: genre, key: e.key }).catch(() => {});
+      if (genre === "down") {
+        if (e.repeat) return;
+        enfoncees.add(e.key);
+      }
+      envoyer(genre, e.key);
     };
     window.addEventListener("keydown", (e) => transmettre(e, "down"), true);
     window.addEventListener("keyup", (e) => transmettre(e, "up"), true);
+    // Cette page perd la main pédale enfoncée : le relâchement n'arrivera pas
+    // ici, on l'envoie tout de suite.
+    const toutRelacher = () => {
+      for (const k of enfoncees) envoyer("up", k);
+      enfoncees.clear();
+    };
+    window.addEventListener("blur", toutRelacher);
+    window.addEventListener("pagehide", toutRelacher);
 
     const horloge = el("div", "horloge-petit");
     document.body.append(horloge);

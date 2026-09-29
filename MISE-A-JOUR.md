@@ -118,6 +118,18 @@ prompteur revient tout seul**.
 
 ## Étape 6 — Vérifier
 
+**D'abord, la vérification automatique.** Dans la fenêtre noire du boîtier (cliquez
+d'abord une fois sur le grand écran, puis **Alt + F4**, puis **Ctrl + Alt + T**) :
+
+```bash
+cd ~/prompteur && ./install/verifier-boitier.sh
+```
+
+**✅ Attendu :** une liste de ✅, puis « 0 en échec ». Elle essaie elle-même les
+pédales (le texte du grand écran avance, puis revient au début). **Un ❌ = envoyez
+une photo de la fenêtre** : il dit quoi regarder. Elle finit par la liste de ce qu'il
+faut vérifier à l'œil.
+
 **Arrêtez-vous à la première case qui ne se coche pas** plutôt que de continuer.
 
 **Le boîtier**

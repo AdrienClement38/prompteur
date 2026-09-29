@@ -277,6 +277,16 @@ a le plus de pixels. `kiosk.sh --ecrans` dit ce qui a été reconnu ;
 ne peut pas être placé à côté du grand, **rien n'est ouvert** : la fenêtre
 couvrirait le prompteur. Détails : **ECRAN-TACTILE.md**.
 
+### Vérifier le boîtier, étape par étape
+
+`./install/verifier-boitier.sh`, depuis la fenêtre noire du boîtier, après chaque mise à
+jour : serveur, grand écran, vue Journaliste qui pilote, **pédales essayées pour de
+vrai** (un clavier virtuel appuie comme le pédalier, puis par le relais du petit
+écran : le texte doit avancer PUIS s'arrêter, selon le mode), petit écran (relié,
+placé, rafraîchi, page ouverte, tactile calé). Un ✅ ou un ❌ par étape, et la liste de
+ce qui ne se vérifie qu'à l'œil. L'essai des pédales (`install/essai_pedales.py`) est
+lui-même testé contre un faux boîtier, en panne ou non (`tests/test_essai_pedales.py`).
+
 ### Veille
 
 **⏻ Veille** (Settings et Spectateur) demande confirmation, puis :

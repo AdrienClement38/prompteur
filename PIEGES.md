@@ -226,6 +226,19 @@ ferme la page Settings, et le petit écran reste noir jusqu'au redémarrage.
 --menu, que seul --menu-stop arrête) ; et, dans les consignes, un clic sur le grand
 écran avant Alt + F4.
 
+### 🔴 Une seconde fenêtre prend les pédales
+Le pédalier est un CLAVIER : ses touches vont à la fenêtre qui a la main. En
+ouvrant la page Settings sur le petit écran, elle prenait la main au démarrage et
+à chaque appui : les pédales ne faisaient plus défiler le texte. Et la règle
+« perte de la main = tout s'arrête » arrêtait le texte à chaque appui de la régie.
+Une fonction validée (les pédales) cassée par un changement « ailleurs ».
+**Parade :** la page du petit écran transmet les touches de pédale au boîtier
+(/api/pedale), qui les passe à la vue Journaliste ; les envois partent L'UN APRÈS
+L'AUTRE (lancés en parallèle, un appui bref arrivait « relâché » avant
+« enfoncé » : pédale collée, texte parti seul — le banc tests/banc_petit_ecran.js
+le rattrape) ; perte de la main = on relâche, sans arrêter le défilement. Et avant
+toute livraison : « qu'est-ce que ça change pour les pédales ? ».
+
 ### Écouter le tactile : les événements BRUTS
 `xinput test-xi2 --root` ne reçoit les événements ordinaires que si aucune fenêtre
 ne les prend avant lui — la page sous le doigt les prend. Et coupé par `timeout`,

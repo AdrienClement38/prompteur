@@ -48,6 +48,7 @@ node --check static/plages.js
 etape "Bancs d'essai (pédales, suivi, frappe)"
 node tests/banc_pedales.js
 node tests/banc_plages.js
+node tests/banc_petit_ecran.js
 
 etape "ESLint"
 npx --no-install eslint static

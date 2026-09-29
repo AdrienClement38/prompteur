@@ -200,6 +200,19 @@ sortie_grand_ecran() {
     END { if (hdmi0) print hdmi0; else if (choix) print choix }'
 }
 
+# Un second écran est-il là, ou va-t-il apparaître ? Deux sorties branchées, ou
+# une seconde carte graphique (l'écran SPI, visible avant même d'être relié).
+petit_ecran_possible() {
+  [ -n "${PROMPTEUR_PETIT_ECRAN:-}" ] && return 0
+  [ "$(sorties_branchees | wc -l)" -ge 2 ] && return 0
+  local n
+  n="$(xrandr --listproviders 2>/dev/null | sed -n 's/^Providers: number : \([0-9]\+\).*/\1/p')"
+  case "$n" in
+    '' | *[!0-9]*) return 1 ;;
+  esac
+  [ "$n" -gt 1 ]
+}
+
 # Le petit écran : une autre sortie branchée. PROMPTEUR_PETIT_ECRAN l'impose.
 sortie_petit_ecran() {
   if [ -n "${PROMPTEUR_PETIT_ECRAN:-}" ]; then
@@ -708,8 +721,11 @@ attendre_serveur || true
 # Au démarrage, le petit écran peut n'être prêt qu'un peu après le bureau (vu sur
 # le boîtier : on tombait sur le bureau au lieu de Settings) : on le place s'il
 # est déjà là, et la fenêtre, lancée dans tous les cas, l'attend une minute.
+# Rien de tout cela sans second écran : sur un boîtier à un seul écran, la
+# fenêtre ne l'attendrait pas une minute à interroger les écrans (chaque
+# interrogation complète peut faire hoqueter l'affichage du prompteur).
 disposer_ecrans || true
-if ! menu_pid >/dev/null && command -v setsid >/dev/null 2>&1; then
+if petit_ecran_possible && ! menu_pid >/dev/null && command -v setsid >/dev/null 2>&1; then
   PROMPTEUR_DETACHE=1 PROMPTEUR_ATTENDRE_ECRAN=60 setsid -f /bin/bash "$0" --menu </dev/null >/dev/null 2>&1 || true
 fi
 
