@@ -28,10 +28,12 @@ function banc(reglages, options = {}) {
     ),
     text: options.texte || "Ligne\n".repeat(400),
     empreinte: "e1",
+    pedales: [], // appuis transmis par le petit écran (/api/pedale)
     marks: options.marks || [],
     control: { cmd: options.cmdAuDemarrage || null, cmdSeq: options.cmdAuDemarrage ? 7 : 0 },
   };
   const veille = { on: false };
+  const attentesPedale = [];
 
   function elt() {
     const e = {
@@ -132,6 +134,15 @@ function banc(reglages, options = {}) {
       return reponse({ ok: true, speed: etat.settings.speed });
     }
     if (url === "/api/info") return reponse({ addresses: ["10.42.0.1"], port: 5000 });
+    if (url.startsWith("/api/pedale")) {
+      // Comme le boîtier : réponse immédiate s'il y a du neuf (ou pour se caler),
+      // sinon la requête attend le prochain appui.
+      const depuis = Number(/depuis=(-?\d+)/.exec(url)[1]);
+      const liste = etat.pedales;
+      if (depuis < 0) return reponse({ seq: liste.length, evenements: [] });
+      if (liste.length > depuis) return reponse({ seq: liste.length, evenements: liste.slice(depuis) });
+      return new Promise((ok) => attentesPedale.push(() => ok(reponse({ seq: liste.length, evenements: liste.slice(depuis) }))));
+    }
     return reponse({ ok: true });
   }
   const window = {
@@ -189,6 +200,15 @@ function banc(reglages, options = {}) {
       viewport.clientWidth = largeur;
       viewport.clientHeight = hauteur;
       for (const f of ecouteurs.resize || []) f();
+    },
+    // Un appui transmis par le petit écran, comme le ferait le boîtier.
+    async pedale(genre, key) {
+      etat.pedales.push({ seq: etat.pedales.length + 1, type: genre, key });
+      attentesPedale.splice(0).forEach((f) => f());
+      for (let i = 0; i < 5; i++) await vider();
+    },
+    perdreLaMain() {
+      for (const f of ecouteurs.blur || []) f();
     },
     etat, envois, veille,
   };
@@ -472,6 +492,51 @@ async function appui(b, key, ms) {
       Math.abs(uneSeconde - 600) < 30 && Math.abs(auBout - 1200) < 2,
       `${Math.round(uneSeconde)} puis ${Math.round(auBout)} px/s`
     );
+  }
+
+  // --- Pédales transmises par le petit écran (retour du boîtier) -------------
+  // Quand la page du petit écran a la main, c'est elle qui reçoit les pédales :
+  // elle les transmet, et le texte doit défiler comme avec une touche locale.
+  {
+    const b = banc({ mode: "hold", speed: 100 });
+    await b.demarrer();
+    b.avancer(100);
+    const p0 = b.pos();
+    await b.pedale("down", "ArrowDown");
+    b.avancer(1000);
+    const p1 = b.pos();
+    await b.pedale("up", "ArrowDown");
+    b.avancer(1000);
+    const p2 = b.pos();
+    verifier(
+      "Pédale transmise par le petit écran : le texte avance, puis s'arrête au relâchement",
+      p1 - p0 > 80 && Math.abs(p2 - p1) < 2,
+      `${Math.round(p0)} -> ${Math.round(p1)} -> ${Math.round(p2)}`
+    );
+  }
+  {
+    const b = banc({ mode: "dyn", speed: 100, rampSeconds: 1 });
+    await b.demarrer();
+    await appui(b, "ArrowDown", 400);
+    const avant = b.vitesse();
+    b.perdreLaMain(); // un appui de la régie sur le petit écran
+    b.avancer(500);
+    verifier(
+      "Un appui sur le petit écran n'arrête plus le texte en pleine lecture",
+      avant > 50 && Math.abs(b.vitesse() - avant) < 2,
+      `${Math.round(avant)} -> ${Math.round(b.vitesse())} px/s`
+    );
+  }
+  {
+    const b = banc({ mode: "hold", speed: 100 });
+    await b.demarrer();
+    b.touche("keydown", "ArrowDown");
+    b.avancer(300);
+    b.perdreLaMain();
+    const p = b.pos();
+    b.avancer(500);
+    verifier("Perte de la main pédale tenue : la pédale est relâchée (pas de pédale collée)", Math.abs(b.pos() - p) < 2,
+      `${Math.round(b.pos() - p)} px après`);
   }
 
   // --- Sans commun.js, l'écran de lecture tourne quand même ---------------

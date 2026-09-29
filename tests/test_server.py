@@ -208,6 +208,61 @@ def test_vitesse_jusqu_a_1200(client):
     assert client.get("/api/state").get_json()["settings"]["speed"] == 1200
 
 
+def test_pedales_transmises_par_le_petit_ecran(client):
+    """La page du petit écran poste les pédales qu'elle reçoit ; la vue
+    Journaliste les relit, dans l'ordre, sans en rejouer d'anciennes."""
+    depart = client.get("/api/pedale?depuis=-1").get_json()
+    assert depart["evenements"] == []  # se caler : réponse immédiate, rien d'ancien
+    n = depart["seq"]
+    assert client.post("/api/pedale", json={"type": "down", "key": "ArrowDown"}).status_code == 200
+    assert client.post("/api/pedale", json={"type": "up", "key": "ArrowDown"}).status_code == 200
+    r = client.get(f"/api/pedale?depuis={n}&attente=0").get_json()
+    assert [(e["type"], e["key"]) for e in r["evenements"]] == [("down", "ArrowDown"), ("up", "ArrowDown")]
+    assert r["seq"] == n + 2
+    # Rien de neuf : la requête attend, puis rend la main sans rien.
+    vide = client.get(f"/api/pedale?depuis={n + 2}&attente=0.1").get_json()
+    assert vide["evenements"] == [] and vide["seq"] == n + 2
+    # Un numéro jamais donné (le boîtier a redémarré) : réponse immédiate, pour se recaler.
+    assert client.get(f"/api/pedale?depuis={n + 999}").get_json()["evenements"] == []
+
+
+def test_pedale_attendue_arrive_aussitot(client):
+    """La vue Journaliste attend le prochain appui : il doit arriver tout de
+    suite, pas au bout de l'attente."""
+    import threading
+    import time
+
+    n = client.get("/api/pedale?depuis=-1").get_json()["seq"]
+    resultat = {}
+
+    def attendre():
+        with server.app.test_client() as autre:
+            debut = time.monotonic()
+            resultat["reponse"] = autre.get(f"/api/pedale?depuis={n}&attente=10").get_json()
+            resultat["duree"] = time.monotonic() - debut
+
+    fil = threading.Thread(target=attendre)
+    fil.start()
+    time.sleep(0.2)
+    client.post("/api/pedale", json={"type": "down", "key": "ArrowUp"})
+    fil.join(timeout=5)
+    assert resultat["reponse"]["evenements"][0]["key"] == "ArrowUp"
+    assert resultat["duree"] < 3
+
+
+@pytest.mark.parametrize(
+    "corps",
+    [
+        {"type": "appui", "key": "ArrowDown"},
+        {"type": "down"},
+        {"type": "down", "key": ""},
+        {"type": "up", "key": "x" * 40},
+    ],
+)
+def test_pedale_invalide_refusee(client, corps):
+    assert client.post("/api/pedale", json=corps).status_code == 400
+
+
 def test_carte_des_lignes_du_grand_ecran(client):
     """La vue Journaliste envoie, pour chaque paragraphe, le numéro de sa première
     ligne à l'écran ; Settings la relit. Elle ne vaut que pour le texte affiché."""

@@ -1069,35 +1069,8 @@
       return; // la touche qui annule ne fait rien d'autre : pas de pédale par surprise
     }
 
-    const s = settings || {};
-    const kf = s.keyForward || "ArrowDown";
-    const kb = s.keyBackward || "ArrowUp";
-    const kc = s.keyCenter || "ArrowRight";
-    const mode = s.mode || "hold";
-
-    if (k === kf || k === kb) {
+    if (pedaleEnfoncee(k, e.repeat)) {
       e.preventDefault();
-      const sens = k === kf ? 1 : -1;
-      const cle = sens > 0 ? "forward" : "backward";
-      // L'autorépétition du clavier est ignorée : une pédale maintenue
-      // basculerait sinon des dizaines de fois par seconde.
-      if (e.repeat) return;
-      if (mode === "tap") {
-        // Deuxième appui sur la MÊME pédale = pause. Sur l'autre = on repart
-        // dans l'autre sens.
-        tapDir = tapDir === sens ? 0 : sens;
-      } else {
-        keys[cle] = true; // maintien et dynamique : pédale enfoncée
-      }
-      updateSpeedTag();
-      return;
-    }
-    if (k === kc) {
-      e.preventDefault();
-      // Pédale centrale : PAUSE, et UNIQUEMENT en mode dynamique. Dans les deux
-      // autres modes le client la veut explicitement sans fonction.
-      if (mode === "dyn" && !e.repeat) arretTout();
-      updateSpeedTag();
       return;
     }
 
@@ -1128,22 +1101,114 @@
 
   window.addEventListener("keyup", (e) => {
     if (isViewer) return;
+    pedaleRelachee(keyName(e));
+  });
+
+  // Une pédale enfoncée (touche locale, ou transmise par le petit écran).
+  // Renvoie true si c'était bien une touche de pédale.
+  function pedaleEnfoncee(k, repetition) {
     const s = settings || {};
-    const k = keyName(e);
+    const kf = s.keyForward || "ArrowDown";
+    const kb = s.keyBackward || "ArrowUp";
+    const kc = s.keyCenter || "ArrowRight";
+    const mode = s.mode || "hold";
+
+    if (k === kf || k === kb) {
+      const sens = k === kf ? 1 : -1;
+      const cle = sens > 0 ? "forward" : "backward";
+      // L'autorépétition du clavier est ignorée : une pédale maintenue
+      // basculerait sinon des dizaines de fois par seconde.
+      if (repetition) return true;
+      if (mode === "tap") {
+        // Deuxième appui sur la MÊME pédale = pause. Sur l'autre = on repart
+        // dans l'autre sens.
+        tapDir = tapDir === sens ? 0 : sens;
+      } else {
+        keys[cle] = true; // maintien et dynamique : pédale enfoncée
+      }
+      updateSpeedTag();
+      return true;
+    }
+    if (k === kc) {
+      // Pédale centrale : PAUSE, et UNIQUEMENT en mode dynamique. Dans les deux
+      // autres modes le client la veut explicitement sans fonction.
+      if (mode === "dyn" && !repetition) arretTout();
+      updateSpeedTag();
+      return true;
+    }
+    return false;
+  }
+
+  function pedaleRelachee(k) {
+    const s = settings || {};
     let cle = null;
     if (k === (s.keyForward || "ArrowDown")) cle = "forward";
     else if (k === (s.keyBackward || "ArrowUp")) cle = "backward";
     if (!cle) return;
     keys[cle] = false; // la vitesse atteinte reste : seule l'accélération s'arrête
     updateSpeedTag();
-  });
+  }
 
-  // Sécurité meneur : perte de focus pédale enfoncée -> on relâche (pas de « pédale collée »)
+  // --- Pédales transmises par le petit écran --------------------------------
+  // Le pédalier est un clavier : ses touches vont à la fenêtre qui a la main.
+  // Vu sur le boîtier : dès que la page du petit écran s'ouvrait (au démarrage,
+  // puis à chaque appui dessus), c'est ELLE qui recevait les pédales, et le texte
+  // ne défilait plus. Elle les transmet donc ici, par le boîtier, en quelques
+  // millisecondes (/api/pedale : une requête qui attend le prochain appui).
+  let pedaleSeq = -1;
+  async function ecouterPedales() {
+    for (;;) {
+      let souffler = false;
+      try {
+        const r = await fetch(`/api/pedale?depuis=${pedaleSeq}`, { cache: "no-store" });
+        const d = r.ok ? await r.json() : null;
+        if (d && Number.isInteger(d.seq)) {
+          // Au premier appel (-1), ou si le boîtier a redémarré (numéro plus
+          // petit), on se cale sans rejouer les appuis anciens.
+          if (pedaleSeq >= 0 && d.seq >= pedaleSeq) {
+            for (const ev of d.evenements || []) appliquerPedale(ev.type, String(ev.key || ""));
+          }
+          pedaleSeq = d.seq;
+        } else {
+          souffler = true; // boîtier d'une version antérieure, ou réponse inattendue
+        }
+      } catch {
+        souffler = true; // liaison perdue : déjà signalée par ailleurs
+      }
+      if (souffler) await new Promise((ok) => setTimeout(ok, 1000));
+    }
+  }
+
+  function appliquerPedale(type, k) {
+    if (type === "down") {
+      // Mêmes règles qu'une touche locale : en veille, elle rallume seulement ;
+      // une demande « quitter ? » en cours est annulée, sans autre effet.
+      if (Commun && Commun.veille.active()) {
+        Commun.veille.rallumer();
+        return;
+      }
+      if (quitPending) {
+        cancelQuit();
+        return;
+      }
+      pedaleEnfoncee(k, false);
+    } else if (type === "up") {
+      pedaleRelachee(k);
+    }
+  }
+
+  // Sécurité meneur : aucune pédale ne doit rester « collée ».
+  // Fenêtre qui perd la main (un appui sur le petit écran, par exemple) : on
+  // relâche les pédales tenues, SANS arrêter le défilement en cours — sinon un
+  // simple appui de la régie sur le petit écran arrêtait le texte en pleine
+  // lecture. Page cachée ou fermée : là, on arrête tout.
+  function relacherPedales() {
+    if (!keys.forward && !keys.backward) return;
+    keys.forward = false;
+    keys.backward = false;
+    updateSpeedTag();
+  }
   function releasePedals() {
-    // Perte de focus : aucune pédale ne doit rester « collée ». En impulsion et
-    // en dynamique, le défilement est en cours SANS qu'aucune touche soit
-    // enfoncée : on le met aussi en pause, sinon le texte continuerait de défiler
-    // derrière une fenêtre que plus personne ne regarde.
     const enMouvement = keys.forward || keys.backward || tapDir !== 0 || Math.abs(dynVel) >= 1;
     if (!enMouvement) return;
     keys.forward = false;
@@ -1151,7 +1216,7 @@
     arretTout();
     updateSpeedTag();
   }
-  window.addEventListener("blur", releasePedals);
+  window.addEventListener("blur", relacherPedales);
   window.addEventListener("pagehide", releasePedals);
   document.addEventListener("visibilitychange", () => { if (document.hidden) releasePedals(); });
 
@@ -1316,6 +1381,7 @@
       setTimeout(() => netinfo.classList.add("hidden"), 12000);
     });
     setTimeout(() => hud.classList.add("hidden"), 6000);
+    ecouterPedales();
     // Mise en veille : le texte s'arrête là où il est, pédales relâchées.
     if (Commun) {
       Commun.veille.surChangement((endormi) => {

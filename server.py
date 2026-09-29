@@ -29,6 +29,7 @@ Lancement :
 Par défaut : http://0.0.0.0:5000  (waitress en production, serveur Flask si PROMPTEUR_DEBUG)
 """
 
+import collections
 import copy
 import hashlib
 import ipaddress
@@ -453,6 +454,13 @@ SCROLL = {
     "hauteur": 0,
 }
 
+# Pédales transmises par le petit écran : le pédalier est un clavier, et ses
+# touches vont à la fenêtre qui a la main — la page du petit écran, dès qu'on la
+# touche. Elle les poste ici ; la vue Journaliste les attend (une requête qui
+# reste ouverte jusqu'au prochain appui) et les applique comme les siennes.
+PEDALES = {"seq": 0, "liste": collections.deque(maxlen=64)}
+_pedales = threading.Condition()
+
 # Numéros de ligne : la vue Journaliste numérote les lignes À L'ÉCRAN (un
 # paragraphe de quatre lignes en porte quatre), et envoie ici, pour chaque
 # paragraphe du texte, le numéro de sa première ligne (0 pour une ligne vide).
@@ -654,6 +662,34 @@ def api_state():
         snap["settings"] = effective_settings(snap["settings"], surface)
     snap["empreinte"] = _empreinte(snap.get("text", ""))
     return jsonify(snap)
+
+
+@app.route("/api/pedale", methods=["GET", "POST"])
+def api_pedale():
+    """GET ?depuis=N : les appuis après le n° N, en attendant le prochain (20 s
+    au plus). depuis=-1 (ou un n° que le boîtier n'a jamais donné : il a
+    redémarré) : réponse immédiate, pour se caler.
+    POST {type: down|up, key} : un appui ou un relâchement de pédale."""
+    if request.method == "GET":
+        try:
+            depuis = int(request.args.get("depuis", "-1"))
+            attente = max(0.0, min(20.0, float(request.args.get("attente", "20"))))
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "valeurs invalides"}), 400
+        with _pedales:
+            if 0 <= depuis <= PEDALES["seq"]:
+                _pedales.wait_for(lambda: PEDALES["seq"] > depuis, timeout=attente)
+            evenements = [e for e in PEDALES["liste"] if depuis >= 0 and e["seq"] > depuis]
+            return jsonify({"seq": PEDALES["seq"], "evenements": evenements})
+    data = _corps()
+    genre, cle = data.get("type"), data.get("key")
+    if genre not in ("down", "up") or not isinstance(cle, str) or not 0 < len(cle) <= 32:
+        return jsonify({"ok": False, "error": "appui invalide"}), 400
+    with _pedales:
+        PEDALES["seq"] += 1
+        PEDALES["liste"].append({"seq": PEDALES["seq"], "type": genre, "key": cle})
+        _pedales.notify_all()
+    return jsonify({"ok": True})
 
 
 @app.route("/api/lignes", methods=["GET", "POST"])

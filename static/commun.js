@@ -290,6 +290,32 @@
       },
       true
     );
+    // Les pédales : si c'est cette page qui a la main (au démarrage, ou après un
+    // appui sur le petit écran), leurs touches arrivent ICI. On les transmet à
+    // la vue Journaliste, par le boîtier, au lieu de faire défiler cette page.
+    let touchesPedales = ["ArrowDown", "ArrowUp", "ArrowRight"];
+    const lireTouches = () =>
+      fetch("/api/state", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((st) => {
+          const s = st.settings || {};
+          touchesPedales = [s.keyForward, s.keyBackward, s.keyCenter].filter(Boolean);
+        })
+        .catch(() => {});
+    lireTouches();
+    setInterval(lireTouches, 10000);
+    const transmettre = (e, genre) => {
+      if (!touchesPedales.includes(e.key)) return;
+      const cible = e.target;
+      if (cible && (cible.isContentEditable || cible.tagName === "INPUT" || cible.tagName === "TEXTAREA")) return;
+      if (document.querySelector(".pedal.capture")) return; // apprentissage d'une touche en cours
+      e.preventDefault();
+      if (genre === "down" && e.repeat) return;
+      poster("/api/pedale", { type: genre, key: e.key }).catch(() => {});
+    };
+    window.addEventListener("keydown", (e) => transmettre(e, "down"), true);
+    window.addEventListener("keyup", (e) => transmettre(e, "up"), true);
+
     const horloge = el("div", "horloge-petit");
     document.body.append(horloge);
     const tic = () => {

@@ -592,6 +592,7 @@ case "$ACTION" in
         --disable-features=Translate \
         --check-for-update-interval=31536000 \
         --overscroll-history-navigation=0 \
+        --disable-gpu \
         --window-position="${POS}" \
         --window-size="${TAILLE}" \
         --user-data-dir="/tmp/prompteur-menu-profil-$(id -u)" \
