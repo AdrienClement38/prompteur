@@ -311,9 +311,13 @@ menu_pid() {
 }
 
 stop_menu() {
-  local pid
+  local pid enfants
   if pid="$(menu_pid)"; then
+    # La boucle d'abord (sinon elle rouvrirait la fenêtre), puis son navigateur.
+    enfants="$(pgrep -P "$pid" 2>/dev/null || true)"
     kill "$pid" 2>/dev/null || true
+    # shellcheck disable=SC2086 # une liste de PID, séparés par des espaces
+    [ -z "$enfants" ] || kill $enfants 2>/dev/null || true
   fi
   rm -f "$MENUPID"
 }
@@ -454,29 +458,41 @@ case "$ACTION" in
     exec 8>&-
     caler_tactile
     attendre_serveur || true
-    # Position et taille réelles du petit écran ; PROMPTEUR_MENU_POS (« 1920,0 »)
-    # et PROMPTEUR_MENU_TAILLE (« 1024,600 ») permettent de les imposer.
-    read -r GX GY GW GH <<<"$(geometrie "$(sortie_petit_ecran)")"
-    POS="${PROMPTEUR_MENU_POS:-${GX:-0},${GY:-0}}"
-    TAILLE="${PROMPTEUR_MENU_TAILLE:-${GW:-800},${GH:-480}}"
-    # Plein écran (--kiosk) sur le petit écran, avec son propre profil : c'est
-    # un second navigateur, indépendant de celui du grand écran.
-    exec "$BROWSER" \
-      --password-store=basic \
-      --kiosk \
-      --no-first-run \
-      --no-default-browser-check \
-      --noerrdialogs \
-      --disable-infobars \
-      --disable-session-crashed-bubble \
-      --disable-features=Translate \
-      --check-for-update-interval=31536000 \
-      --overscroll-history-navigation=0 \
-      --window-position="${POS}" \
-      --window-size="${TAILLE}" \
-      --user-data-dir="/tmp/prompteur-menu-profil-$(id -u)" \
-      --class=PrompteurMenu \
-      --app="http://localhost:${PORT}/settings"
+    # La fenêtre revient toute seule si elle se ferme : un Alt + F4 donné quand
+    # le petit écran avait la main (vu sur le boîtier), un plantage. Seul
+    # --menu-stop l'arrête — ou la disparition du petit écran.
+    while :; do
+      # Position et taille réelles du petit écran ; PROMPTEUR_MENU_POS
+      # (« 1920,0 ») et PROMPTEUR_MENU_TAILLE (« 480,320 ») permettent de les imposer.
+      read -r GX GY GW GH <<<"$(geometrie "$(sortie_petit_ecran)")"
+      [ -n "${GX:-}" ] || break
+      POS="${PROMPTEUR_MENU_POS:-${GX},${GY}}"
+      TAILLE="${PROMPTEUR_MENU_TAILLE:-${GW:-800},${GH:-480}}"
+      DEPART="$(date +%s)"
+      # Plein écran (--kiosk) sur le petit écran, avec son propre profil : c'est
+      # un second navigateur, indépendant de celui du grand écran.
+      "$BROWSER" \
+        --password-store=basic \
+        --kiosk \
+        --no-first-run \
+        --no-default-browser-check \
+        --noerrdialogs \
+        --disable-infobars \
+        --disable-session-crashed-bubble \
+        --disable-features=Translate \
+        --check-for-update-interval=31536000 \
+        --overscroll-history-navigation=0 \
+        --window-position="${POS}" \
+        --window-size="${TAILLE}" \
+        --user-data-dir="/tmp/prompteur-menu-profil-$(id -u)" \
+        --class=PrompteurMenu \
+        --app="http://localhost:${PORT}/settings" >/dev/null 2>&1 || true
+      # Refermée aussitôt ouverte : on attend un peu plus, sans s'emballer.
+      if [ $(($(date +%s) - DEPART)) -lt 10 ]; then sleep 10; else sleep 2; fi
+      disposer_ecrans || break
+    done
+    rm -f "$MENUPID"
+    exit 0
     ;;
   --status)
     if kiosk_pid >/dev/null; then

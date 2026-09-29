@@ -218,6 +218,21 @@ pas : rien n'était jamais envoyé.
 **Parade :** `xrandr --output <petit écran> --set "PRIME Synchronization" 0`, posé
 par kiosk.sh à chaque placement. Constaté sur le boîtier : la page est apparue aussitôt.
 
+### 🔴 Alt + F4 ferme la fenêtre qui a la main — parfois celle du petit écran
+Les procédures disent « Alt + F4 » pour quitter le prompteur et atteindre le bureau.
+Mais après un appui sur le petit écran, c'est SA fenêtre qui a la main : Alt + F4
+ferme la page Settings, et le petit écran reste noir jusqu'au redémarrage.
+**Parade :** la page du petit écran se rouvre toute seule (boucle de kiosk.sh
+--menu, que seul --menu-stop arrête) ; et, dans les consignes, un clic sur le grand
+écran avant Alt + F4.
+
+### Écouter le tactile : les événements BRUTS
+`xinput test-xi2 --root` ne reçoit les événements ordinaires que si aucune fenêtre
+ne les prend avant lui — la page sous le doigt les prend. Et coupé par `timeout`,
+xinput perd ce qu'il n'a pas encore écrit.
+**Parade :** lire les valeurs des événements bruts (lignes « 0: » et « 1: »), avec
+`stdbuf -oL` pour que chaque ligne sorte aussitôt.
+
 ### Les réglages `hdmi_*` sont ignorés sur Pi 5
 Presque tous les tutoriels en ligne datent d'avant le changement d'architecture
 graphique. Les recettes qu'on trouve **ne font rien**, sans le dire.
