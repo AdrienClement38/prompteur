@@ -282,6 +282,18 @@ rotation_voulue() {
   echo "${r:-normal}"
 }
 
+# Valeur actuelle de « PRIME Synchronization » d'une sortie (1, 0, ou rien si
+# elle n'a pas ce réglage : écran HDMI).
+prime_sync() {
+  [ -n "${1:-}" ] || return 0
+  # --current : ne réinterroge pas les écrans (une interrogation complète peut
+  # figer l'affichage un instant — impensable toutes les 5 s pendant une lecture).
+  xrandr --current --prop 2>/dev/null | awk -v s="$1" '
+    $1 == s { dedans = 1; next }
+    /^[^ \t]/ { dedans = 0 }
+    dedans && /PRIME Synchronization:/ { print $3; exit }'
+}
+
 # Rotation actuelle d'une sortie, telle que xrandr l'écrit après sa géométrie.
 rotation_de() {
   xrandr --query 2>/dev/null | awk -v s="$1" '
@@ -570,7 +582,21 @@ case "$ACTION" in
         --window-size="${TAILLE}" \
         --user-data-dir="/tmp/prompteur-menu-profil-$(id -u)" \
         --class=PrompteurMenu \
-        --app="http://localhost:${PORT}/settings" >>"$MENULOG" 2>&1 || true
+        --app="http://localhost:${PORT}/settings" >/dev/null 2>&1 &
+      NAVIGATEUR=$!
+      SORTIE="$(sortie_petit_ecran)"
+      # Tant que la page est ouverte, on veille sur « PRIME Synchronization » :
+      # vu sur le boîtier, le réglage posé au démarrage ne tenait pas (la page
+      # était ouverte, l'écran montrait encore le bureau figé), alors que le même
+      # réglage, reposé à la main ensuite, faisait apparaître la page aussitôt.
+      while kill -0 "$NAVIGATEUR" 2>/dev/null; do
+        sleep 5
+        if [ "$(prime_sync "$SORTIE")" = 1 ]; then
+          xrandr --output "$SORTIE" --set "PRIME Synchronization" 0 2>/dev/null &&
+            journal_menu "Rafraîchissement du petit écran rétabli (PRIME Synchronization remis à 0)."
+        fi
+      done
+      wait "$NAVIGATEUR" 2>/dev/null || true
       journal_menu "Page Settings fermée après $(($(date +%s) - DEPART)) s : réouverture."
       # Refermée aussitôt ouverte : on attend un peu plus, sans s'emballer.
       if [ $(($(date +%s) - DEPART)) -lt 10 ]; then sleep 10; else sleep 2; fi
