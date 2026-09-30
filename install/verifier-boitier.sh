@@ -90,15 +90,16 @@ else
   if [ "$("$ICI/kiosk.sh" --status 2>/dev/null)" = "running journaliste" ]; then
     ok "Le prompteur s'ouvre sur le grand écran."
   else
-    ko "Le prompteur ne s'ouvre pas sur le grand écran." "Icône « Le Prompteur » du bureau ; sinon, une photo de l'écran."
+    ko "Le prompteur ne s'ouvre pas sur le grand écran." "Ce qu'en dit son journal (à envoyer en photo) :"
+    tail -n 8 "/tmp/prompteur-kiosk-$(id -u).log" 2>/dev/null | cut -c1-150 | sed 's/^/      /'
   fi
 fi
 PILOTE="$(curl -s -m 5 "$URL/api/presenter")"
 if [ "$(echo "$PILOTE" | champ sur_le_boitier)" = "True" ]; then
   ok "C'est bien la vue du grand écran qui pilote le défilement."
 elif [ "$(echo "$PILOTE" | champ taken)" = "True" ]; then
-  ko "Une vue Journaliste ouverte sur un AUTRE appareil pilote le défilement." \
-    "Fermez-la (téléphone, ordinateur) : c'est elle qui recevrait les pédales transmises."
+  ko "Une vue Journaliste ouverte sur un AUTRE appareil pilote le défilement ($(echo "$PILOTE" | champ appareil))." \
+    "Fermez cette page sur cet appareil : tant qu'elle est ouverte, le grand écran ne pilote pas."
 else
   ko "Aucune vue Journaliste ne pilote le défilement." "Le prompteur affiche-t-il « déjà ouverte ailleurs » ?"
 fi
@@ -158,6 +159,13 @@ else
     1) ko "Son image risque d'être figée (PRIME Synchronization à 1)." "Normalement remis à 0 tout seul en 30 s : relancez la vérification." ;;
     *) echo "   (réglage de rafraîchissement sans objet pour cet écran)" ;;
   esac
+  FREQ="$(xrandr --current 2>/dev/null | awk -v s="$PETIT" '$1 == s {d = 1; next} /^[^ \t]/ {d = 0} d && /\*/ {for (i = 2; i <= NF; i++) if ($i ~ /\*/) {gsub(/[*+]/, "", $i); print $i; exit}}')"
+  if [ -n "$FREQ" ] && awk -v f="$FREQ" 'BEGIN { exit !(f + 0 >= 5) }'; then
+    ok "Sa fréquence d'image est normale (${FREQ} Hz)."
+  elif [ -n "$FREQ" ]; then
+    ko "Sa fréquence d'image est factice (${FREQ} Hz) : la page n'est redessinée que toutes les quelques secondes." \
+      "Normalement corrigée au lancement de la page : ./install/kiosk.sh --menu-stop puis ./install/kiosk.sh --menu"
+  fi
   if echo "$ECRANS" | grep -q "Vue Settings du petit écran : affichée"; then
     ok "La page Settings y est ouverte."
   else

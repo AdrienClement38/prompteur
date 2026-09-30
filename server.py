@@ -1195,7 +1195,7 @@ PRESENTER_TTL = 12.0  # secondes sans battement avant de considérer la place li
 # token/password/secret comme un mot de passe en dur, et il sort en erreur des la
 # moindre alerte, meme de severite faible. Renommer supprime le faux positif a la
 # source, ce qui vaut mieux que de museler le controle.
-_presenter = {"holder": None, "seen": 0.0, "kiosk": False}
+_presenter = {"holder": None, "seen": 0.0, "kiosk": False, "appareil": ""}
 
 
 def _depuis_le_boitier():
@@ -1214,6 +1214,23 @@ def _prendre_la_place(token):
     _presenter["holder"] = token
     _presenter["seen"] = time.monotonic()
     _presenter["kiosk"] = _depuis_le_boitier()
+    _presenter["appareil"] = _appareil(request.headers.get("User-Agent", ""), request.remote_addr)
+
+
+def _appareil(agent, adresse):
+    """Quelques mots pour reconnaître un appareil (« Windows, 10.42.0.23 ») : la
+    vérification du boîtier dit ainsi QUEL appareil tient la vue Journaliste."""
+    systemes = (
+        ("iPhone", "iPhone"),
+        ("iPad", "iPad"),
+        ("Android", "Android"),
+        ("Windows", "Windows"),
+        ("Macintosh", "Mac"),
+        ("CrOS", "Chromebook"),
+        ("Linux", "Linux"),
+    )
+    nom = next((n for cle, n in systemes if cle in agent), "appareil inconnu")
+    return f"{nom}, {adresse or '?'}"
 
 
 def _liberer_la_place_du_kiosque():
@@ -1242,11 +1259,13 @@ def api_presenter():
     with _lock:
         holder = _presenter_holder()
         sur_le_boitier = bool(holder) and _presenter["kiosk"]
+        appareil = _presenter["appareil"] if holder else ""
     # sur_le_boitier : la vue Journaliste qui pilote est ouverte SUR le boîtier (le
     # grand écran), et non sur un autre appareil — utile à la vérification.
-    return jsonify(
-        {"taken": holder is not None, "mine": bool(holder) and holder == mine, "sur_le_boitier": sur_le_boitier}
-    )
+    reponse = {"taken": holder is not None, "mine": bool(holder) and holder == mine, "sur_le_boitier": sur_le_boitier}
+    if _depuis_le_boitier():
+        reponse["appareil"] = appareil  # à la vérification du boîtier seulement
+    return jsonify(reponse)
 
 
 @app.route("/api/presenter/claim", methods=["POST"])

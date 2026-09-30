@@ -68,6 +68,8 @@ MENULOCK="/tmp/prompteur-menu-$(id -u).lock"
 # Journal du petit écran : ce qui s'est passé à son ouverture, lisible après coup
 # (cat /tmp/prompteur-menu-UID.log) — il est lancé en arrière-plan, sans fenêtre.
 MENULOG="/tmp/prompteur-menu-$(id -u).log"
+# Journal du grand écran : son lancement, et ce que le navigateur en dit.
+KIOSKLOG="/tmp/prompteur-kiosk-$(id -u).log"
 
 journal_menu() {
   echo "$*"
@@ -264,12 +266,54 @@ disposer_ecrans() {
     done
     [ -n "$place" ] || return 1
   fi
+  frequence_saine "$petit"
   # Écran SPI relié à la carte principale : sans cela, l'image ne se rafraîchit
   # jamais (elle reste figée sur le noir du démarrage). Vu sur le boîtier : la
   # synchronisation « PRIME » attend des signaux qu'un écran SPI ne donne pas.
   # Sans effet (et sans erreur) sur un écran HDMI, qui n'a pas ce réglage.
   xrandr --output "$petit" --set "PRIME Synchronization" 0 2>/dev/null || true
   return 0
+}
+
+# Fréquence d'image (Hz) du mode en cours d'une sortie, et sa taille (« 480x320 »).
+frequence_de() {
+  xrandr --current 2>/dev/null | awk -v s="$1" '
+    $1 == s { dedans = 1; next }
+    /^[^ \t]/ { dedans = 0 }
+    dedans && /\*/ { for (i = 2; i <= NF; i++) if ($i ~ /\*/) { gsub(/[*+]/, "", $i); print $i; exit } }'
+}
+taille_de() {
+  xrandr --current 2>/dev/null | awk -v s="$1" '
+    $1 == s { dedans = 1; next }
+    /^[^ \t]/ { dedans = 0 }
+    dedans && /\*/ { print $1; exit }'
+}
+
+# Un écran SPI n'a pas de vrai balayage : son pilote annonce une fréquence
+# d'image factice, de l'ordre de 0,01 Hz. Chromium cale ses images dessus — une
+# image toutes les ~10 s. Vu sur le boîtier : horloge figée, rond d'appui et
+# actions ~10 s plus tard, alors que la souris, dessinée par le serveur
+# d'affichage, bougeait tout de suite. On lui donne un mode de même taille à
+# 60 Hz (l'écran SPI, lui, ne regarde pas cette fréquence : il reçoit une image
+# à chaque changement). Rien à faire au-dessus de 5 Hz (un vrai écran HDMI).
+frequence_saine() {
+  local sortie="$1" f taille w h nom horloge
+  f="$(frequence_de "$sortie")"
+  [ -n "$f" ] || return 0
+  awk -v f="$f" 'BEGIN { exit !(f + 0 >= 5) }' && return 0
+  taille="$(taille_de "$sortie")"
+  case "$taille" in
+    [0-9]*x[0-9]*) ;;
+    *) return 0 ;;
+  esac
+  w="${taille%%x*}"
+  h="${taille#*x}"
+  h="${h%%[!0-9]*}"
+  nom="${w}x${h}_60"
+  horloge="$(awk -v w="$w" -v h="$h" 'BEGIN { printf "%.3f", (w + 3) * (h + 3) * 60 / 1000000 }')"
+  xrandr --newmode "$nom" "$horloge" "$w" $((w + 1)) $((w + 2)) $((w + 3)) "$h" $((h + 1)) $((h + 2)) $((h + 3)) 2>/dev/null || true
+  xrandr --addmode "$sortie" "$nom" 2>/dev/null || true
+  xrandr --output "$sortie" --mode "$nom" 2>/dev/null || true
 }
 
 # Le petit écran de 3,5 pouces sur les broches (SPI) est une carte graphique à
@@ -680,6 +724,9 @@ esac
 
 detacher_si_ssh "Prompteur relancé sur l'écran du boîtier."
 
+if [ -f "$KIOSKLOG" ]; then tail -n 200 "$KIOSKLOG" >"$KIOSKLOG.tmp" 2>/dev/null && mv -f "$KIOSKLOG.tmp" "$KIOSKLOG"; fi
+echo "$(date '+%F %T') Lancement demandé : vue $VUE${ACTION:+ ($ACTION)}, PID $$." >>"$KIOSKLOG" 2>/dev/null || true
+
 # --- Lancement (avec ou sans --restart) --------------------------------------
 # Verrou : deux lancements simultanés (démarrage automatique inscrit à deux
 # endroits, double appui sur un bouton) ouvriraient deux navigateurs l'un sur
@@ -694,6 +741,7 @@ elif kiosk_pid >/dev/null; then
     # Sans effet si la vue demandée est déjà affichée : c'est ce qui rend
     # l'icône de bureau inoffensive en cas de double-clic.
     echo "Vue $VUE déjà affichée."
+    echo "$(date '+%F %T') Vue $VUE déjà affichée (PID $(kiosk_pid)) : rien à faire." >>"$KIOSKLOG" 2>/dev/null || true
     exit 0
   fi
   stop_kiosk # l'autre vue laisse la place
@@ -760,6 +808,8 @@ fi
 # --window-position : le plein écran se fait sur l'écran où s'ouvre la fenêtre ;
 # avec deux écrans, c'est ce qui la met sur le GRAND.
 read -r GX GY _ _ <<<"$(geometrie "$(sortie_grand_ecran)")"
+echo "$(date '+%F %T') Navigateur lancé ($BROWSER) en ${GX:-0},${GY:-0}, vue $VUE." >>"$KIOSKLOG" 2>/dev/null || true
+exec 2>>"$KIOSKLOG" # ce que le navigateur dit (plantage, profil occupé…) reste lisible
 exec "$BROWSER" \
   --password-store=basic \
   --kiosk \

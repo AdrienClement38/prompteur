@@ -208,6 +208,22 @@ def test_vitesse_jusqu_a_1200(client):
     assert client.get("/api/state").get_json()["settings"]["speed"] == 1200
 
 
+def test_quel_appareil_pilote(client):
+    """La vérification du boîtier doit pouvoir dire QUEL appareil tient la vue
+    Journaliste — mais seulement au boîtier lui-même."""
+    autre = {"REMOTE_ADDR": "10.42.0.23"}
+    ua = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/140"}
+    assert (
+        client.post("/api/presenter/claim", json={"token": "t-pc"}, headers=ua, environ_base=autre).status_code == 200
+    )
+    vu_du_boitier = client.get("/api/presenter").get_json()
+    assert vu_du_boitier["taken"] and not vu_du_boitier["sur_le_boitier"]
+    assert vu_du_boitier["appareil"] == "Windows, 10.42.0.23"
+    vu_d_ailleurs = client.get("/api/presenter", environ_base={"REMOTE_ADDR": "10.42.0.50"}).get_json()
+    assert "appareil" not in vu_d_ailleurs
+    client.post("/api/presenter/release", json={"token": "t-pc"}, environ_base=autre)
+
+
 def test_pedales_transmises_par_le_petit_ecran(client):
     """La page du petit écran poste les pédales qu'elle reçoit ; la vue
     Journaliste les relit, dans l'ordre, sans en rejouer d'anciennes."""
