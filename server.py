@@ -1241,7 +1241,12 @@ def api_presenter():
     mine = request.args.get("token", "")
     with _lock:
         holder = _presenter_holder()
-    return jsonify({"taken": holder is not None, "mine": bool(holder) and holder == mine})
+        sur_le_boitier = bool(holder) and _presenter["kiosk"]
+    # sur_le_boitier : la vue Journaliste qui pilote est ouverte SUR le boîtier (le
+    # grand écran), et non sur un autre appareil — utile à la vérification.
+    return jsonify(
+        {"taken": holder is not None, "mine": bool(holder) and holder == mine, "sur_le_boitier": sur_le_boitier}
+    )
 
 
 @app.route("/api/presenter/claim", methods=["POST"])

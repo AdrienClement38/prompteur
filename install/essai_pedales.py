@@ -102,6 +102,10 @@ class ClavierVirtuel:
 
 def main():
     moyen = sys.argv[1] if len(sys.argv) > 1 else "relais"
+    # Codes des touches de la pédale avant et de la centrale, trouvés par
+    # verifier-boitier.sh dans la disposition du clavier du boîtier (xmodmap) :
+    # le pédalier peut envoyer des lettres (« c »…), qui dépendent de la disposition.
+    codes_donnes = [int(c) for c in sys.argv[3:5] if c.isdigit()]
     try:
         etat = lire("/api/state")
         if lire("/api/version").get("veille"):
@@ -114,6 +118,10 @@ def main():
     mode = s.get("mode", "hold")
     avant, centrale = s.get("keyForward", "ArrowDown"), s.get("keyCenter", "ArrowRight")
 
+    if len(codes_donnes) >= 1:
+        CODES[avant] = codes_donnes[0]
+    if len(codes_donnes) >= 2:
+        CODES[centrale] = codes_donnes[1]
     clavier = None
     if moyen == "clavier":
         if avant not in CODES or (mode == "dyn" and centrale not in CODES):

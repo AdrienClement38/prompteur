@@ -5,9 +5,11 @@
 #  À lancer après chaque mise à jour, depuis la fenêtre noire du boîtier (celle du
 #  bureau, pas en SSH : il faut l'écran) :
 #      cd ~/prompteur && ./install/verifier-boitier.sh
-#  sudo est demandé une fois, pour l'essai des pédales « comme le vrai pédalier »
-#  (clavier virtuel). Pendant l'essai, le texte du grand écran avance puis revient
-#  au début : c'est normal.
+#  sudo est demandé une fois, AU DÉBUT, pour l'essai des pédales « comme le vrai
+#  pédalier » (clavier virtuel). Si le prompteur est fermé (Alt + F4 pour atteindre
+#  cette fenêtre le ferme), la vérification l'ouvre elle-même le temps des essais,
+#  puis le referme pour qu'on puisse lire le résultat. Pendant l'essai, le texte du
+#  grand écran avance puis revient au début : c'est normal.
 #
 #  Chaque étape affiche ✅ ou ❌, avec ce qu'il faut regarder. Ce qu'aucun
 #  programme ne peut voir (l'image du petit écran, le stylet) est listé à la fin.
@@ -34,7 +36,27 @@ for k in sys.argv[1].split("."):
 print("" if d is None else d)' "$1" 2>/dev/null
 }
 
+# La touche d'une pédale (« c », « ArrowDown »…) -> son code pour le noyau, d'après
+# la disposition du clavier du boîtier : une lettre n'est pas au même endroit en
+# AZERTY et en QWERTY. Vide si introuvable.
+code_touche() {
+  local sym="$1"
+  case "$sym" in
+    ArrowDown) sym=Down ;;
+    ArrowUp) sym=Up ;;
+    ArrowLeft) sym=Left ;;
+    ArrowRight) sym=Right ;;
+    " ") sym=space ;;
+    Enter) sym=Return ;;
+    PageDown) sym=Next ;;
+    PageUp) sym=Prior ;;
+  esac
+  xmodmap -pke 2>/dev/null | awk -v k="$sym" '$4 == k {print $2 - 8; exit}'
+}
+
 echo "Vérification du Prompteur — $(date '+%d/%m/%Y %H:%M')"
+echo "Le mot de passe est demandé maintenant, une seule fois (rien ne s'affiche en tapant) :"
+sudo -v || echo "   (sans mot de passe, l'essai « comme le vrai pédalier » sera sauté)"
 echo "Version : $(git -C "$ICI/.." log -1 --format='%h du %cd' --date=format:'%d/%m %H:%M' 2>/dev/null || echo inconnue)"
 
 titre "1. Le logiciel du boîtier"
@@ -51,26 +73,45 @@ if [ "$(echo "$VERSION" | champ veille)" = "True" ]; then
 fi
 
 titre "2. Le grand écran"
+OUVERT_ICI=""
 ETAT_GRAND="$("$ICI/kiosk.sh" --status 2>/dev/null)"
-case "$ETAT_GRAND" in
-  "running journaliste") ok "Il affiche la vue Journaliste." ;;
-  running*) ko "Il affiche la vue ${ETAT_GRAND#running }, pas le prompteur." "En haut de Settings : « Écran journaliste » → Journaliste." ;;
-  *) ko "Le prompteur n'est pas ouvert sur le grand écran." "Icône « Le Prompteur » du bureau, ou « Écran journaliste » → Journaliste." ;;
-esac
-SEQ1="$(curl -s -m 5 "$URL/api/scroll" | champ seq)"
-sleep 3
-SEQ2="$(curl -s -m 5 "$URL/api/scroll" | champ seq)"
-if [ -n "$SEQ1" ] && [ -n "$SEQ2" ] && [ "$SEQ2" != "$SEQ1" ]; then
-  ok "La vue Journaliste pilote le défilement (elle donne sa position)."
+if [ "$ETAT_GRAND" = "running journaliste" ]; then
+  ok "Le prompteur est ouvert sur le grand écran."
 else
-  ko "La vue Journaliste ne donne pas sa position." "Est-elle ouverte ? Affiche-t-elle « déjà ouverte ailleurs » ?"
+  echo "   Le prompteur est fermé (${ETAT_GRAND:-état inconnu}) : la vérification l'ouvre le temps des essais."
+  setsid -f "$ICI/kiosk.sh" --vue journaliste </dev/null >/dev/null 2>&1
+  OUVERT_ICI=1
+  for _ in $(seq 1 30); do
+    [ "$("$ICI/kiosk.sh" --status 2>/dev/null)" = "running journaliste" ] &&
+      [ "$(curl -s -m 3 "$URL/api/presenter" | champ sur_le_boitier)" = "True" ] && break
+    sleep 1
+  done
+  sleep 3 # le temps que la page soit dessinée et prenne la main
+  if [ "$("$ICI/kiosk.sh" --status 2>/dev/null)" = "running journaliste" ]; then
+    ok "Le prompteur s'ouvre sur le grand écran."
+  else
+    ko "Le prompteur ne s'ouvre pas sur le grand écran." "Icône « Le Prompteur » du bureau ; sinon, une photo de l'écran."
+  fi
+fi
+PILOTE="$(curl -s -m 5 "$URL/api/presenter")"
+if [ "$(echo "$PILOTE" | champ sur_le_boitier)" = "True" ]; then
+  ok "C'est bien la vue du grand écran qui pilote le défilement."
+elif [ "$(echo "$PILOTE" | champ taken)" = "True" ]; then
+  ko "Une vue Journaliste ouverte sur un AUTRE appareil pilote le défilement." \
+    "Fermez-la (téléphone, ordinateur) : c'est elle qui recevrait les pédales transmises."
+else
+  ko "Aucune vue Journaliste ne pilote le défilement." "Le prompteur affiche-t-il « déjà ouverte ailleurs » ?"
 fi
 
 titre "3. Les pédales"
 essai() {
   local moyen="$1" nom="$2" sortie code
   if [ "$moyen" = clavier ]; then
-    sortie="$(sudo python3 "$ICI/essai_pedales.py" clavier "$PORT")"
+    if ! sudo -n true 2>/dev/null; then
+      ko "$nom : essai sauté (pas de mot de passe)."
+      return
+    fi
+    sortie="$(sudo -n python3 "$ICI/essai_pedales.py" clavier "$PORT" "$CODE_AVANT" "$CODE_CENTRALE")"
   else
     sortie="$(python3 "$ICI/essai_pedales.py" relais "$PORT")"
   fi
@@ -89,6 +130,12 @@ essai() {
     fi
   fi
 }
+REGLAGES="$(curl -s -m 5 "$URL/api/state")"
+TOUCHE_AVANT="$(echo "$REGLAGES" | champ settings.keyForward)"
+TOUCHE_CENTRALE="$(echo "$REGLAGES" | champ settings.keyCenter)"
+CODE_AVANT="$(code_touche "${TOUCHE_AVANT:-ArrowDown}")"
+CODE_CENTRALE="$(code_touche "${TOUCHE_CENTRALE:-ArrowRight}")"
+echo "   Touches des pédales : avant « ${TOUCHE_AVANT} », centrale « ${TOUCHE_CENTRALE} »."
 echo "   (le texte du grand écran va avancer, puis revenir au début)"
 essai clavier "Pédale, comme le vrai pédalier"
 essai relais "Pédale transmise par le petit écran"
@@ -127,6 +174,28 @@ else
       *) ok "Le tactile est calé sur le petit écran (corrections : $(sed -n 's/^tactile=//p' "$HOME/.config/prompteur/petit-ecran.conf" 2>/dev/null | tail -1))." ;;
     esac
   fi
+fi
+
+titre "5. La charge du boîtier"
+# %CPU instantané (deuxième mesure de top, sur une seconde) des programmes les
+# plus gourmands. Un serveur d'affichage (Xorg) saturé ralentit TOUT : le grand
+# écran, le petit, et l'arrivée des pédales.
+CHARGE="$(top -b -n 2 -d 1 2>/dev/null | awk '/^top -/ {n++} n == 2 && $1 ~ /^[0-9]+$/ {print int($9), $12}' | sort -rn | head -4)"
+echo "$CHARGE" | sed 's/^/   /;s/ /% /'
+XORG="$(echo "$CHARGE" | awk '$2 == "Xorg" {print $1; exit}')"
+if [ -n "$XORG" ] && [ "$XORG" -ge 60 ]; then
+  ko "Le serveur d'affichage est saturé (Xorg à ${XORG} %)." "Envoyez cette photo : c'est une piste pour la lenteur du petit écran."
+else
+  ok "Le serveur d'affichage n'est pas saturé (Xorg à ${XORG:-0} %)."
+fi
+FENETRES="$(xwininfo -root -tree 2>/dev/null | grep -iE 'prompteur(kiosque|menu)' | sed -n 's/.*("\([^"]*\)" "[^"]*").* \([0-9]\+x[0-9]\+[+-][0-9]\+[+-][0-9]\+\).*/\1 \2/p' | sort -u)"
+[ -z "$FENETRES" ] || while read -r ligne; do echo "   fenêtre $ligne"; done <<<"$FENETRES"
+
+if [ -n "$OUVERT_ICI" ]; then
+  "$ICI/kiosk.sh" --stop >/dev/null 2>&1
+  echo
+  echo "Le prompteur a été refermé pour que vous puissiez lire ce résultat."
+  echo "Rouvrez-le ensuite avec l'icône « Le Prompteur » du bureau."
 fi
 
 echo

@@ -85,7 +85,7 @@ kiosk_pid() {
     '' | *[!0-9]*) return 1 ;;
   esac
   kill -0 "$pid" 2>/dev/null || return 1
-  est_a_nous "$pid" 'kiosk\.sh|PrompteurKiosque' || return 1
+  est_a_nous "$pid" 'kiosk\.sh|chrom|Prompteur' || return 1
   echo "$pid"
 }
 
@@ -385,7 +385,9 @@ caler_tactile() {
 
 # Un PID lu dans un fichier ne vaut que s'il désigne encore NOTRE processus :
 # après un redémarrage, le même numéro peut appartenir à n'importe quoi d'autre,
-# et l'on croirait la fenêtre ouverte alors qu'elle ne l'est pas.
+# et l'on croirait la fenêtre ouverte alors qu'elle ne l'est pas. Le motif reste
+# large (kiosk.sh, chromium, Prompteur…) : un navigateur peut réécrire sa ligne
+# de commande, et un faux « fermé » serait pire (on en relancerait un second).
 est_a_nous() {
   [ -r "/proc/$1/cmdline" ] || return 0 # impossible de vérifier : on fait confiance
   tr '\0' ' ' <"/proc/$1/cmdline" 2>/dev/null | grep -qE "$2"
@@ -399,7 +401,7 @@ menu_pid() {
     '' | *[!0-9]*) return 1 ;;
   esac
   kill -0 "$pid" 2>/dev/null || return 1
-  est_a_nous "$pid" 'kiosk\.sh|PrompteurMenu' || return 1
+  est_a_nous "$pid" 'kiosk\.sh|chrom|Prompteur' || return 1
   echo "$pid"
 }
 
