@@ -244,6 +244,24 @@ aller_sur_petit_x() {
   export PROMPTEUR_PETIT_ECRAN
 }
 
+# Les réglages du bureau (police « system-ui », lissage…) sur l'affichage du petit
+# écran. Le bureau du grand écran les publie lui-même ; l'affichage du petit écran
+# n'a personne pour le faire. Sans eux, son navigateur prenait une police de
+# secours, plus large que celle du grand (Nunito Sans sur Raspberry Pi OS) : la vue
+# Spectateur coupait ses lignes ailleurs, et ses numéros ne correspondaient plus
+# (vu sur le boîtier : 74 sur le grand écran, 140 sur le petit).
+lancer_reglages_bureau() {
+  command -v xsettingsd >/dev/null 2>&1 || return 0
+  local conf="$HOME/.config/xsettingsd/xsettingsd.conf"
+  if [ ! -f "$conf" ]; then
+    journal_menu "Réglages du bureau introuvables ($conf) : le petit écran garde sa police par défaut."
+    return 0
+  fi
+  # Un seul par affichage : s'il y en a déjà un, le nouveau s'arrête de lui-même.
+  setsid -f xsettingsd -c "$conf" </dev/null >/dev/null 2>&1 || true
+  sleep 0.5 # le temps qu'il les publie, avant que le navigateur ne les lise
+}
+
 # Le petit écran : une autre sortie branchée. PROMPTEUR_PETIT_ECRAN l'impose.
 sortie_petit_ecran() {
   if [ -n "${PROMPTEUR_PETIT_ECRAN:-}" ]; then
@@ -653,6 +671,7 @@ case "$ACTION" in
         sleep 2
       done
       aller_sur_petit_x
+      lancer_reglages_bureau
       SEPARE=1
       if [ -z "$PROMPTEUR_PETIT_ECRAN" ]; then
         journal_menu "L'affichage du petit écran ($PETIT_X) n'a aucun écran branché : rien n'est ouvert." >&2

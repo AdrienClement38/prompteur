@@ -263,6 +263,20 @@ pédalier ne peuvent plus aller au petit écran. Confirmé par le journaliste : 
 boutons au premier appui, horloge à la seconde. Leçon : mesurer ce qui part vers
 l'écran AVANT toute hypothèse.
 
+### 🔴 Un second affichage n'a pas la police du bureau
+Juste après la séparation des deux affichages : « je suis à 74 sur le grand écran, à
+140 sur le petit ». La vue Spectateur reproduit pourtant la largeur du grand… mais
+avec une AUTRE police. La police « system-ui » est celle que le bureau publie
+(Nunito Sans sur Raspberry Pi OS, via les réglages XSETTINGS de la session) ;
+l'affichage du petit écran n'a pas de session, donc personne pour les publier : son
+navigateur prenait une police de secours, plus large. Lignes coupées ailleurs,
+numéros qui dérivent. Vu sur l'écran réel (fenêtre Spectateur ouverte 15 s dessus,
+capture des deux écrans) : 31 sous le trait rouge du grand, ~37 sur le petit.
+**Parade :** kiosk.sh lance `xsettingsd` (avec les réglages du bureau,
+`~/.config/xsettingsd/xsettingsd.conf`) sur l'affichage du petit écran avant son
+navigateur. Vérifié : même ligne 31, mêmes coupures, des deux côtés. Un téléphone
+ou un ordinateur en vue Spectateur a, lui, SA police : ses numéros peuvent différer.
+
 ### Une dalle désignée par un lien symbolique est introuvable
 `Option "Device" "/dev/input/by-path/…-event"` (chemin stable, en théorie) : « Failed to
 look up path '/dev/input/event10' » — libinput résout le lien, puis le pilote X compare
