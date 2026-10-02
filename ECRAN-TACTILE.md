@@ -39,8 +39,11 @@ le petit.
 Ce que fait `petit-ecran.sh` : il ajoute au fichier de démarrage (`config.txt`, sauvegardé
 avant) les lignes du pilote **officiel** de Raspberry Pi pour cet écran (`piscreen` en mode
 drm pour la famille ili9486 ; `mipi-dbi-spi` avec la séquence d'allumage du ST7796S, et
-`ads7846` pour le tactile, pour l'autre). Au démarrage, le boîtier relie ce petit écran au bureau, cale le tactile dessus et y
-ouvre la vue Settings. Le grand écran n'est pas touché.
+`ads7846` pour le tactile, pour l'autre). Il donne aussi au petit écran **son propre
+affichage**, séparé de celui du grand écran (service `prompteur-petit-ecran-x`) : l'image
+lui arrive à chaque changement, et il n'a ni clavier ni pédalier — **les pédales restent
+toujours au grand écran**, même après un appui sur le petit. Au démarrage, le boîtier y
+ouvre la vue Settings et y cale le tactile. Le grand écran n'est pas touché.
 
 ### Si le résultat n'est pas le bon
 
@@ -116,9 +119,11 @@ La vue **Settings**, comme sur le téléphone, avec tout en haut :
 ~/prompteur/install/kiosk.sh --ecrans
 ```
 
-dit quelles cartes graphiques et quels écrans le bureau voit, lequel est le grand, lequel le
-petit, et quelle dalle tactile est reconnue. `~/prompteur/install/kiosk.sh --menu` rouvre la vue
-Settings sur le petit écran (et dit pourquoi, s'il ne peut pas) ; `--menu-stop` la ferme.
+dit quels écrans le bureau voit, lequel est le grand, si le petit a bien son propre affichage
+(« actif ») et quelle dalle tactile y est branchée. `~/prompteur/install/kiosk.sh --menu`
+rouvre la vue Settings sur le petit écran (et dit pourquoi, s'il ne peut pas) ; `--menu-stop`
+la ferme. `systemctl status prompteur-petit-ecran-x` dit si l'affichage du petit écran tourne
+(son journal : `/var/log/Xorg.1.log`).
 
 *Voir aussi : `SAUVEGARDE-ET-RESTAURATION.md` (revenir en arrière) et
 `MISE-EN-ROUTE.md` (installation complète du boîtier).*

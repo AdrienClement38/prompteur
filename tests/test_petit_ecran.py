@@ -55,10 +55,12 @@ def boot(tmp_path):
     cale.write_text('#!/bin/sh\nexec "%s" "$@"\n' % Path(sys.executable).as_posix(), encoding="utf-8")
     cale.chmod(0o755)
     env = dict(os.environ)
+    racine = tmp_path / "racine"
     env.update(
         PROMPTEUR_ESSAI="1",
         PROMPTEUR_BOOT_CONFIG=config.as_posix(),
         PROMPTEUR_FIRMWARE=(tmp_path / "st7796s.bin").as_posix(),
+        PROMPTEUR_RACINE=racine.as_posix(),
         HOME=maison.as_posix(),
         SUDO_USER="",
         PATH=outils.as_posix() + os.pathsep + env.get("PATH", ""),
@@ -69,7 +71,92 @@ def boot(tmp_path):
             [_bash(), SCRIPT.as_posix(), *args], env=env, capture_output=True, text=True, timeout=60
         )
 
-    return {"config": config, "maison": maison, "tmp": tmp_path, "lancer": lancer}
+    return {"config": config, "maison": maison, "tmp": tmp_path, "racine": racine, "lancer": lancer}
+
+
+# Ce que « installer » pose pour l'affichage propre du petit écran (X :1).
+FICHIERS_X = (
+    "etc/X11/xorg.conf.d/60-prompteur-petit-ecran.conf",
+    "etc/prompteur/xorg-petit-ecran.conf",
+    "etc/prompteur/xorg-petit-ecran.d/00-vide.conf",
+    "usr/local/sbin/prompteur-petit-ecran-x",
+    "etc/systemd/system/prompteur-petit-ecran-x.service",
+)
+
+
+def _lire(boot, chemin):
+    return (boot["racine"] / chemin).read_text(encoding="utf-8")
+
+
+def test_installer_donne_au_petit_ecran_son_propre_affichage(boot):
+    """Mesuré sur le boîtier : relié au bureau du grand écran, le petit écran ne
+    recevait une image que toutes les ~10 s. Sur son propre serveur (X :1), sans
+    accélération, il la reçoit à chaque changement. Et :1 n'a QUE la dalle
+    tactile : clavier et pédalier restent au grand écran."""
+    r = boot["lancer"]("installer")
+    assert r.returncode == 0, r.stderr
+    for chemin in FICHIERS_X:
+        assert (boot["racine"] / chemin).is_file(), chemin
+
+    # Le bureau du grand écran (:0) ne prend plus ni la carte ni la dalle.
+    grand = _lire(boot, FICHIERS_X[0])
+    assert 'Option "AutoAddGPU" "false"' in grand
+    assert 'MatchProduct "ADS7846"' in grand and 'Option "Ignore" "on"' in grand
+
+    # :1 : la carte du petit écran (remplie au lancement), sans accélération, à 60 Hz.
+    petit = _lire(boot, FICHIERS_X[1])
+    assert 'BusID "@BUS@"' in petit and 'Option "kmsdev" "@CARTE@"' in petit
+    assert 'Option "AccelMethod" "none"' in petit
+    assert 'Modeline "480x320_60"' in petit and 'Option "PreferredMode" "480x320_60"' in petit
+    assert "DefaultDepth 24" in petit
+    # Rien que la dalle : tout ce qui n'est pas elle est ignoré.
+    assert 'NoMatchProduct "ADS7846"' in petit
+    assert 'Option "AutoAddGPU" "false"' in petit
+
+    # Le service : il partage la console du bureau sans jamais la lui prendre.
+    unite = _lire(boot, FICHIERS_X[4])
+    lancement = next(ligne for ligne in unite.splitlines() if ligne.startswith("ExecStart="))
+    for morceau in (
+        ":1 vt7",
+        "-sharevts",
+        "-novtswitch",
+        "-noreset",
+        "-nolisten tcp",
+        "-config /run/prompteur-petit-ecran/xorg.conf",
+        "-auth /run/prompteur-petit-ecran/auth",
+    ):
+        assert morceau in lancement, morceau
+    assert "ExecStartPre=" + (boot["racine"] / FICHIERS_X[3]).as_posix() in unite
+
+    # La préparation : remplit le modèle installé, donne le jeton au compte du boîtier.
+    avant = _lire(boot, FICHIERS_X[3])
+    assert (boot["racine"] / FICHIERS_X[1]).as_posix() in avant
+    assert "@UTILISATEUR@" not in avant and "@MODELE@" not in avant
+    assert '"@CARTE@"' not in avant  # ceux-là restent pour le sed, entre |
+    assert "s|@CARTE@|$carte|" in avant and "s|@BUS@|platform:$bus|" in avant
+    assert (
+        subprocess.run(
+            [_bash(), "-n", (boot["racine"] / FICHIERS_X[3]).as_posix()],  # nosec B603
+            capture_output=True,
+            timeout=30,
+        ).returncode
+        == 0
+    )
+
+
+def test_reinstaller_reecrit_l_affichage_a_l_identique(boot):
+    assert boot["lancer"]("installer").returncode == 0
+    avant = {c: _lire(boot, c) for c in FICHIERS_X}
+    assert boot["lancer"]("installer", "--rotation", "left").returncode == 0
+    assert {c: _lire(boot, c) for c in FICHIERS_X} == avant
+
+
+def test_annuler_retire_l_affichage_du_petit_ecran(boot):
+    assert boot["lancer"]("installer").returncode == 0
+    assert boot["lancer"]("annuler").returncode == 0
+    for chemin in FICHIERS_X:
+        assert not (boot["racine"] / chemin).exists(), chemin
+    assert not (boot["racine"] / "etc" / "prompteur").exists()
 
 
 def _bloc(texte):

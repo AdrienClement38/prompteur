@@ -217,6 +217,7 @@ pour envoyer chaque image, des signaux de rafraîchissement qu'un écran SPI ne 
 pas : rien n'était jamais envoyé.
 **Parade :** `xrandr --output <petit écran> --set "PRIME Synchronization" 0`, posé
 par kiosk.sh à chaque placement. Constaté sur le boîtier : la page est apparue aussitôt.
+Mais l'image restait figée ensuite : voir « Un seul bureau pour deux écrans » plus bas.
 
 ### 🔴 Alt + F4 ferme la fenêtre qui a la main — parfois celle du petit écran
 Les procédures disent « Alt + F4 » pour quitter le prompteur et atteindre le bureau.
@@ -238,6 +239,46 @@ L'AUTRE (lancés en parallèle, un appui bref arrivait « relâché » avant
 « enfoncé » : pédale collée, texte parti seul — le banc tests/banc_petit_ecran.js
 le rattrape) ; perte de la main = on relâche, sans arrêter le défilement. Et avant
 toute livraison : « qu'est-ce que ça change pour les pédales ? ».
+Depuis, le petit écran a son propre affichage, sans clavier (voir ci-dessous) : il ne
+peut plus prendre la main au grand.
+
+### 🔴 Un seul bureau pour deux écrans : le petit ne reçoit presque rien
+Page Settings affichée… mais qui ne bougeait que toutes les ~10 s : horloge figée,
+rond d'appui et actions en retard. Trois hypothèses annoncées trop vite (le réglage
+PRIME, la charge de Xorg, la fréquence factice de 0,01 Hz de l'écran SPI). C'est la
+MESURE qui a tranché, une fois le boîtier joignable en SSH : pendant que l'image du
+bureau changeait chaque seconde (capture `scrot` comparée), le compteur des octets
+envoyés à l'écran (`/sys/bus/spi/devices/spi0.0/statistics/bytes_tx`) ne bougeait
+qu'une fois en 15 s — quand kiosk.sh reposait le réglage PRIME. Relié au bureau du
+grand écran, le petit passe par le processeur graphique (glamor) : l'image est
+recopiée mais jamais poussée vers un écran SPI (1 300 « failed to add fb » au
+démarrage). Et sans accélération, le bureau n'arrive plus du tout à l'allumer
+(« Configure crtc failed »).
+**Parade :** le petit écran a **son propre serveur d'affichage** (X :1, service
+`prompteur-petit-ecran-x`, posé par `petit-ecran.sh installer`). Sans accélération, il
+envoie à l'écran chaque changement (mesuré : ~1,3 Ko chaque seconde, l'horloge). Le
+bureau du grand écran lui laisse sa carte et sa dalle (`AutoAddGPU` à false, ADS7846
+ignoré) ; :1 ignore tout sauf la dalle (`NoMatchProduct "ADS7846"`) : clavier et
+pédalier ne peuvent plus aller au petit écran. Confirmé par le journaliste : pédales,
+boutons au premier appui, horloge à la seconde. Leçon : mesurer ce qui part vers
+l'écran AVANT toute hypothèse.
+
+### Une dalle désignée par un lien symbolique est introuvable
+`Option "Device" "/dev/input/by-path/…-event"` (chemin stable, en théorie) : « Failed to
+look up path '/dev/input/event10' » — libinput résout le lien, puis le pilote X compare
+ce chemin au TEXTE de l'option. Pas de tactile.
+**Parade :** désigner la dalle par son nom (`InputClass`, `MatchProduct "ADS7846"`).
+
+### Chromium propose de traduire la page… sur 480 × 320
+Profil neuf, interface en anglais, page en français : une bulle « French / English »
+couvrait le haut du petit écran. `--disable-features=Translate` ne suffit plus.
+**Parade :** le navigateur du petit écran est lancé avec `LANGUAGE=fr`.
+
+### sudo : un mot de passe tapé vaut un moment pour TOUTES les sessions
+Observé sur le boîtier : juste après un `sudo` tapé à la main dans une session, `sudo -n`
+passait sans mot de passe dans une autre (SSH). Une règle « sans mot de passe pour
+telle commande » paraît alors trop large alors qu'elle ne l'est pas.
+**Parade :** vider ce souvenir avant de vérifier une règle : `sudo -K`.
 
 ### Écouter le tactile : les événements BRUTS
 `xinput test-xi2 --root` ne reçoit les événements ordinaires que si aucune fenêtre

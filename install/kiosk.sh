@@ -24,7 +24,8 @@
 #      kiosk.sh --reveil          les rallume
 #      kiosk.sh --menu            ouvre la vue Settings sur le PETIT écran (fait
 #                                 d'office à chaque lancement du prompteur quand
-#                                 deux écrans sont branchés)
+#                                 il est là ; sur son propre affichage « :1 »
+#                                 s'il a été installé par petit-ecran.sh)
 #      kiosk.sh --menu-stop       la ferme
 #      kiosk.sh --ecrans          dit quels écrans sont vus, lequel est le grand,
 #                                 lequel le petit, et quelle dalle tactile
@@ -70,6 +71,14 @@ MENULOCK="/tmp/prompteur-menu-$(id -u).lock"
 MENULOG="/tmp/prompteur-menu-$(id -u).log"
 # Journal du grand écran : son lancement, et ce que le navigateur en dit.
 KIOSKLOG="/tmp/prompteur-kiosk-$(id -u).log"
+# Le petit écran SPI a son PROPRE serveur d'affichage (« :1 », service
+# prompteur-petit-ecran-x posé par install/petit-ecran.sh), séparé du bureau du
+# grand écran (« :0 ») : partager un seul bureau entre les deux ne marche pas sur
+# ce matériel (l'image n'arrivait au petit écran que toutes les ~10 s, voir
+# PIEGES.md). Les variables PROMPTEUR_PETIT_X* ne servent qu'aux essais.
+PETIT_X="${PROMPTEUR_PETIT_X:-:1}"
+PETIT_X_AUTH="${PROMPTEUR_PETIT_X_AUTH:-/run/prompteur-petit-ecran/auth}"
+PETIT_X_UNITE="${PROMPTEUR_PETIT_X_UNITE:-/etc/systemd/system/prompteur-petit-ecran-x.service}"
 
 journal_menu() {
   echo "$*"
@@ -213,6 +222,26 @@ petit_ecran_possible() {
     '' | *[!0-9]*) return 1 ;;
   esac
   [ "$n" -gt 1 ]
+}
+
+# Le petit écran a-t-il son propre affichage (installé par petit-ecran.sh) ?
+# Alors c'est là que s'ouvre la vue Settings ; le bureau du grand écran ne le voit
+# même plus.
+petit_x_installe() {
+  [ -f "$PETIT_X_UNITE" ]
+}
+
+# Cet affichage répond-il ? Lancé par systemd, il peut n'être prêt qu'après le bureau.
+petit_x_pret() {
+  [ -r "$PETIT_X_AUTH" ] && DISPLAY="$PETIT_X" XAUTHORITY="$PETIT_X_AUTH" xset q >/dev/null 2>&1
+}
+
+# Toutes les commandes qui suivent (xrandr, xinput, navigateur) visent désormais
+# l'affichage du petit écran, dont l'unique sortie est le petit écran.
+aller_sur_petit_x() {
+  export DISPLAY="$PETIT_X" XAUTHORITY="$PETIT_X_AUTH"
+  PROMPTEUR_PETIT_ECRAN="$(sorties_branchees | head -1)"
+  export PROMPTEUR_PETIT_ECRAN
 }
 
 # Le petit écran : une autre sortie branchée. PROMPTEUR_PETIT_ECRAN l'impose.
@@ -558,12 +587,28 @@ case "$ACTION" in
     echo "Écrans branchés et allumés (nom, x, y, largeur, hauteur, surface en mm²) :"
     sorties | sed 's/^/  /'
     echo "Grand écran (la vitre) : $(sortie_grand_ecran)"
-    echo "Petit écran (la régie) : $(sortie_petit_ecran)"
+    if petit_x_installe; then
+      echo "Petit écran (la régie) : sur son propre affichage ($PETIT_X), voir plus bas."
+    else
+      echo "Petit écran (la régie) : $(sortie_petit_ecran)"
+    fi
     if command -v xinput >/dev/null 2>&1; then
       echo "Dalles tactiles reconnues :"
       xinput list --short 2>/dev/null | grep -iE 'slave +pointer' | grep -iE "$MOTS_TACTILES" | sed 's/^/  /'
     else
       echo "xinput absent : le tactile ne peut pas être calé sur le petit écran."
+    fi
+    if petit_x_installe; then
+      if petit_x_pret; then
+        echo "Affichage propre du petit écran ($PETIT_X) : actif. Écran et dalle tactile :"
+        (
+          aller_sur_petit_x
+          sorties | sed 's/^/  /'
+          xinput list --short 2>/dev/null | grep -iE 'slave +pointer' | grep -iE "$MOTS_TACTILES" | sed 's/^/  /'
+        )
+      else
+        echo "Affichage propre du petit écran ($PETIT_X) : installé mais ne répond pas (systemctl status prompteur-petit-ecran-x)."
+      fi
     fi
     if PID_MENU="$(menu_pid)"; then
       echo "Vue Settings du petit écran : affichée (PID $PID_MENU)."
@@ -573,6 +618,7 @@ case "$ACTION" in
     exit 0
     ;;
   --caler-tactile)
+    if petit_x_installe && petit_x_pret; then aller_sur_petit_x; fi
     caler_tactile
     echo "Tactile recalé sur le petit écran (corrections : $(tactile_voulu))."
     exit 0
@@ -594,24 +640,50 @@ case "$ACTION" in
     # (PROMPTEUR_ATTENDRE_ECRAN secondes) ; à la main, la réponse est immédiate.
     ATTENTE="${PROMPTEUR_ATTENDRE_ECRAN:-0}"
     case "$ATTENTE" in '' | *[!0-9]*) ATTENTE=0 ;; esac
-    PRET=""
-    while :; do
-      relier_ecrans_annexes # le petit écran SPI n'apparaît qu'une fois relié
-      if [ -n "$(sortie_petit_ecran)" ] && disposer_ecrans; then
-        PRET=1
-        break
+    SEPARE=""
+    if petit_x_installe; then
+      # Le petit écran a son propre affichage : on l'attend, puis tout se passe
+      # là-bas (le bureau du grand écran n'a rien à disposer).
+      while ! petit_x_pret; do
+        if [ "$ATTENTE" -le 0 ]; then
+          journal_menu "L'affichage du petit écran ($PETIT_X) ne répond pas : rien n'est ouvert (systemctl status prompteur-petit-ecran-x)." >&2
+          exit 1
+        fi
+        ATTENTE=$((ATTENTE - 2))
+        sleep 2
+      done
+      aller_sur_petit_x
+      SEPARE=1
+      if [ -z "$PROMPTEUR_PETIT_ECRAN" ]; then
+        journal_menu "L'affichage du petit écran ($PETIT_X) n'a aucun écran branché : rien n'est ouvert." >&2
+        exit 1
       fi
-      [ "$ATTENTE" -gt 0 ] || break
-      ATTENTE=$((ATTENTE - 2))
-      sleep 2
-    done
-    if [ -z "$PRET" ]; then
-      if [ -z "$(sortie_petit_ecran)" ]; then
-        journal_menu "Un seul écran branché : pas de petit écran à remplir."
-        exit 0
+      # Rotation choisie par petit-ecran.sh (--rotation), et vraie fréquence
+      # d'image (si le mode à 60 Hz du réglage n'a pas pu être pris).
+      if [ "$(rotation_de "$PROMPTEUR_PETIT_ECRAN")" != "$(rotation_voulue)" ]; then
+        xrandr --output "$PROMPTEUR_PETIT_ECRAN" --rotate "$(rotation_voulue)" 2>/dev/null || true
       fi
-      journal_menu "Le petit écran n'a pas pu être placé à côté du grand : rien n'est ouvert (voir kiosk.sh --ecrans)." >&2
-      exit 1
+      frequence_saine "$PROMPTEUR_PETIT_ECRAN"
+    else
+      PRET=""
+      while :; do
+        relier_ecrans_annexes # le petit écran SPI n'apparaît qu'une fois relié
+        if [ -n "$(sortie_petit_ecran)" ] && disposer_ecrans; then
+          PRET=1
+          break
+        fi
+        [ "$ATTENTE" -gt 0 ] || break
+        ATTENTE=$((ATTENTE - 2))
+        sleep 2
+      done
+      if [ -z "$PRET" ]; then
+        if [ -z "$(sortie_petit_ecran)" ]; then
+          journal_menu "Un seul écran branché : pas de petit écran à remplir."
+          exit 0
+        fi
+        journal_menu "Le petit écran n'a pas pu être placé à côté du grand : rien n'est ouvert (voir kiosk.sh --ecrans)." >&2
+        exit 1
+      fi
     fi
     BROWSER="$(trouver_navigateur)"
     if [ -z "$BROWSER" ]; then
@@ -637,10 +709,12 @@ case "$ACTION" in
       POS="${PROMPTEUR_MENU_POS:-${GX},${GY}}"
       TAILLE="${PROMPTEUR_MENU_TAILLE:-${GW:-800},${GH:-480}}"
       DEPART="$(date +%s)"
-      journal_menu "Page Settings ouverte en $POS, taille $TAILLE."
+      journal_menu "Page Settings ouverte en $POS, taille $TAILLE${SEPARE:+ (affichage $PETIT_X)}."
       # Plein écran (--kiosk) sur le petit écran, avec son propre profil : c'est
       # un second navigateur, indépendant de celui du grand écran.
-      "$BROWSER" \
+      # LANGUAGE=fr : sur ce profil neuf, Chromium (en anglais) proposait de
+      # traduire la page, dans une bulle qui couvrait le haut du petit écran.
+      LANGUAGE=fr "$BROWSER" \
         --password-store=basic \
         --kiosk \
         --no-first-run \
@@ -659,12 +733,15 @@ case "$ACTION" in
         --app="http://localhost:${PORT}/settings?petit=1" >/dev/null 2>&1 &
       NAVIGATEUR=$!
       SORTIE="$(sortie_petit_ecran)"
-      # Tant que la page est ouverte, on relance le rafraîchissement : à 3, 10
-      # et 30 s (la page est alors dessinée, le grand écran installé), puis
-      # toutes les 30 s ; et tout de suite si le réglage est revenu à 1.
+      # Petit écran relié au bureau du grand (sans affichage propre) : tant que
+      # la page est ouverte, on relance le rafraîchissement : à 3, 10 et 30 s
+      # (la page est alors dessinée, le grand écran installé), puis toutes les
+      # 30 s ; et tout de suite si le réglage est revenu à 1. Sur son propre
+      # affichage, rien de tout cela : l'image lui arrive à chaque changement.
       ECOULE=0
       while kill -0 "$NAVIGATEUR" 2>/dev/null; do
         sleep 1
+        [ -z "$SEPARE" ] || continue
         ECOULE=$((ECOULE + 1))
         case "$ECOULE" in
           3 | 10 | 30)
@@ -685,7 +762,12 @@ case "$ACTION" in
       journal_menu "Page Settings fermée après $(($(date +%s) - DEPART)) s : réouverture."
       # Refermée aussitôt ouverte : on attend un peu plus, sans s'emballer.
       if [ $(($(date +%s) - DEPART)) -lt 10 ]; then sleep 10; else sleep 2; fi
-      if ! disposer_ecrans; then
+      if [ -n "$SEPARE" ]; then
+        if ! petit_x_pret; then
+          journal_menu "L'affichage du petit écran ($PETIT_X) ne répond plus : arrêt."
+          break
+        fi
+      elif ! disposer_ecrans; then
         journal_menu "Le petit écran n'est plus à côté du grand : arrêt."
         break
       fi
@@ -774,8 +856,9 @@ attendre_serveur || true
 # Rien de tout cela sans second écran : sur un boîtier à un seul écran, la
 # fenêtre ne l'attendrait pas une minute à interroger les écrans (chaque
 # interrogation complète peut faire hoqueter l'affichage du prompteur).
+# Petit écran sur son propre affichage : la fenêtre l'attend de la même façon.
 disposer_ecrans || true
-if petit_ecran_possible && ! menu_pid >/dev/null && command -v setsid >/dev/null 2>&1; then
+if { petit_x_installe || petit_ecran_possible; } && ! menu_pid >/dev/null && command -v setsid >/dev/null 2>&1; then
   PROMPTEUR_DETACHE=1 PROMPTEUR_ATTENDRE_ECRAN=60 setsid -f /bin/bash "$0" --menu </dev/null >/dev/null 2>&1 || true
 fi
 

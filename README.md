@@ -266,11 +266,14 @@ tactile de 3,5 pouces **sur les broches** (SPI), une fois installé par `sudo
 ./install/petit-ecran.sh installer` — pilote officiel `piscreen,drm` pour la famille
 ILI9486 (d'usine), `mipi-dbi-spi` pour un ST7796S (`--modele st7796s`) ; voir
 ECRAN-TACTILE.md — et d'un écran branché sur la seconde
-prise HDMI, sans rien installer. `install/kiosk.sh` relie l'écran SPI au bureau X11
-(`xrandr --setprovideroutputsource` : c'est une carte graphique à part), met les
-deux écrans côte à côte s'ils étaient en recopie, applique la rotation choisie, cale
-la dalle tactile sur le petit écran (`xinput map-to-output`), puis ouvre un second
-Chromium, indépendant du premier.
+prise HDMI, sans rien installer. L'écran SPI a **son propre serveur d'affichage**
+(X `:1`, service `prompteur-petit-ecran-x` posé par `petit-ecran.sh`) : relié au bureau
+du grand écran, il ne recevait une image que toutes les ~10 s (mesuré, voir
+PIEGES.md). Ce serveur n'a que l'écran et sa dalle tactile — ni clavier ni pédalier,
+qui restent au grand écran. `install/kiosk.sh` y applique la rotation choisie, y cale
+la dalle (`xinput map-to-output`, puis les corrections), puis ouvre un second
+Chromium, indépendant du premier. Un écran HDMI, lui, est mis côte à côte avec le
+grand sur le même bureau.
 Le grand écran est la prise **HDMI 0** (collée à l'alimentation) ; à défaut, celui qui
 a le plus de pixels. `kiosk.sh --ecrans` dit ce qui a été reconnu ;
 `PROMPTEUR_ECRAN` / `PROMPTEUR_PETIT_ECRAN` imposent les sorties. Si le petit écran
@@ -282,8 +285,9 @@ couvrirait le prompteur. Détails : **ECRAN-TACTILE.md**.
 `./install/verifier-boitier.sh`, depuis la fenêtre noire du boîtier, après chaque mise à
 jour : serveur, grand écran, vue Journaliste qui pilote, **pédales essayées pour de
 vrai** (un clavier virtuel appuie comme le pédalier, puis par le relais du petit
-écran : le texte doit avancer PUIS s'arrêter, selon le mode), petit écran (relié,
-placé, rafraîchi, page ouverte, tactile calé). Un ✅ ou un ❌ par étape, et la liste de
+écran : le texte doit avancer PUIS s'arrêter, selon le mode), petit écran (son
+affichage répond, l'image lui arrive vraiment — octets envoyés comptés sur 3 s —,
+page ouverte, dalle branchée). Un ✅ ou un ❌ par étape, et la liste de
 ce qui ne se vérifie qu'à l'œil. L'essai des pédales (`install/essai_pedales.py`) est
 lui-même testé contre un faux boîtier, en panne ou non (`tests/test_essai_pedales.py`).
 

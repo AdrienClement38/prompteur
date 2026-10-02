@@ -17,8 +17,14 @@
 #
 #  Rien n'est téléchargé, aucun pilote du vendeur n'est lancé, la ligne
 #  vc4-kms-v3d n'est pas touchée : le grand écran HDMI continue de fonctionner.
-#  Ensuite, install/kiosk.sh relie ce petit écran au bureau et y ouvre la vue
-#  Settings, tout seul, à chaque démarrage.
+#
+#  Le petit écran a SON PROPRE serveur d'affichage (X « :1 », service
+#  prompteur-petit-ecran-x), séparé du bureau du grand écran (« :0 ») qui ne le
+#  touche plus. Partager un seul bureau entre les deux ne marche pas sur ce
+#  matériel (mesuré sur le boîtier, voir PIEGES.md) : l'image n'arrivait au petit
+#  écran que toutes les ~10 s. Et :1 n'a ni clavier ni pédalier : le petit écran
+#  ne peut plus jamais prendre les pédales au grand. install/kiosk.sh y ouvre la
+#  vue Settings, tout seul, à chaque démarrage.
 #
 #  Usage :
 #      sudo ./install/petit-ecran.sh installer [--modele M] [--rotation R] [--tactile T]
@@ -35,7 +41,8 @@
 #  Après installer ou annuler : sudo reboot
 #
 #  Retour arrière garanti : config.txt est sauvegardé avant toute modification
-#  (config.txt.avant-petit-ecran), et nos lignes sont entre deux repères.
+#  (config.txt.avant-petit-ecran), et nos lignes sont entre deux repères. Les
+#  autres fichiers posés (serveur :1) sont tous à nous, et « annuler » les retire.
 # =============================================================================
 set -eu
 
@@ -59,6 +66,17 @@ if [ -n "${SUDO_USER:-}" ]; then
   MAISON="${MAISON:-$HOME}"
 fi
 REGLAGE="$MAISON/.config/prompteur/petit-ecran.conf"
+
+# Serveur d'affichage du petit écran (X :1). PROMPTEUR_RACINE ne sert qu'aux
+# essais (tests/test_petit_ecran.py) ; sudo l'efface de toute façon.
+RACINE="${PROMPTEUR_RACINE:-}"
+XORG_GRAND="$RACINE/etc/X11/xorg.conf.d/60-prompteur-petit-ecran.conf"
+DOSSIER_X="$RACINE/etc/prompteur"
+XORG_PETIT="$DOSSIER_X/xorg-petit-ecran.conf"
+XORG_VIDE="$DOSSIER_X/xorg-petit-ecran.d"
+AVANT_X="$RACINE/usr/local/sbin/prompteur-petit-ecran-x"
+SERVICE_X=prompteur-petit-ecran-x.service
+UNITE_X="$RACINE/etc/systemd/system/$SERVICE_X"
 
 usage() {
   sed -n 's/^#  \{0,1\}//p' "$0" | sed -n '/^Usage/,/^Après/p'
@@ -136,6 +154,155 @@ for numero, ligne in enumerate(open(source, encoding="utf-8"), 1):
 with open(cible, "wb") as f:
     f.write(octets)
 PY
+}
+
+# Le serveur d'affichage du petit écran (X :1). Le bureau du grand écran (:0) ne
+# prend plus ni la carte du petit écran ni sa dalle tactile ; :1 ne prend
+# qu'elles. Tout est écrit d'un bloc à chaque installation (rien à fusionner).
+installer_serveur_x() {
+  case "$UTILISATEUR" in
+    '' | *[!a-zA-Z0-9._-]*)
+      echo "Compte inattendu : « $UTILISATEUR »." >&2
+      exit 1
+      ;;
+  esac
+  mkdir -p "$(dirname "$XORG_GRAND")" "$XORG_VIDE" "$(dirname "$AVANT_X")" "$(dirname "$UNITE_X")"
+
+  cat >"$XORG_GRAND" <<'EOF'
+# Prompteur (install/petit-ecran.sh) : le bureau du grand écran (:0) laisse le
+# petit écran SPI et sa dalle tactile à leur propre serveur d'affichage (:1).
+Section "ServerFlags"
+  Option "AutoAddGPU" "false"
+EndSection
+Section "InputClass"
+  Identifier "prompteur-tactile-du-petit-ecran"
+  MatchProduct "ADS7846"
+  Option "Ignore" "on"
+EndSection
+EOF
+
+  # Modèle : @CARTE@ et @BUS@ sont remplis au lancement du serveur (les numéros
+  # card2, event10… changent selon l'ordre de démarrage).
+  cat >"$XORG_PETIT" <<'EOF'
+# Prompteur (install/petit-ecran.sh) : serveur d'affichage du petit écran (X :1).
+# Lu SEUL : :1 est lancé avec son propre dossier de réglages, pas celui du bureau.
+Section "ServerFlags"
+  Option "AutoAddGPU" "false"
+  Option "AutoBindGPU" "false"
+  Option "DontVTSwitch" "true"
+  Option "BlankTime" "0"
+  Option "StandbyTime" "0"
+  Option "SuspendTime" "0"
+  Option "OffTime" "0"
+EndSection
+# Un écran SPI annonce une fréquence factice (~0,01 Hz) : le navigateur caderait
+# ses images dessus. Le mode à 60 Hz, de même taille, est pris d'office.
+Section "Monitor"
+  Identifier "petit-ecran"
+  Modeline "480x320_60" 9.361 480 481 482 483 320 321 322 323
+  Option "PreferredMode" "480x320_60"
+EndSection
+# Sans accélération : l'image est copiée par le processeur et envoyée à l'écran
+# à chaque changement (c'est ce qui manquait quand le bureau partageait l'écran).
+Section "Device"
+  Identifier "petit-ecran"
+  Driver "modesetting"
+  BusID "@BUS@"
+  Option "kmsdev" "@CARTE@"
+  Option "AccelMethod" "none"
+  Option "Monitor-Unknown19-1" "petit-ecran"
+EndSection
+Section "Screen"
+  Identifier "petit-ecran"
+  Device "petit-ecran"
+  Monitor "petit-ecran"
+  DefaultDepth 24
+EndSection
+# Entrées : la dalle tactile SEULEMENT. Clavier, pédalier, souris sont ignorés :
+# ils restent au grand écran, toujours.
+Section "InputClass"
+  Identifier "prompteur-rien-que-le-tactile"
+  NoMatchProduct "ADS7846"
+  Option "Ignore" "on"
+EndSection
+Section "InputClass"
+  Identifier "prompteur-tactile"
+  MatchProduct "ADS7846"
+  MatchDevicePath "/dev/input/event*"
+  Driver "libinput"
+EndSection
+Section "ServerLayout"
+  Identifier "petit-ecran"
+  Screen "petit-ecran"
+EndSection
+EOF
+  # Sans fichier, X signale une erreur (dossier « introuvable ») : un réglage vide.
+  echo "# Volontairement vide : le petit écran ne lit que xorg-petit-ecran.conf." >"$XORG_VIDE/00-vide.conf"
+
+  # Lancé par systemd juste avant le serveur, en root : attend le petit écran,
+  # remplit le modèle, prépare le jeton d'accès (lisible par le compte du boîtier
+  # seulement).
+  sed -e "s|@UTILISATEUR@|$UTILISATEUR|g" -e "s|@MODELE@|$XORG_PETIT|g" >"$AVANT_X" <<'EOF'
+#!/bin/sh
+# Prompteur (install/petit-ecran.sh) : prépare le serveur d'affichage du petit
+# écran (X :1), juste avant son lancement par systemd.
+set -eu
+ICI=/run/prompteur-petit-ecran
+# La carte du petit écran : un écran sur le bus SPI. Son pilote peut n'arriver
+# qu'après le bureau : on l'attend 30 s.
+carte=""
+i=0
+while :; do
+  for c in /dev/dri/by-path/*spi*-card; do
+    if [ -e "$c" ]; then carte="$c"; break; fi
+  done
+  [ -z "$carte" ] || break
+  i=$((i + 1))
+  [ "$i" -le 30 ] || { echo "Petit écran introuvable (aucune carte graphique SPI)." >&2; exit 1; }
+  sleep 1
+done
+bus="$(readlink -f "/sys/class/drm/$(basename "$(readlink -f "$carte")")/device")"
+install -d -m 0755 "$ICI"
+sed -e "s|@CARTE@|$carte|" -e "s|@BUS@|platform:$bus|" "@MODELE@" >"$ICI/xorg.conf"
+A="$ICI/auth"
+rm -f "$A"
+(umask 077 && xauth -q -f "$A" add :1 . "$(mcookie)")
+chown "@UTILISATEUR@:" "$A"
+EOF
+  chmod 755 "$AVANT_X"
+
+  cat >"$UNITE_X" <<EOF
+[Unit]
+Description=Prompteur - affichage du petit écran (serveur X :1)
+After=lightdm.service
+
+[Service]
+ExecStartPre=$AVANT_X
+# vt7 -sharevts -novtswitch : il partage la console du bureau sans jamais la lui
+# prendre (le grand écran reste affiché). -noreset : il ne se réinitialise pas
+# quand la page du petit écran se ferme.
+ExecStart=/usr/lib/xorg/Xorg :1 vt7 -sharevts -novtswitch -noreset -nolisten tcp -config /run/prompteur-petit-ecran/xorg.conf -configdir $XORG_VIDE -auth /run/prompteur-petit-ecran/auth
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target
+EOF
+  if [ -z "${PROMPTEUR_ESSAI:-}" ]; then
+    systemctl daemon-reload
+    systemctl enable "$SERVICE_X" >/dev/null 2>&1
+  fi
+}
+
+retirer_serveur_x() {
+  if [ -z "${PROMPTEUR_ESSAI:-}" ]; then
+    systemctl disable --now "$SERVICE_X" >/dev/null 2>&1 || true
+  fi
+  rm -f "$XORG_GRAND" "$XORG_PETIT" "$XORG_VIDE/00-vide.conf" "$AVANT_X" "$UNITE_X"
+  rmdir "$XORG_VIDE" "$DOSSIER_X" 2>/dev/null || true
+  if [ -z "${PROMPTEUR_ESSAI:-}" ]; then
+    systemctl daemon-reload
+  fi
 }
 
 installer() {
@@ -221,6 +388,7 @@ EOF
   # Rotation et tactile se font par le bureau (kiosk.sh), pas au démarrage : ils
   # se changent sans toucher à config.txt.
   ecrire_reglage "$modele" "$rotation" "$tactile"
+  installer_serveur_x
 
   echo "Petit écran préparé (modèle : $modele, rotation : $rotation, tactile : ${tactile:-normal})."
   echo "Sauvegarde de l'ancien fichier de démarrage : $SAUVEGARDE"
@@ -245,8 +413,9 @@ tactile() {
 annuler() {
   exiger_root annuler
   retirer_bloc
+  retirer_serveur_x
   rm -f "$REGLAGE"
-  echo "Lignes du petit écran retirées de $CONFIG. Redémarrez : sudo reboot"
+  echo "Petit écran retiré (lignes de $CONFIG, serveur d'affichage). Redémarrez : sudo reboot"
 }
 
 etat() {
@@ -277,6 +446,11 @@ etat() {
     echo "Tactile : reconnu (ADS7846)."
   else
     echo "Tactile : NON reconnu."
+  fi
+  if [ -f "$UNITE_X" ]; then
+    echo "Affichage propre du petit écran (X :1) : $(systemctl is-active "$SERVICE_X" 2>/dev/null || true)."
+  else
+    echo "Affichage propre du petit écran (X :1) : non installé (sudo $0 installer)."
   fi
   echo "Écrans vus par le bureau :"
   "$ICI/kiosk.sh" --ecrans 2>&1 | sed 's/^/  /'

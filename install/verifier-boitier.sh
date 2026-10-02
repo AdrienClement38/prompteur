@@ -144,7 +144,43 @@ essai relais "Pédale transmise par le petit écran"
 titre "4. Le petit écran"
 ECRANS="$("$ICI/kiosk.sh" --ecrans 2>&1)"
 PETIT="$(echo "$ECRANS" | sed -n 's/^Petit écran (la régie) : //p')"
-if [ -z "$PETIT" ] && [ ! -f "$HOME/.config/prompteur/petit-ecran.conf" ]; then
+if [ -f /etc/systemd/system/prompteur-petit-ecran-x.service ]; then
+  # Le petit écran a son propre affichage (X :1, installé par petit-ecran.sh).
+  if echo "$ECRANS" | grep -q "^Affichage propre du petit écran (:1) : actif"; then
+    ok "Le petit écran a son propre affichage, et il répond."
+  else
+    ko "L'affichage du petit écran ne répond pas." "systemctl status prompteur-petit-ecran-x, et une photo."
+  fi
+  # L'image arrive-t-elle vraiment à l'écran ? On compte ce que le boîtier lui
+  # envoie sur ses broches pendant 3 s : l'horloge de la page change chaque
+  # seconde, il doit donc partir quelque chose (c'est ce qui manquait avant).
+  SPI=""
+  for d in /sys/bus/spi/devices/*; do
+    [ -r "$d/statistics/bytes_tx" ] || continue
+    [ "$(basename "$(readlink -f "$d/driver" 2>/dev/null)")" = ads7846 ] && continue
+    SPI="$d/statistics/bytes_tx"
+  done
+  if [ -n "$SPI" ]; then
+    AVANT="$(cat "$SPI")"
+    sleep 3
+    ENVOYE=$(($(cat "$SPI") - AVANT))
+    if [ "$ENVOYE" -gt 0 ]; then
+      ok "Le petit écran reçoit son image ($ENVOYE octets en 3 s)."
+    else
+      ko "Rien n'a été envoyé au petit écran en 3 s : son image est figée." "Une photo du petit écran, et ./install/kiosk.sh --ecrans"
+    fi
+  fi
+  if echo "$ECRANS" | grep -q "Vue Settings du petit écran : affichée"; then
+    ok "La page Settings y est ouverte."
+  else
+    ko "La page Settings n'y est pas ouverte." "tail -15 /tmp/prompteur-menu-$(id -u).log, et une photo."
+  fi
+  if echo "$ECRANS" | sed -n '/^Affichage propre du petit écran/,/^[^ ]/p' | grep -qi 'ads7846\|touch'; then
+    ok "Sa dalle tactile est branchée sur lui (corrections : $(sed -n 's/^tactile=//p' "$HOME/.config/prompteur/petit-ecran.conf" 2>/dev/null | tail -1))."
+  else
+    ko "Sa dalle tactile n'est pas reconnue." "./install/petit-ecran.sh etat, et une photo."
+  fi
+elif [ -z "$PETIT" ] && [ ! -f "$HOME/.config/prompteur/petit-ecran.conf" ]; then
   echo "   Pas de petit écran sur ce boîtier : étape sans objet."
 else
   if [ -n "$PETIT" ]; then ok "Le bureau voit le petit écran ($PETIT)."; else ko "Le bureau ne voit pas le petit écran." "./install/petit-ecran.sh etat, et une photo."; fi
