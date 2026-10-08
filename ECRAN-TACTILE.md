@@ -99,6 +99,9 @@ reste sur la prise **collée à l'alimentation**. À chaque lancement du prompte
 les deux écrans côte à côte, cale le tactile sur le petit et y ouvre la vue Settings.
 Écrans inversés (le texte sur le petit) : intervertissez les deux câbles et redémarrez.
 
+> ⚠️ **Pas sur le boîtier en service** : sa prise HDMI 0 est hors d'usage depuis octobre 2026,
+> et la seule prise HDMI qui reste sert au grand écran. Le petit écran SPI n'est pas concerné.
+
 ---
 
 ## Ce que le petit écran affiche

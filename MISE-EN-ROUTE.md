@@ -215,7 +215,7 @@ Faites-le dans **cet ordre exact** :
 
 - [ ] **B1.** Vérifiez que **rien n'est branché au courant** pour l'instant.
 - [ ] **B2.** Insérez la **carte micro-SD** dans la fente prévue sous le Raspberry Pi (elle ne rentre que dans un sens, sans forcer).
-- [ ] **B3.** Branchez le **câble micro-HDMI** côté boîtier. **⚠️ Attention, c'est le piège le plus fréquent :** le Raspberry Pi 5 a **deux** petits ports HDMI côte à côte. Il faut **celui qui est le plus proche de la prise d'alimentation USB-C**. Sur le mauvais port, l'écran reste désespérément noir alors que tout fonctionne parfaitement.
+- [ ] **B3.** Branchez le **câble micro-HDMI** côté boîtier. **⚠️ Attention, c'est le piège le plus fréquent :** le Raspberry Pi 5 a **deux** petits ports HDMI côte à côte. Sur ce boîtier, il faut **celui qui est le plus éloigné de la prise d'alimentation USB-C** (HDMI 1) : celui qui est collé à l'alimentation (HDMI 0) est **hors d'usage** depuis octobre 2026 — l'écran y clignote entre un écran noir et un écran bleu « pas de signal ». Le boîtier reconnaît l'écran **au démarrage** : changer de port boîtier allumé laisse l'écran noir jusqu'au prochain démarrage.
 - [ ] **B4.** Branchez l'autre bout du câble sur l'**écran 7 pouces**.
 - [ ] **B5.** Branchez le **clavier** et la **souris** sur deux ports USB du boîtier.
 - [ ] **B6.** Branchez le **câble Ethernet** entre le boîtier et votre box Internet.
@@ -780,16 +780,16 @@ jamais se contenter de débrancher** : une coupure brutale pendant que l'apparei
 **La méthode normale, avec le petit bouton du boîtier :**
 
 - [ ] **1.** Appuyez **brièvement** (moins d'une seconde) sur le **petit bouton rond situé à côté de la prise d'alimentation USB-C**.
-- [ ] **2.** Selon le modèle, soit l'écran s'éteint tout seul au bout de quelques secondes, soit **une petite fenêtre de confirmation apparaît** : dans ce cas, **appuyez une deuxième fois brièvement** sur le bouton (ou cliquez sur **Shutdown** si vous avez une souris).
-- [ ] **3.** Attendez que **l'écran soit éteint**, puis **comptez 20 secondes**.
-- [ ] **4.** Débranchez l'alimentation.
+- [ ] **2.** L'écran s'éteint tout seul au bout de quelques secondes : le prompteur se ferme et le boîtier s'arrête. *(Le Raspberry Pi ouvrait d'abord une fenêtre de confirmation, mais le prompteur, en plein écran, la cachait : on ne voyait rien, et on finissait par débrancher un boîtier toujours allumé. L'installation — ligne F7, `install/setup.sh` — retire cette fenêtre.)* Si **au bout de 30 secondes le texte est toujours affiché**, appuyez une **deuxième fois brièvement**.
+- [ ] **3.** Attendez que **l'écran soit éteint**, puis **comptez 20 secondes**. Si le boîtier plastique laisse voir le petit voyant de la carte, il est passé au **rouge** : le boîtier est éteint.
+- [ ] **4.** Débranchez l'alimentation — de préférence à la multiprise, pour ne pas forcer sur les prises du boîtier.
 
 > **⚠️ Ne maintenez JAMAIS ce bouton enfoncé plusieurs secondes :** cela coupe
 > brutalement le courant, exactement comme un arrachage de prise.
 
 > **🧪 À vérifier une fois, pendant la répétition générale :** que ce bouton soit
-> bien accessible sur **votre** boîtier plastique, et comment il réagit
-> (extinction directe, ou fenêtre de confirmation). **Notez-le sur la feuille de
+> bien accessible sur **votre** boîtier plastique, et qu'un appui bref éteint
+> bien directement le boîtier. **Notez-le sur la feuille de
 > l'installateur** (étape O) : c'est un geste qu'il fera tous les jours.
 
 **Si le bouton n'est pas accessible sur votre boîtier**, la méthode de
@@ -1132,7 +1132,7 @@ catastrophe en direct.
 
 **Le repérage physique, pour tous les montages à venir**
 
-- [ ] Je colle **une pastille de couleur** (ou un morceau de gaffer) **sur le bon port HDMI du boîtier** ET **sur la fiche du câble micro-HDMI** correspondante : la consigne de montage devient « on branche couleur sur couleur », et le piège du mauvais port disparaît pour toujours.
+- [ ] Je colle **une pastille de couleur** (ou un morceau de gaffer) **sur le bon port HDMI du boîtier** — HDMI 1, le plus éloigné de l'alimentation, voir le point B3 — ET **sur la fiche du câble micro-HDMI** correspondante : la consigne de montage devient « on branche couleur sur couleur », et le piège du mauvais port disparaît pour toujours.
 - [ ] Mieux encore : je laisse le **câble micro-HDMI branché en permanence côté boîtier**, et on ne débranche que du côté de l'écran.
 
 **LE TEST QUI VAUT TOUS LES AUTRES — en configuration réelle de tournage**
@@ -1193,6 +1193,7 @@ clavier, une souris, un écran, un câble Ethernet et Internet.
 | Ce que vous constatez | Ce qu'il faut faire |
 |---|---|
 | **L'écran reste noir au démarrage** | Le câble micro-HDMI est sur le mauvais port : **voir le point B3 de l'étape B**. Sinon : éteignez tout, allumez **l'écran d'abord**, le boîtier ensuite. En dernier recours, testez sur une télévision ordinaire. |
+| **L'écran clignote sans arrêt entre un écran noir et un écran bleu « pas de signal »** | L'image n'arrive pas jusqu'à l'écran, alors que le boîtier fonctionne : c'est la **prise HDMI du boîtier** ou la fiche du câble. **Ne débranchez pas le boîtier, ne redémarrez pas en boucle.** Dans l'ordre : (1) vérifiez que le câble est sur **HDMI 1, le port le plus éloigné de l'alimentation** (point B3) et enfoncez fermement la fiche, côté boîtier puis côté écran ; (2) éteignez l'**écran seul** avec son bouton, comptez 10 secondes, rallumez-le ; (3) si le câble a dû changer de port, le boîtier ne le verra qu'au prochain démarrage : redémarrez-le une fois, proprement. Sinon, essayez un autre câble micro-HDMI. *(Vécu en octobre 2026 : le port HDMI 0 a lâché, voir PIEGES.md.)* |
 | **L'image est décalée, coupée sur les bords, ou minuscule** | C'est fréquent avec les petits écrans HDMI. Dans l'ordre : (1) si l'écran possède ses propres boutons de réglage, cherchez-y un mode « plein écran » / « auto » / « 16:9 » ; (2) éteignez le boîtier, allumez **l'écran d'abord**, puis le boîtier ; (3) contrôle simple : **la ligne rouge doit traverser l'écran d'un bord à l'autre** — sinon l'image est mal cadrée. Si rien n'y fait, signalez le problème à un dépanneur **avec la marque et le modèle exacts de l'écran**. |
 | **Le boîtier démarre sur le bureau, pas sur le prompteur** | **Dans l'immédiat : double-cliquez sur l'icône « Le Prompteur » du bureau**, l'écran revient. Puis cherchez la cause, sinon cela recommencera au prochain allumage : (1) la ligne **F7** a été lancée avec `sudo` — ouvrez la fenêtre noire, tapez `cd prompteur`, relancez la ligne F7 **sans** `sudo` (même mot de passe entre guillemets), puis `sudo reboot` ; (2) dans le menu bleu, « Console » a été choisi au lieu de **Desktop** — refaites le réglage n° 1 de l'étape E ; (3) si votre menu avait **deux lignes séparées**, la ligne **Auto Login** a été oubliée — refaites le réglage n° 1 de l'étape E, cas 2. |
 | **L'écran affiche une page blanche, ou un message d'erreur en anglais du navigateur** (« This site can't be reached ») | Le boîtier a démarré plus vite que son propre programme : l'affichage s'est ouvert trop tôt et **ne se répare pas tout seul**. Branchez le clavier de la sacoche et appuyez sur **F5** (ou **Ctrl + R**) pour recharger la page. Si le prompteur ne revient pas : éteignez proprement, attendez 10 secondes, rallumez, et laissez **une minute complète** sans rien toucher. |

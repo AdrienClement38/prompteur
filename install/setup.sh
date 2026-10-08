@@ -262,7 +262,22 @@ else
 fi
 rm -f "$DESKTOP_ENTRY"
 
-# d) Assistance à distance : les deux icônes sont posées par assistance.sh
+# d) Bouton d'alimentation : un appui bref éteint le boîtier, proprement.
+#    Le bureau du Raspberry Pi bloque l'arrêt direct (/etc/xdg/autostart/pwrkey.desktop :
+#    systemd-inhibit --what=handle-power-key) et ouvre à la place un menu d'arrêt…
+#    que le prompteur, en plein écran, cache. On ne voyait rien, et on finissait par
+#    débrancher le boîtier allumé. Une entrée du même nom chez l'utilisateur, marquée
+#    Hidden, retire ce blocage pour lui seul : logind éteint alors au premier appui
+#    (HandlePowerKey=poweroff, son réglage d'usine).
+cat > "$RUN_HOME/.config/autostart/pwrkey.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=Power Key Inhibit
+Comment=Desactive par le Prompteur : un appui bref sur le bouton eteint le boitier proprement
+Hidden=true
+EOF
+
+# e) Assistance à distance : les deux icônes sont posées par assistance.sh
 #    lui-même. Une seule définition, et surtout un boîtier DÉJÀ installé peut
 #    les obtenir sans relancer ce script — qui recrée le WiFi.
 chmod +x "$PROJECT_DIR/install/assistance.sh" 2>/dev/null || true

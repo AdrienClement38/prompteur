@@ -275,7 +275,9 @@ la dalle (`xinput map-to-output`, puis les corrections), puis ouvre un second
 Chromium, indépendant du premier. Un écran HDMI, lui, est mis côte à côte avec le
 grand sur le même bureau.
 Le grand écran est la prise **HDMI 0** (collée à l'alimentation) ; à défaut, celui qui
-a le plus de pixels. `kiosk.sh --ecrans` dit ce qui a été reconnu ;
+a le plus de pixels. Sur le boîtier en service, HDMI 0 est hors d'usage depuis octobre
+2026 : la vitre est sur HDMI 1, retenue faute d'écran sur HDMI 0 (voir PIEGES.md).
+`kiosk.sh --ecrans` dit ce qui a été reconnu ;
 `PROMPTEUR_ECRAN` / `PROMPTEUR_PETIT_ECRAN` imposent les sorties. Si le petit écran
 ne peut pas être placé à côté du grand, **rien n'est ouvert** : la fenêtre
 couvrirait le prompteur. Détails : **ECRAN-TACTILE.md**.

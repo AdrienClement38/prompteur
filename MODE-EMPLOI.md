@@ -186,26 +186,26 @@ il prend deux minutes.
 
 > ⚠️ **PIÈGE — À LIRE AVANT DE BRANCHER LE CÂBLE D'ÉCRAN.**
 > Sur le bord du boîtier où arrive le courant, vous voyez **côte à côte** : la prise du courant
-> (**ovale**), puis **deux petites prises plates identiques**. Prenez **celle qui est collée à la
-> prise du courant**, PAS l'autre. Sur l'autre, l'image peut ne pas apparaître du tout — et
-> l'erreur est invisible : tout fonctionne à l'intérieur, mais vous restez devant un écran noir.
+> (**ovale**), puis **deux petites prises plates identiques**. Prenez **celle qui est la plus
+> éloignée de la prise du courant**, PAS celle qui y est collée : sur ce boîtier, elle est hors
+> d'usage, et l'écran y clignote entre un écran noir et un écran bleu « pas de signal ».
 
 ```
    Le bord du boîtier où arrive le courant, vu de face :
 
    +-------------------------------------------------------+
    |      (   )          [___]           [___]             |
-   |     courant     écran <-- ICI    ne pas utiliser      |
+   |     courant     hors d'usage    écran <-- ICI         |
    +-------------------------------------------------------+
-          ^                 ^
-        ovale        la prise plate COLLÉE à la prise du courant
+          ^                                ^
+        ovale        la prise plate la plus ÉLOIGNÉE du courant
 
    (Les prises USB rectangulaires -- pédalier, souris, clavier, clé USB --
     sont sur l'AUTRE bord du boîtier.)
 ```
 
-- [ ] **2.** Branchez le **câble d'écran** côté boîtier, sur la prise plate **collée à la prise
-      du courant**.
+- [ ] **2.** Branchez le **câble d'écran** côté boîtier, sur la prise plate **la plus éloignée
+      de la prise du courant**.
       *Ce que vous devez voir : le connecteur entre **à fond, sans forcer**. S'il résiste,
       retournez-le : il n'y a qu'un seul sens. On ne force jamais.*
 
@@ -267,7 +267,8 @@ il prend deux minutes.
 > 🆘 **Si au bout de 2 minutes l'écran est toujours noir** : vérifiez d'abord **le courant**
 > (multiprise allumée ? blocs bien enfoncés aux deux bouts ?), puis que l'écran est **allumé,
 > alimenté et réglé sur l'entrée HDMI**, puis que le câble d'écran est branché côté boîtier sur
-> **la prise plate collée à la prise du courant**. Débranchez ensuite l'alimentation du boîtier,
+> **la prise plate la plus éloignée de la prise du courant** (celle qui y est collée est hors
+> d'usage sur ce boîtier). Débranchez ensuite l'alimentation du boîtier,
 > attendez 10 secondes et rebranchez-la, **écran allumé en premier**.
 > Voir aussi le chapitre 14, « Si quelque chose cloche ».
 
@@ -1065,14 +1066,14 @@ aussi rouvrir le prompteur en double-cliquant, avec la souris USB, sur l'icône
 
 ### Le petit écran du boîtier
 
-Si un **second écran** est branché sur le boîtier (le petit écran de la régie, sur la **seconde
-prise HDMI**), il affiche **tout seul la page Settings**, dès l'allumage : **pas besoin du
-WiFi**. On y passe de Settings à Spectateur d'un appui, comme sur un téléphone. S'il est
-tactile, le toucher vise bien ce petit écran.
+Si un **second écran** est branché sur le boîtier (le petit écran de la régie), il affiche
+**tout seul la page Settings**, dès l'allumage : **pas besoin du WiFi**. On y passe de
+Settings à Spectateur d'un appui, comme sur un téléphone. S'il est tactile, le toucher vise
+bien ce petit écran.
 
-> 📌 **Le grand écran, celui qu'on lit, reste sur la prise HDMI collée à l'alimentation.** Si
-> les deux écrans sont inversés (le texte sur le petit, Settings sur le grand), intervertissez
-> les deux câbles côté boîtier et redémarrez.
+> 📌 **Le grand écran, celui qu'on lit, est branché sur la prise HDMI la plus éloignée de
+> l'alimentation.** Celle qui est collée à l'alimentation est **hors d'usage** sur ce boîtier
+> (l'écran y clignote entre noir et bleu) : n'y rebranchez jamais le câble.
 
 ### Éteindre
 
@@ -1086,8 +1087,11 @@ Faites-le vérifier une fois par l'installateur et notez la réponse (chapitre 2
       affiche `⏸`, et vous n'êtes pas en train d'envoyer un texte ni de charger un document.
 - [ ] **2.** Appuyez **BRIÈVEMENT une seule fois** sur le petit bouton, à côté de la prise
       d'alimentation.
-- [ ] **3.** Attendez que l'écran devienne noir ou vide (10 à 20 secondes).
-- [ ] **4.** **Alors seulement**, débranchez l'alimentation, puis éteignez et débranchez l'écran.
+- [ ] **3.** Attendez que l'écran devienne noir ou vide (10 à 20 secondes). Si le petit voyant
+      de la carte est visible, il passe au **rouge** : le boîtier est éteint. *Si au bout de
+      30 secondes le texte est toujours affiché, appuyez une deuxième fois brièvement.*
+- [ ] **4.** **Alors seulement**, débranchez l'alimentation (de préférence à la multiprise, pour ne
+      pas forcer sur les prises du boîtier), puis éteignez et débranchez l'écran.
 
 > ⚠️ **N'appuyez jamais longuement sur ce bouton.** Un appui bref suffit. Pour rallumer, il suffit
 > de rebrancher le courant (ou d'appuyer à nouveau brièvement sur le bouton).
@@ -1132,7 +1136,8 @@ toujours du tout début**.
 | Ce que vous constatez | Ce qu'il faut faire |
 |---|---|
 | **Rien ne s'allume du tout (ni l'écran, ni le boîtier)** | C'est un problème **de courant**, pas de prompteur. Vérifiez que la **multiprise est allumée** (son interrupteur lumineux), essayez **une autre prise murale**, et vérifiez que **chaque bloc d'alimentation est bien enfoncé aux deux bouts**. |
-| **L'écran reste noir alors que le boîtier est alimenté** | Vérifiez que l'écran est **allumé** et que **sa propre** alimentation est branchée. Puis que le câble d'image est branché, côté boîtier, sur **la prise plate collée à la prise du courant**. Puis débranchez le boîtier, attendez 10 secondes, rebranchez **écran allumé en premier**, et attendez **une minute complète**. |
+| **L'écran reste noir alors que le boîtier est alimenté** | Vérifiez que l'écran est **allumé** et que **sa propre** alimentation est branchée. Puis que le câble d'image est branché, côté boîtier, sur **la prise plate la plus éloignée de la prise du courant**. Puis débranchez le boîtier, attendez 10 secondes, rebranchez **écran allumé en premier**, et attendez **une minute complète**. |
+| **L'écran clignote sans arrêt entre un écran noir et un écran bleu « pas de signal »** | L'image n'arrive pas jusqu'à l'écran : c'est **la prise ou le câble HDMI**, pas le prompteur. **Ne débranchez pas le boîtier.** Vérifiez que le câble est bien sur **la prise plate la plus éloignée de la prise du courant**, et enfoncez fermement la fiche, côté boîtier puis côté écran. Puis éteignez **l'écran seul** avec son bouton, comptez 10 secondes, rallumez-le. Si ça clignote encore, **appelez la personne qui a installé le boîtier** : elle peut le vérifier à distance. |
 | **L'écran affiche « pas de signal », ou reste bleu** | C'est l'écran, pas le boîtier. Cherchez les **petits boutons de menu sur sa tranche** et vérifiez qu'il est réglé sur l'entrée **HDMI** (et non AV, ni HDMI 2). Vérifiez aussi que la **luminosité n'est pas au minimum**. |
 | **L'écran du boîtier affiche un bureau, des icônes ou une barre de navigateur au lieu du texte** | Le prompteur a été fermé : **plus besoin de redémarrer**. Avec la **souris USB**, double-cliquez sur l'icône **« Le Prompteur »** sur ce bureau. Ou, depuis le téléphone : page Settings → en haut, **« Écran journaliste »** → **Journaliste**. *(Si seule une barre de navigateur dépasse et qu'un clavier est branché, la touche **F** remet le plein écran.)* |
 | **Le grand écran est tout noir, et le téléphone affiche un fond noir avec « ⏻ Rallumer »** | Le système est **en veille** (quelqu'un a appuyé sur ⏻ Veille). Touchez **« Rallumer »**, ou appuyez sur une pédale. Tout revient à l'arrêt, là où vous en étiez. |

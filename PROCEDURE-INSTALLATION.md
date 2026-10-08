@@ -78,7 +78,7 @@ opérationnel qui démarre tout seul sur le prompteur.
 ## 2. Premier démarrage du Raspberry Pi
 
 1. Insérez la carte SD dans le Pi.
-2. Branchez l'**écran** : câble **micro‑HDMI → HDMI** sur le port **HDMI0** du Pi (le plus proche de la prise d'alimentation USB‑C).
+2. Branchez l'**écran** : câble **micro‑HDMI → HDMI** sur le port **HDMI1** du Pi (le plus éloigné de la prise d'alimentation USB‑C). Sur le boîtier en service, **HDMI0** (collé à l'alimentation) est hors d'usage depuis octobre 2026 : voir PIEGES.md.
 3. Branchez le **clavier + souris** (ou préparez un accès SSH).
 4. **Si vous installez par Ethernet** : branchez le câble réseau maintenant.
 5. Branchez enfin l'**alimentation** : le Pi démarre sur le bureau.

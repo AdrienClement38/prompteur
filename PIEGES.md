@@ -178,7 +178,8 @@ petit » tombe sur le grand ; la dalle tactile vise **toute la largeur** des deu
 leur taille.
 **Parade :** le lancement du prompteur ouvre lui-même le petit écran ; il met les
 écrans côte à côte, cale le tactile (`xinput map-to-output`), et désigne le grand par
-sa prise (HDMI 0, celle que prescrivent les procédures). S'il ne peut pas garantir
+sa prise (HDMI 0 ; à défaut, l'écran qui a le plus de pixels — c'est ainsi que la vitre,
+passée sur HDMI 1 quand HDMI 0 a lâché, reste le grand écran). S'il ne peut pas garantir
 que les écrans sont côte à côte, il n'ouvre **rien** : une fenêtre plein écran
 posée sur le prompteur serait pire que pas de fenêtre. `kiosk.sh --ecrans` dit ce
 qui a été reconnu.
@@ -304,6 +305,41 @@ xinput perd ce qu'il n'a pas encore écrit.
 ### Les réglages `hdmi_*` sont ignorés sur Pi 5
 Presque tous les tutoriels en ligne datent d'avant le changement d'architecture
 graphique. Les recettes qu'on trouve **ne font rien**, sans le dire.
+
+### 🔴 Une prise HDMI qui lâche : le Pi croit tout bon, l'écran ne voit rien
+Octobre 2026 : la vitre clignotait toutes les 1 à 2 secondes entre un écran noir et
+l'écran bleu « pas de signal » du moniteur, pendant des heures. Côté Pi, tout était
+normal : sortie `connected`, `enabled`, `On`, `link-status: Good`, EDID lu en entier,
+image bien dessinée (captures identiques), aucun branchement vu pendant le
+clignotement. Seul indice : des rafales d'impulsions HPD venues de l'écran (lignes
+`vc4 hdmi hpd` de `/proc/interrupts` : 173 en deux jours, jusqu'à 40 par heure). La
+prise **HDMI 0**, collée à l'USB-C qu'on débranchait chaque matin pour éteindre, ne
+transmettait plus l'image : l'identification de l'écran passait, l'image non. Même
+câble, même écran sur **HDMI 1** : texte affiché aussitôt.
+Les premières pistes (veille du prompteur, code du kiosque, écran « coincé ») étaient
+fausses, et chaque redémarrage effaçait les traces : journal non persistant, `/tmp`
+vidé, `Xorg.0.log` écrasé, horloge repartie d'un tampon ancien faute de pile et
+d'Ethernet.
+**Parade :** vitre sur HDMI 1, et ne plus débrancher le boîtier pour l'éteindre.
+Changer de port boîtier allumé laisse l'écran éteint : X ne rallume pas de lui-même
+une sortie apparue en cours de route. Il faut un redémarrage, ou `DISPLAY=:0 xrandr
+--output HDMI-1 --off --output HDMI-2 --mode 1920x1080 --rate 60 --pos 0x0 --primary`.
+Pour diagnostiquer : demander **ce que montre l'écran** (noir, puis bleu : rien
+n'arrive), et compter les HPD plutôt que croire `xrandr`.
+
+### 🔴 Le bouton d'arrêt ouvre un menu que le prompteur cache
+Le journaliste « mettait en veille » le soir d'un appui sur le bouton : le boîtier
+tournait en fait toute la nuit, puis on le débranchait allumé. Le bureau du Raspberry
+Pi bloque l'arrêt direct (`/etc/xdg/autostart/pwrkey.desktop` lance `systemd-inhibit
+--what=handle-power-key rpi-gui-nop`) et ouvre à la place, par openbox, le menu
+`pishutdown`… derrière le Chromium du kiosque, en plein écran. Rien ne se voit ; seul
+un second appui éteint. Et comme le blocage peut disparaître en cours de session, le
+même geste n'a pas toujours le même effet. Indice qu'on a débranché : au démarrage,
+l'horloge de la carte (`/sys/class/rtc/rtc0/since_epoch`, sans pile) repart de zéro.
+**Parade :** `setup.sh` pose `~/.config/autostart/pwrkey.desktop` avec `Hidden=true`,
+qui retire le blocage pour l'utilisateur du kiosque : logind éteint au premier appui
+(`HandlePowerKey=poweroff`, réglage d'usine). Vérification : `systemd-inhibit --list`
+ne doit montrer aucun `handle-power-key`.
 
 ---
 
